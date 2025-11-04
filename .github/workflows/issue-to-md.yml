@@ -33,13 +33,13 @@ jobs:
         id: extract_data
         run: |
           body="${{ github.event.issue.body }}"
-          # Sed komutları ile her bir bölümün altındaki ilk satırı alıyoruz.
-          year=$(echo "$body" | sed -n '/### Yıl/{n;p;}' | tr -d '\r')
-          title=$(echo "$body" | sed -n '/### Başlık/{n;p;}' | tr -d '\r')
-          description=$(echo "$body" | awk '/### Açıklama/{f=1;next} /### Kategori/{f=0} f' | sed '1d;$d' | sed '$d' | tr -d '\r')
-          category=$(echo "$body" | sed -n '/### Kategori/{n;p;}' | tr -d '\r')
-          date=$(echo "$body" | sed -n '/### Tam Tarih/{n;p;}' | tr -d '\r')
-          
+          # Use awk to skip blank lines after headers
+          year=$(echo "$body" | awk '/### Yıl/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          title=$(echo "$body" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          description=$(echo "$body" | awk '/### Açıklama/{f=1;next} /### Kategori/{f=0} f' | sed '/^[[:space:]]*$/d' | tr -d '\r')
+          category=$(echo "$body" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          date=$(echo "$body" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+
           echo "year=$year" >> "$GITHUB_OUTPUT"
           echo "title=$title" >> "$GITHUB_OUTPUT"
           echo "description=$description" >> "$GITHUB_OUTPUT"
