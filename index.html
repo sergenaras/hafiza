@@ -356,7 +356,7 @@
             </div>
 
             <div class="instructions">
-                🖱️ Sürükle: Pan | 🔍 Mouse Wheel: Zoom
+                🖱️ Sürükle: Hareket Et | 🔍 Mouse Wheel: Zoom (3 Seviye)
             </div>
         </div>
     </div>
@@ -382,10 +382,33 @@
 
         // Zoom levels
         const ZOOM_LEVELS = [
-            { scale: 1, label: 'Yıllar', unit: 'year', pixelsPerUnit: 50, majorEvery: 10 },
-            { scale: 12, label: 'Aylar', unit: 'month', pixelsPerUnit: 50, majorEvery: 12 },
-            { scale: 365, label: 'Günler', unit: 'day', pixelsPerUnit: 10, majorEvery: 30 },
-            { scale: 8760, label: 'Saatler', unit: 'hour', pixelsPerUnit: 5, majorEvery: 24 }
+            { 
+                scale: 1, 
+                label: 'Yıllar', 
+                pixelsPerYear: 50, 
+                showYears: true, 
+                showMonths: false, 
+                showDays: false,
+                yearInterval: 10 // Her 10 yılda bir göster
+            },
+            { 
+                scale: 2, 
+                label: 'Yıllar + Aylar', 
+                pixelsPerYear: 200, 
+                showYears: true, 
+                showMonths: true, 
+                showDays: false,
+                yearInterval: 1 // Her yılı göster
+            },
+            { 
+                scale: 3, 
+                label: 'Aylar + Günler', 
+                pixelsPerYear: 2000, 
+                showYears: false, 
+                showMonths: true, 
+                showDays: true,
+                yearInterval: 1
+            }
         ];
 
         let currentZoomLevel = 0;
@@ -435,75 +458,170 @@
             eventsContainer.innerHTML = '';
 
             const centerX = wrapper.offsetWidth / 2;
-            const visibleRange = wrapper.offsetWidth / level.pixelsPerUnit;
+            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
             
-            // Calculate time range based on zoom level
-            let startTime, endTime, currentTime;
-            
-            if (level.unit === 'year') {
-                currentTime = currentYear;
-                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
-                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
-            } else if (level.unit === 'month') {
-                currentTime = currentYear * 12 + currentMonth;
-                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
-                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
-            } else if (level.unit === 'day') {
-                const startOfYear = new Date(currentYear, 0, 1);
-                currentTime = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24)) + currentYear * 365;
-                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
-                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
-            } else { // hours
-                currentTime = currentYear * 8760 + Math.floor((now - new Date(currentYear, 0, 1)) / (1000 * 60 * 60));
-                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
-                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
-            }
+            // Calculate visible range in years
+            const visibleYears = wrapper.offsetWidth / level.pixelsPerYear;
+            const startYear = Math.floor(currentYear - visibleYears / 2 - (offsetX / level.pixelsPerYear));
+            const endYear = Math.ceil(currentYear + visibleYears / 2 - (offsetX / level.pixelsPerYear));
 
-            // Draw time markers
-            for (let t = startTime; t <= endTime; t++) {
-                const isMajor = t % level.majorEvery === 0;
-                const offsetFromCurrent = t - currentTime;
-                const x = centerX + (offsetFromCurrent * level.pixelsPerUnit) + offsetX;
+            // LEVEL 1: Only Years
+            if (level.showYears && !level.showMonths) {
+                for (let year = startYear; year <= endYear; year++) {
+                    if (year % level.yearInterval !== 0) continue;
+                    
+                    const offsetFromCurrent = year - currentYear;
+                    const x = centerX + (offsetFromCurrent * level.pixelsPerYear) + offsetX;
 
-                const marker = document.createElement('div');
-                marker.className = 'time-marker';
-                marker.style.left = x + 'px';
+                    const marker = document.createElement('div');
+                    marker.className = 'time-marker';
+                    marker.style.left = x + 'px';
 
-                const line = document.createElement('div');
-                line.className = `marker-line ${isMajor ? 'major' : ''}`;
-                line.style.height = isMajor ? '30px' : '15px';
-                line.style.transform = isMajor ? 'translateY(-15px)' : 'translateY(-7px)';
-                marker.appendChild(line);
+                    const line = document.createElement('div');
+                    line.className = 'marker-line major';
+                    line.style.height = '30px';
+                    line.style.transform = 'translateY(-15px)';
+                    marker.appendChild(line);
 
-                if (isMajor) {
                     const label = document.createElement('div');
                     label.className = 'marker-label';
-                    label.textContent = formatTimeLabel(t, level.unit);
+                    label.textContent = year;
                     marker.appendChild(label);
-                }
 
-                container.appendChild(marker);
+                    container.appendChild(marker);
+                }
+            }
+            
+            // LEVEL 2: Years (thick) + Months (thin)
+            else if (level.showYears && level.showMonths && !level.showDays) {
+                for (let year = startYear; year <= endYear; year++) {
+                    const yearOffsetFromCurrent = year - currentYear;
+                    const yearX = centerX + (yearOffsetFromCurrent * level.pixelsPerYear) + offsetX;
+
+                    // Draw year marker (thick)
+                    const yearMarker = document.createElement('div');
+                    yearMarker.className = 'time-marker';
+                    yearMarker.style.left = yearX + 'px';
+
+                    const yearLine = document.createElement('div');
+                    yearLine.className = 'marker-line major';
+                    yearLine.style.height = '40px';
+                    yearLine.style.transform = 'translateY(-20px)';
+                    yearMarker.appendChild(yearLine);
+
+                    const yearLabel = document.createElement('div');
+                    yearLabel.className = 'marker-label';
+                    yearLabel.textContent = year;
+                    yearLabel.style.fontWeight = 'bold';
+                    yearMarker.appendChild(yearLabel);
+
+                    container.appendChild(yearMarker);
+
+                    // Draw months (thin)
+                    const pixelsPerMonth = level.pixelsPerYear / 12;
+                    for (let month = 0; month < 12; month++) {
+                        const monthX = yearX + (month * pixelsPerMonth);
+                        
+                        const monthMarker = document.createElement('div');
+                        monthMarker.className = 'time-marker';
+                        monthMarker.style.left = monthX + 'px';
+
+                        const monthLine = document.createElement('div');
+                        monthLine.className = 'marker-line';
+                        monthLine.style.height = '20px';
+                        monthLine.style.width = '1px';
+                        monthLine.style.transform = 'translateY(-10px)';
+                        monthMarker.appendChild(monthLine);
+
+                        const monthLabel = document.createElement('div');
+                        monthLabel.className = 'marker-label';
+                        monthLabel.textContent = monthNames[month];
+                        monthLabel.style.fontSize = '11px';
+                        monthMarker.appendChild(monthLabel);
+
+                        container.appendChild(monthMarker);
+                    }
+                }
+            }
+            
+            // LEVEL 3: Months + Days
+            else if (level.showMonths && level.showDays) {
+                const pixelsPerMonth = level.pixelsPerYear / 12;
+                const pixelsPerDay = level.pixelsPerYear / 365;
+                
+                for (let year = startYear; year <= endYear; year++) {
+                    const yearOffsetFromCurrent = year - currentYear;
+                    const yearX = centerX + (yearOffsetFromCurrent * level.pixelsPerYear) + offsetX;
+
+                    for (let month = 0; month < 12; month++) {
+                        const monthX = yearX + (month * pixelsPerMonth);
+                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                        // Draw month marker
+                        const monthMarker = document.createElement('div');
+                        monthMarker.className = 'time-marker';
+                        monthMarker.style.left = monthX + 'px';
+
+                        const monthLine = document.createElement('div');
+                        monthLine.className = 'marker-line major';
+                        monthLine.style.height = '35px';
+                        monthLine.style.transform = 'translateY(-17px)';
+                        monthMarker.appendChild(monthLine);
+
+                        const monthLabel = document.createElement('div');
+                        monthLabel.className = 'marker-label';
+                        monthLabel.textContent = `${monthNames[month]} ${year}`;
+                        monthLabel.style.fontWeight = 'bold';
+                        monthMarker.appendChild(monthLabel);
+
+                        container.appendChild(monthMarker);
+
+                        // Draw days
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            const daysSinceYearStart = new Date(year, month, day) - new Date(year, 0, 1);
+                            const daysCount = daysSinceYearStart / (1000 * 60 * 60 * 24);
+                            const dayX = yearX + (daysCount * pixelsPerDay);
+
+                            const dayMarker = document.createElement('div');
+                            dayMarker.className = 'time-marker';
+                            dayMarker.style.left = dayX + 'px';
+
+                            const dayLine = document.createElement('div');
+                            dayLine.className = 'marker-line';
+                            dayLine.style.height = '15px';
+                            dayLine.style.width = '1px';
+                            dayLine.style.transform = 'translateY(-7px)';
+                            dayMarker.appendChild(dayLine);
+
+                            if (day % 5 === 0) { // Her 5 günde bir label
+                                const dayLabel = document.createElement('div');
+                                dayLabel.className = 'marker-label';
+                                dayLabel.textContent = `${monthNames[month]} ${day}`;
+                                dayLabel.style.fontSize = '10px';
+                                dayMarker.appendChild(dayLabel);
+                            }
+
+                            container.appendChild(dayMarker);
+                        }
+                    }
+                }
             }
 
             // Draw events
             events.forEach(event => {
-                let eventTime;
-                if (level.unit === 'year') {
-                    eventTime = event.year;
-                } else if (level.unit === 'month') {
-                    const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
-                    eventTime = eventDate.getFullYear() * 12 + eventDate.getMonth();
-                } else if (level.unit === 'day') {
-                    const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
-                    const startOfYear = new Date(eventDate.getFullYear(), 0, 1);
-                    eventTime = Math.floor((eventDate - startOfYear) / (1000 * 60 * 60 * 24)) + eventDate.getFullYear() * 365;
-                } else { // hours
-                    const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
-                    eventTime = eventDate.getFullYear() * 8760 + Math.floor((eventDate - new Date(eventDate.getFullYear(), 0, 1)) / (1000 * 60 * 60));
-                }
-
-                const offsetFromCurrent = eventTime - currentTime;
-                const x = centerX + (offsetFromCurrent * level.pixelsPerUnit) + offsetX;
+                const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
+                const eventYear = eventDate.getFullYear();
+                const eventMonth = eventDate.getMonth();
+                const eventDay = eventDate.getDate();
+                
+                const yearOffset = eventYear - currentYear;
+                const monthOffset = eventMonth / 12;
+                const daysSinceYearStart = (eventDate - new Date(eventYear, 0, 1)) / (1000 * 60 * 60 * 24);
+                const dayOffset = daysSinceYearStart / 365;
+                
+                const totalOffset = yearOffset + monthOffset + dayOffset;
+                const x = centerX + (totalOffset * level.pixelsPerYear) + offsetX;
 
                 // Only render if visible
                 if (x < -100 || x > wrapper.offsetWidth + 100) return;
@@ -530,30 +648,7 @@
             });
 
             // Update zoom info
-            document.getElementById('zoomInfo').textContent = `Zoom: ${level.scale}x (${level.label})`;
-        }
-
-        function formatTimeLabel(value, unit) {
-            if (unit === 'year') {
-                return value;
-            } else if (unit === 'month') {
-                const year = Math.floor(value / 12);
-                const month = value % 12;
-                const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-                return `${monthNames[month]} ${year}`;
-            } else if (unit === 'day') {
-                const year = Math.floor(value / 365);
-                const dayOfYear = value % 365;
-                const date = new Date(year, 0, 1);
-                date.setDate(dayOfYear + 1);
-                return `${date.getDate()}/${date.getMonth() + 1}/${year}`;
-            } else { // hour
-                const year = Math.floor(value / 8760);
-                const hourOfYear = value % 8760;
-                const date = new Date(year, 0, 1);
-                date.setHours(hourOfYear);
-                return `${date.getDate()}/${date.getMonth() + 1} ${date.getHours()}:00`;
-            }
+            document.getElementById('zoomInfo').textContent = `Seviye ${currentZoomLevel + 1}/3: ${level.label}`;
         }
 
         // Mouse wheel zoom
