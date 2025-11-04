@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaman Yolculuğu - İnteraktif Tarih Çizelgesi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #ccc;
+            font-size: 1.1em;
+        }
+
+        .github-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .github-badge:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .timeline-container {
+            position: relative;
+            padding: 50px 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .timeline-wrapper {
+            min-width: 3000px;
+            width: max-content;
+            margin: 0 auto;
+            padding: 0 50px;
+            position: relative;
+        }
+
+        .timeline-line {
+            height: 4px;
+            background: linear-gradient(to right, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #0abde3 75%, #5f27cd 100%);
+            position: relative;
+            margin: 100px 0;
+        }
+
+        .center-marker {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 3px;
+            height: 150px;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        .center-label {
+            position: absolute;
+            left: 50%;
+            top: -80px;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .past-label, .future-label {
+            position: absolute;
+            top: -50px;
+            font-size: 1.5em;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+
+        .past-label {
+            left: 20%;
+            color: #ff6b6b;
+        }
+
+        .future-label {
+            right: 20%;
+            color: #5f27cd;
+        }
+
+        .event {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .event-marker {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            border: 3px solid;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .event:hover .event-marker {
+            transform: scale(1.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        .event-date {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.9em;
+            font-weight: bold;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+        }
+
+        .event-info {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 200px;
+            max-width: 300px;
+            display: none;
+            z-index: 10;
+            border: 2px solid;
+        }
+
+        .event:hover .event-info {
+            display: block;
+        }
+
+        .event-info h3 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .event-info p {
+            font-size: 0.9em;
+            line-height: 1.4;
+            color: #ccc;
+            white-space: normal;
+        }
+
+        .event-category {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .controls button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.5em;
+            color: #48dbfb;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #ff6b6b;
+        }
+
+        .stats {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        .stats span {
+            margin: 0 15px;
+            font-size: 1.1em;
+        }
+
+        .stats .number {
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="https://github.com/KULLANICI-ADI/REPO-ADI" class="github-badge" target="_blank">
+            ⭐ GitHub'da Görüntüle
+        </a>
+        <h1>🚀 Zaman Yolculuğu 🚀</h1>
+        <p>Geçmişten geleceğe uzanan zaman çizgisinde yolculuk edin</p>
+    </div>
+
+    <div class="stats" id="stats">
+        <span>Toplam Olay: <span class="number" id="totalEvents">-</span></span>
+        <span>Geçmiş: <span class="number" id="pastEvents">-</span></span>
+        <span>Gelecek: <span class="number" id="futureEvents">-</span></span>
+    </div>
+
+    <div id="loadingMessage" class="loading">
+        Olaylar yükleniyor... ⏳
+    </div>
+
+    <div class="timeline-container" style="display: none;" id="timelineContainer">
+        <div class="timeline-wrapper" id="timelineWrapper">
+            <div class="timeline-line">
+                <div class="center-marker"></div>
+                <div class="center-label">ŞİMDİ</div>
+                <div class="past-label">← GEÇMİŞ</div>
+                <div class="future-label">GELECEK →</div>
+                <div id="eventsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="addNewEvent()">+ Yeni Olay Ekle</button>
+        <button onclick="scrollToCenter()">📍 Şimdiye Git</button>
+        <button onclick="reloadEvents()">🔄 Yenile</button>
+    </div>
+
+    <script>
+        const GITHUB_USERNAME = 'sergenaras';
+        const REPO_NAME = 'hafiza';
+        const BRANCH = 'main';
+        
+        // CDN üzerinden JSON'ı çek (cache-free)
+        const EVENTS_JSON_URL = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/${REPO_NAME}@${BRANCH}/events/events.json`;
+        
+        const currentYear = new Date().getFullYear();
+        let events = [];
+
+        async function loadEvents() {
+            try {
+                document.getElementById('loadingMessage').style.display = 'block';
+                document.getElementById('timelineContainer').style.display = 'none';
+                
+                // Cache bypass için timestamp ekle
+                const response = await fetch(`${EVENTS_JSON_URL}?t=${Date.now()}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                events = data.events || [];
+                
+                renderEvents();
+                updateStats();
+                
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('timelineContainer').style.display = 'block';
+                
+                setTimeout(scrollToCenter, 100);
+            } catch (error) {
+                console.error('Olaylar yüklenirken hata:', error);
+                document.getElementById('loadingMessage').innerHTML = 
+                    `<div class="error">
+                        ❌ Olaylar yüklenemedi!<br>
+                        <small>Lütfen GitHub repo ayarlarınızı kontrol edin.</small><br>
+                        <button onclick="reloadEvents()" style="margin-top: 20px; padding: 10px 20px; background: #667eea; border: none; color: white; border-radius: 5px; cursor: pointer;">
+                            Tekrar Dene
+                        </button>
+                    </div>`;
+            }
+        }
+
+        function renderEvents() {
+            const container = document.getElementById('eventsContainer');
+            container.innerHTML = '';
+
+            events.forEach((event) => {
+                const yearDiff = event.year - currentYear;
+                const position = 50 + (yearDiff * 3);
+
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'event';
+                eventDiv.style.left = position + '%';
+
+                let color = getEventColor(event.year);
+
+                const categoryBadge = event.category ? 
+                    `<span class="event-category">${event.category}</span>` : '';
+
+                eventDiv.innerHTML = `
+                    <div class="event-marker" style="border-color: ${color}; background: ${color}"></div>
+                    <div class="event-date">${event.year}</div>
+                    <div class="event-info" style="border-color: ${color}">
+                        <h3>${event.title}</h3>
+                        <p>${event.description}</p>
+                        ${categoryBadge}
+                    </div>
+                `;
+
+                container.appendChild(eventDiv);
+            });
+        }
+
+        function getEventColor(year) {
+            if (year < currentYear - 20) return '#ff6b6b';
+            if (year < currentYear) return '#feca57';
+            if (year === currentYear) return '#48dbfb';
+            if (year < currentYear + 20) return '#0abde3';
+            return '#5f27cd';
+        }
+
+        function updateStats() {
+            const total = events.length;
+            const past = events.filter(e => e.year < currentYear).length;
+            const future = events.filter(e => e.year > currentYear).length;
+
+            document.getElementById('totalEvents').textContent = total;
+            document.getElementById('pastEvents').textContent = past;
+            document.getElementById('futureEvents').textContent = future;
+        }
+
+        function scrollToCenter() {
+            const container = document.querySelector('.timeline-container');
+            const wrapper = document.getElementById('timelineWrapper');
+            container.scrollLeft = (wrapper.offsetWidth - container.offsetWidth) / 2;
+        }
+
+        function addNewEvent() {
+            // GitHub Issue sayfasına yönlendir
+            const issueUrl = `https://github.com/${GITHUB_USERNAME}/${REPO_NAME}/issues/new?template=new-event.yml&title=Yeni+Olay:+`;
+            window.open(issueUrl, '_blank');
+        }
+
+        function reloadEvents() {
+            loadEvents();
+        }
+
+        // Sayfa yüklendiğinde olayları getir
+        loadEvents();
+    </script>
+</body>
+</html>
