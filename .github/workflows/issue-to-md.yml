@@ -1,0 +1,83 @@
+name: ⚙️ Issue to Markdown
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+
+jobs:
+  create_md_from_issue:
+    # Sadece "new-event" etiketine sahip issue'lar için çalış
+    if: contains(github.event.issue.labels.*.name, 'new-event')
+    runs-on: ubuntu-latest
+    permissions:
+      # Issue'ları okumak için
+      issues: read
+      # Kodu checkout yapmak ve commit atmak için
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract data from issue form
+        id: extract_data
+        run: |
+          # Issue body'sinden alanları parse et
+          # Not: GitHub'ın issue body'sini formatlama şekli nedeniyle sed/awk kullanıyoruz.
+          body="${{ github.event.issue.body }}"
+          
+          # Sed komutları ile her bir bölümün altındaki ilk satırı alıyoruz.
+          # 'tr -d "\r"' komutu Windows satır sonu karakterlerini temizler.
+          year=$(echo "$body" | sed -n '/### Yıl/{n;p;}' | tr -d '\r')
+          title=$(echo "$body" | sed -n '/### Başlık/{n;p;}' | tr -d '\r')
+          description=$(echo "$body" | awk '/### Açıklama/{f=1;next} /### Kategori/{f=0} f' | sed '1d;$d' | sed '$d' | tr -d '\r')
+          category=$(echo "$body" | sed -n '/### Kategori/{n;p;}' | tr -d '\r')
+          date=$(echo "$body" | sed -n '/### Tam Tarih/{n;p;}' | tr -d '\r')
+
+          # Çıktıları sonraki adımlarda kullanmak için GITHUB_OUTPUT'a yaz
+          echo "year=$year" >> $GITHUB_OUTPUT
+          echo "title=$title" >> $GITHUB_OUTPUT
+          echo "description=$description" >> $GITHUB_OUTPUT
+          echo "category=$category" >> $GITHUB_OUTPUT
+          echo "date=$date" >> $GITHUB_OUTPUT
+
+      - name: Generate Markdown file
+        id: generate_file
+        run: |
+          # Dosya adı için başlığı temizle (küçük harf, boşluk yerine tire)
+          filename_title=$(echo "${{ steps.extract_data.outputs.title }}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' -e 's/--+/-/g' -e 's/^-//' -e 's/-$//')
+          filename="${{ steps.extract_data.outputs.year }}"-${filename_title}.md"
+          filepath="events/data/${filename}"
+
+          # Markdown içeriğini oluştur
+          {
+            echo "---"
+            echo "year: ${{ steps.extract_data.outputs.year }}"
+            echo "title: \"${{ steps.extract_data.outputs.title }}\""
+            # Sadece doluysa tarih ve kategori ekle
+            if [ -n "${{ steps.extract_data.outputs.date }}" ]; then
+              echo "date: ${{ steps.extract_data.outputs.date }}"
+            fi
+            if [ -n "${{ steps.extract_data.outputs.category }}" ]; then
+              echo "category: ${{ steps.extract_data.outputs.category }}"
+            fi
+            echo "---"
+            echo ""
+            echo "${{ steps.extract_data.outputs.description }}"
+          } > "$filepath"
+
+          echo "filename=$filename" >> $GITHUB_OUTPUT
+          echo "filepath=$filepath" >> $GITHUB_OUTPUT
+          echo "✅ Markdown file generated at $filepath"
+
+      - name: Commit and push new event file
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add "${{ steps.generate_file.outputs.filepath }}"
+          git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
