@@ -16,6 +16,8 @@ jobs:
       issues: read
       # Kodu checkout yapmak ve commit atmak için
       contents: write
+      # Başka bir workflow'u tetiklemek için
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -81,3 +83,10 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger 'Generate Events JSON' workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering 'Generate Events JSON' workflow..."
+          gh workflow run generate-events.yml --ref ${{ github.event.repository.default_branch }}
