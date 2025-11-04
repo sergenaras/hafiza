@@ -29,6 +29,13 @@
       "description": "Büyük dil modelleri ve üretken yapay zeka teknolojileri günlük hayatın vazgeçilmez bir parçası haline geldi. ChatGPT, Claude ve benzeri AI araçları iş dünyasından eğitime, sanattan bilime her alanda devrim yarattı. AI asistanları milyonlarca insan tarafından günlük olarak kullanılmaya başlandı."
     },
     {
+      "year": 2025,
+      "title": "Anılar",
+      "date": "2025-11-03",
+      "category": "tarih",
+      "description": "anılar, şimdi gözümde canlandılarrrr"
+    },
+    {
       "year": 2030,
       "title": "İlk İnsanlı Mars Misyonu",
       "date": "2030-07-01",
@@ -44,8 +51,8 @@
     }
   ],
   "metadata": {
-    "total_events": 6,
-    "generated_at": "2025-11-04T21:33:30.523497Z",
+    "total_events": 7,
+    "generated_at": "2025-11-04T21:38:54.909249Z",
     "generator": "Zaman Yolculuğu Event Generator v1.0"
   }
 }
