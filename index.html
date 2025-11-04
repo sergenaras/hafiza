@@ -378,6 +378,11 @@
         </div>
     </div>
 
+    <div class="controls">
+        <button class="control-btn" onclick="zoomOut()" title="Uzaklaş">-</button>
+        <button class="control-btn" onclick="zoomIn()" title="Yakınlaş">+</button>
+    </div>
+
     <script>
         const GITHUB_USERNAME = 'sergenaras';
         const REPO_NAME = 'hafiza';
@@ -386,15 +391,51 @@
         const EVENTS_JSON_URL = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/${REPO_NAME}@${BRANCH}/events/events.json`;
         
         const currentYear = new Date().getFullYear();
-        const pixelsPerYear = 50; // Her yıl için piksel
         let events = [];
+
+        // Zoom seviyeleri
+        const zoomLevels = [25, 100, 500]; // Yıl başına piksel
+        let currentZoomLevel = 1; // Başlangıç zoom seviyesi (100px)
+        
+        function getPixelsPerYear() {
+            return zoomLevels[currentZoomLevel];
+        }
+
+        function rerenderTimeline() {
+            const pixelsPerYear = getPixelsPerYear();
+            const timeline = document.getElementById('timeline');
+            const totalYears = 2150 - 1850;
+            const timelineWidth = totalYears * pixelsPerYear;
+            timeline.style.minWidth = timelineWidth + 'px';
+
+            createYearMarkers();
+            renderEvents();
+        }
+
+        function zoomIn() {
+            if (currentZoomLevel < zoomLevels.length - 1) {
+                currentZoomLevel++;
+                rerenderTimeline();
+                scrollToCenter();
+            }
+        }
+
+        function zoomOut() {
+            if (currentZoomLevel > 0) {
+                currentZoomLevel--;
+                rerenderTimeline();
+                scrollToCenter();
+            }
+        }
 
         // Cetvel çizgileri oluştur
         function createYearMarkers() {
             const container = document.getElementById('yearMarkers');
+            container.innerHTML = ''; // Önceki işaretleri temizle
             const startYear = 1850;
             const endYear = 2150;
-            const centerPosition = 2500; // px
+            const pixelsPerYear = getPixelsPerYear();
+            const centerPosition = parseFloat(document.getElementById('timeline').style.minWidth) / 2;
 
             for (let year = startYear; year <= endYear; year++) {
                 const offset = (year - currentYear) * pixelsPerYear;
@@ -412,8 +453,31 @@
                     label.textContent = year;
                     marker.appendChild(label);
                 }
-
                 container.appendChild(marker);
+
+                // Ay işaretlerini ekle (sadece orta ve yüksek zoom seviyesinde)
+                if (currentZoomLevel > 0 && year < endYear) {
+                    for (let month = 1; month < 12; month++) {
+                        const monthOffset = (month / 12) * pixelsPerYear;
+                        const monthPosition = position + monthOffset;
+                        
+                        const monthMarker = document.createElement('div');
+                        monthMarker.className = 'year-marker';
+                        monthMarker.style.left = monthPosition + 'px';
+                        monthMarker.innerHTML = '<div style="width: 1px; height: 10px; background: #ccc; margin: 0 auto; transform: translateY(-5px);"></div>';
+                        
+                        // En yüksek zoom seviyesinde ay etiketlerini göster
+                        if (currentZoomLevel === zoomLevels.length - 1) {
+                             const monthLabel = document.createElement('div');
+                             monthLabel.className = 'year-label';
+                             monthLabel.textContent = month + 1;
+                             monthLabel.style.fontSize = '9px';
+                             monthLabel.style.marginTop = '2px';
+                             monthMarker.appendChild(monthLabel);
+                        }
+                        container.appendChild(monthMarker);
+                    }
+                }
             }
         }
 
@@ -431,8 +495,7 @@
                 const data = await response.json();
                 events = data.events || [];
                 
-                createYearMarkers();
-                renderEvents();
+                rerenderTimeline();
                 updateStats();
                 
                 document.getElementById('loadingMessage').style.display = 'none';
@@ -446,14 +509,33 @@
             }
         }
 
+        function getEventPosition(event) {
+            const pixelsPerYear = getPixelsPerYear();
+            const centerPosition = parseFloat(document.getElementById('timeline').style.minWidth) / 2;
+
+            let yearFraction = 0;
+            if (event.date) {
+                const dateParts = event.date.split('-');
+                if (dateParts.length === 3) {
+                    const eventDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                    const startOfYear = new Date(eventDate.getFullYear(), 0, 1);
+                    const dayOfYear = ((eventDate - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
+                    const daysInYear = (eventDate.getFullYear() % 4 === 0 && eventDate.getFullYear() % 100 !== 0) || eventDate.getFullYear() % 400 === 0 ? 366 : 365;
+                    yearFraction = dayOfYear / daysInYear;
+                }
+            }
+
+            const effectiveYear = parseFloat(event.year) + yearFraction;
+            const offset = (effectiveYear - currentYear) * pixelsPerYear;
+            return centerPosition + offset;
+        }
+
         function renderEvents() {
             const container = document.getElementById('eventMarkers');
             container.innerHTML = '';
-            const centerPosition = 2500;
 
             events.forEach((event) => {
-                const offset = (event.year - currentYear) * pixelsPerYear;
-                const position = centerPosition + offset;
+                const position = getEventPosition(event);
 
                 const marker = document.createElement('div');
                 marker.className = 'event-marker';
@@ -465,7 +547,7 @@
                 const popup = document.createElement('div');
                 popup.className = 'event-popup';
                 popup.innerHTML = `
-                    <div class="event-year">${event.year}</div>
+                    <div class="event-year">${event.date || event.year}</div>
                     <div class="event-title">${event.title}</div>
                     <div class="event-description">${event.description}</div>
                     ${event.category ? `<span class="event-category">${event.category}</span>` : ''}
