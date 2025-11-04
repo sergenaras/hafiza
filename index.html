@@ -153,15 +153,19 @@
         .marker-label.month-label {
             font-weight: 400;
             color: #333;
-            font-size: 11px;
-            top: -30px;
+            font-size: 10px;
+            top: -35px;
+            min-width: 40px;
+            text-align: center;
         }
 
         .marker-label.day-label {
             font-weight: 400;
             color: #666;
-            font-size: 10px;
-            top: -25px;
+            font-size: 9px;
+            top: -22px;
+            min-width: 12px;
+            text-align: center;
         }
 
         /* Center indicator */
@@ -401,16 +405,16 @@
             { 
                 scale: 1, 
                 label: 'Yıllar', 
-                pixelsPerYear: 80, 
+                pixelsPerYear: 120, // Arttırdım: daha fazla alan
                 showYears: true, 
                 showMonths: false, 
                 showDays: false,
-                yearInterval: 1 // Her yılı göster
+                yearInterval: 1
             },
             { 
                 scale: 2, 
                 label: 'Yıllar + Aylar', 
-                pixelsPerYear: 400, 
+                pixelsPerYear: 600, // Arttırdım: aylar için yeterli alan
                 showYears: true, 
                 showMonths: true, 
                 showDays: false,
@@ -419,7 +423,7 @@
             { 
                 scale: 3, 
                 label: 'Aylar + Günler', 
-                pixelsPerYear: 3000, 
+                pixelsPerYear: 6000, // Çok arttırdım: her günün en az 16px genişliği olacak
                 showYears: true, 
                 showMonths: true, 
                 showDays: true,
