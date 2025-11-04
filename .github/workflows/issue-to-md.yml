@@ -22,28 +22,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: DEBUG - Print Issue Body
+        run: |
+          echo "The raw issue body is:"
+          echo "------------------------------------"
+          echo "${{ github.event.issue.body }}"
+          echo "------------------------------------"
+
       - name: Extract data from issue form
         id: extract_data
         run: |
-          # Issue body'sinden alanları parse et
-          # Not: GitHub'ın issue body'sini formatlama şekli nedeniyle sed/awk kullanıyoruz.
           body="${{ github.event.issue.body }}"
-          
           # Sed komutları ile her bir bölümün altındaki ilk satırı alıyoruz.
-          # 'tr -d "
-          # "' komutu Windows satır sonu karakterlerini temizler.
           year=$(echo "$body" | sed -n '/### Yıl/{n;p;}' | tr -d '\r')
           title=$(echo "$body" | sed -n '/### Başlık/{n;p;}' | tr -d '\r')
           description=$(echo "$body" | awk '/### Açıklama/{f=1;next} /### Kategori/{f=0} f' | sed '1d;$d' | sed '$d' | tr -d '\r')
           category=$(echo "$body" | sed -n '/### Kategori/{n;p;}' | tr -d '\r')
           date=$(echo "$body" | sed -n '/### Tam Tarih/{n;p;}' | tr -d '\r')
-
-          # Çıktıları sonraki adımlarda kullanmak için GITHUB_OUTPUT'a yaz
-          echo "year=$year" >> $GITHUB_OUTPUT
-          echo "title=$title" >> $GITHUB_OUTPUT
-          echo "description=$description" >> $GITHUB_OUTPUT
-          echo "category=$category" >> $GITHUB_OUTPUT
-          echo "date=$date" >> $GITHUB_OUTPUT
+          
+          echo "year=$year" >> "$GITHUB_OUTPUT"
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+          echo "description=$description" >> "$GITHUB_OUTPUT"
+          echo "category=$category" >> "$GITHUB_OUTPUT"
+          echo "date=$date" >> "$GITHUB_OUTPUT"
 
       - name: Generate Markdown file
         id: generate_file
@@ -75,29 +76,20 @@ jobs:
           echo "filepath=$filepath" >> $GITHUB_OUTPUT
           echo "✅ Markdown file generated at $filepath"
 
-      # Replace the commit step with this:
       - name: Commit and push new event file
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-
-          if git diff --quiet; then
-            echo "No changes found."
-            exit 0
-          fi
-          
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
-          if [ -f "${{ steps.generate_file.outputs.filepath }}" ]; then
-            git add "${{ steps.generate_file.outputs.filepath }}"
+          git add "${{ steps.generate_file.outputs.filepath }}"
+          # Değişiklik olup olmadığını kontrol et
+          if git diff --staged --quiet; then
+            echo "Commit atılacak yeni değişiklik bulunamadı."
+          else
             git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
             git push
-          else
-            echo "No file to commit."
           fi
-
-          
 
       - name: Trigger 'Generate Events JSON' workflow
         env:
