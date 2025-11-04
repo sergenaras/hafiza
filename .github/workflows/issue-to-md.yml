@@ -75,15 +75,20 @@ jobs:
           echo "filepath=$filepath" >> $GITHUB_OUTPUT
           echo "✅ Markdown file generated at $filepath"
 
+      # Replace the commit step with this:
       - name: Commit and push new event file
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add "${{ steps.generate_file.outputs.filepath }}"
-          git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
-          git push
+          if [ -f "${{ steps.generate_file.outputs.filepath }}" ]; then
+            git add "${{ steps.generate_file.outputs.filepath }}"
+            git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
+            git push
+          else
+            echo "No file to commit."
+          fi
 
       - name: Trigger 'Generate Events JSON' workflow
         env:
