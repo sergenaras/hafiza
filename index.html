@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaman Yolculuğu - İnteraktif Tarih Çizelgesi</title>
+    <title>Hafıza - Zaman Çizelgesi</title>
     <style>
         * {
             margin: 0;
@@ -12,292 +12,370 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        .header {
-            text-align: center;
-            padding: 30px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(to right, #ff6b6b, #4ecdc4, #45b7d1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            color: #ccc;
-            font-size: 1.1em;
-        }
-
-        .github-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px 20px;
-            border-radius: 20px;
-            text-decoration: none;
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .github-badge:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .timeline-container {
-            position: relative;
-            padding: 50px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: auto;
         }
 
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header - Minimal */
+        .header {
+            padding: 20px 40px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 300;
+            color: #333;
+            letter-spacing: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        .btn-primary {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
+
+        .btn-primary:hover {
+            background: #000;
+            border-color: #000;
+        }
+
+        /* Timeline Container */
         .timeline-wrapper {
-            min-width: 3000px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+
+        .timeline {
+            position: relative;
+            height: 120px;
+            min-width: 5000px;
             width: max-content;
-            margin: 0 auto;
-            padding: 0 50px;
-            position: relative;
         }
 
-        .timeline-line {
-            height: 4px;
-            background: linear-gradient(to right, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #0abde3 75%, #5f27cd 100%);
-            position: relative;
-            margin: 100px 0;
-        }
-
-        .center-marker {
+        /* Main ruler line */
+        .ruler-line {
             position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #333;
+            transform: translateY(-50%);
+        }
+
+        /* Year markers */
+        .year-marker {
+            position: absolute;
+            top: 50%;
+            transform: translateX(-50%);
+        }
+
+        .year-marker::before {
+            content: '';
+            display: block;
+            width: 1px;
+            height: 20px;
+            background: #666;
+            margin: 0 auto;
+            transform: translateY(-10px);
+        }
+
+        .year-marker.decade::before {
+            height: 30px;
+            background: #333;
+            width: 2px;
+            transform: translateY(-15px);
+        }
+
+        .year-label {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+            margin-top: 8px;
+        }
+
+        .year-marker.decade .year-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-top: 12px;
+        }
+
+        /* Center indicator (current year) */
+        .center-indicator {
+            position: fixed;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 3px;
-            height: 150px;
-            background: #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            width: 2px;
+            height: 200px;
+            background: #ff4444;
+            z-index: 50;
+            pointer-events: none;
         }
 
         .center-label {
-            position: absolute;
+            position: fixed;
             left: 50%;
-            top: -80px;
+            top: calc(50% - 120px);
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.2em;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: #ff4444;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 51;
+            pointer-events: none;
         }
 
-        .past-label, .future-label {
-            position: absolute;
-            top: -50px;
-            font-size: 1.5em;
-            font-weight: bold;
-            opacity: 0.7;
-        }
-
-        .past-label {
-            left: 20%;
-            color: #ff6b6b;
-        }
-
-        .future-label {
-            right: 20%;
-            color: #5f27cd;
-        }
-
-        .event {
+        /* Events */
+        .event-marker {
             position: absolute;
             top: 50%;
-            transform: translateY(-50%);
+            transform: translate(-50%, -50%);
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .event-marker {
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            border: 3px solid;
-            position: relative;
-            z-index: 2;
-            transition: all 0.3s ease;
-        }
-
-        .event:hover .event-marker {
-            transform: scale(1.5);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-        }
-
-        .event-date {
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap;
-            font-size: 0.9em;
-            font-weight: bold;
-            padding: 5px 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 5px;
-        }
-
-        .event-info {
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 15px;
-            border-radius: 10px;
-            min-width: 200px;
-            max-width: 300px;
-            display: none;
             z-index: 10;
-            border: 2px solid;
         }
 
-        .event:hover .event-info {
+        .event-dot {
+            width: 14px;
+            height: 14px;
+            background: #333;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .event-marker:hover .event-dot {
+            width: 18px;
+            height: 18px;
+            background: #ff4444;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Event popup */
+        .event-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 16px;
+            min-width: 250px;
+            max-width: 350px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+
+        .event-marker:hover .event-popup {
             display: block;
         }
 
-        .event-info h3 {
-            margin-bottom: 10px;
-            font-size: 1.1em;
+        .event-popup::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: white;
         }
 
-        .event-info p {
-            font-size: 0.9em;
-            line-height: 1.4;
-            color: #ccc;
-            white-space: normal;
+        .event-year {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .event-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .event-description {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
         }
 
         .event-category {
             display: inline-block;
+            font-size: 11px;
             padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 0.75em;
+            background: #f0f0f0;
+            border-radius: 3px;
             margin-top: 8px;
-            background: rgba(255, 255, 255, 0.2);
+            color: #666;
         }
 
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* Controls */
         .controls {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            gap: 10px;
             z-index: 100;
         }
 
-        .controls button {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
+        .control-btn {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 50%;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .controls button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        .control-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .loading {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.5em;
-            color: #48dbfb;
-        }
-
-        .error {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-            color: #ff6b6b;
-        }
-
+        /* Stats */
         .stats {
-            text-align: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            margin: 20px;
-            border-radius: 10px;
+            position: fixed;
+            top: 80px;
+            left: 40px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #666;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .stats span {
-            margin: 0 15px;
-            font-size: 1.1em;
+            margin-right: 16px;
         }
 
         .stats .number {
-            font-weight: bold;
-            color: #4ecdc4;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                font-size: 18px;
+            }
+
+            .stats {
+                left: 20px;
+                font-size: 12px;
+            }
+
+            .controls {
+                bottom: 20px;
+                right: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <a href="https://github.com/KULLANICI-ADI/REPO-ADI" class="github-badge" target="_blank">
-            ⭐ GitHub'da Görüntüle
-        </a>
-        <h1>🚀 Zaman Yolculuğu 🚀</h1>
-        <p>Geçmişten geleceğe uzanan zaman çizgisinde yolculuk edin</p>
-    </div>
-
-    <div class="stats" id="stats">
-        <span>Toplam Olay: <span class="number" id="totalEvents">-</span></span>
-        <span>Geçmiş: <span class="number" id="pastEvents">-</span></span>
-        <span>Gelecek: <span class="number" id="futureEvents">-</span></span>
-    </div>
-
-    <div id="loadingMessage" class="loading">
-        Olaylar yükleniyor... ⏳
-    </div>
-
-    <div class="timeline-container" style="display: none;" id="timelineContainer">
-        <div class="timeline-wrapper" id="timelineWrapper">
-            <div class="timeline-line">
-                <div class="center-marker"></div>
-                <div class="center-label">ŞİMDİ</div>
-                <div class="past-label">← GEÇMİŞ</div>
-                <div class="future-label">GELECEK →</div>
-                <div id="eventsContainer"></div>
+    <div class="container">
+        <div class="header">
+            <div class="logo">HAFIZA</div>
+            <div class="header-actions">
+                <button class="btn" onclick="scrollToCenter()">↻ Şimdi</button>
+                <button class="btn btn-primary" onclick="addNewEvent()">+ Yeni Olay</button>
             </div>
         </div>
-    </div>
 
-    <div class="controls">
-        <button onclick="addNewEvent()">+ Yeni Olay Ekle</button>
-        <button onclick="scrollToCenter()">📍 Şimdiye Git</button>
-        <button onclick="reloadEvents()">🔄 Yenile</button>
+        <div class="stats" id="stats">
+            <span>Toplam: <span class="number" id="totalEvents">-</span></span>
+            <span>Geçmiş: <span class="number" id="pastEvents">-</span></span>
+            <span>Gelecek: <span class="number" id="futureEvents">-</span></span>
+        </div>
+
+        <div class="center-indicator"></div>
+        <div class="center-label" id="centerLabel">2025</div>
+
+        <div id="loadingMessage" class="loading">Yükleniyor...</div>
+
+        <div class="timeline-wrapper" id="timelineWrapper" style="display: none;">
+            <div class="timeline" id="timeline">
+                <div class="ruler-line"></div>
+                <div id="yearMarkers"></div>
+                <div id="eventMarkers"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -305,18 +383,45 @@
         const REPO_NAME = 'hafiza';
         const BRANCH = 'main';
         
-        // CDN üzerinden JSON'ı çek (cache-free)
         const EVENTS_JSON_URL = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/${REPO_NAME}@${BRANCH}/events/events.json`;
         
         const currentYear = new Date().getFullYear();
+        const pixelsPerYear = 50; // Her yıl için piksel
         let events = [];
+
+        // Cetvel çizgileri oluştur
+        function createYearMarkers() {
+            const container = document.getElementById('yearMarkers');
+            const startYear = 1850;
+            const endYear = 2150;
+            const centerPosition = 2500; // px
+
+            for (let year = startYear; year <= endYear; year++) {
+                const offset = (year - currentYear) * pixelsPerYear;
+                const position = centerPosition + offset;
+
+                const isDecade = year % 10 === 0;
+                
+                const marker = document.createElement('div');
+                marker.className = `year-marker ${isDecade ? 'decade' : ''}`;
+                marker.style.left = position + 'px';
+
+                if (isDecade) {
+                    const label = document.createElement('div');
+                    label.className = 'year-label';
+                    label.textContent = year;
+                    marker.appendChild(label);
+                }
+
+                container.appendChild(marker);
+            }
+        }
 
         async function loadEvents() {
             try {
                 document.getElementById('loadingMessage').style.display = 'block';
-                document.getElementById('timelineContainer').style.display = 'none';
+                document.getElementById('timelineWrapper').style.display = 'none';
                 
-                // Cache bypass için timestamp ekle
                 const response = await fetch(`${EVENTS_JSON_URL}?t=${Date.now()}`);
                 
                 if (!response.ok) {
@@ -326,63 +431,50 @@
                 const data = await response.json();
                 events = data.events || [];
                 
+                createYearMarkers();
                 renderEvents();
                 updateStats();
                 
                 document.getElementById('loadingMessage').style.display = 'none';
-                document.getElementById('timelineContainer').style.display = 'block';
+                document.getElementById('timelineWrapper').style.display = 'flex';
                 
                 setTimeout(scrollToCenter, 100);
             } catch (error) {
                 console.error('Olaylar yüklenirken hata:', error);
                 document.getElementById('loadingMessage').innerHTML = 
-                    `<div class="error">
-                        ❌ Olaylar yüklenemedi!<br>
-                        <small>Lütfen GitHub repo ayarlarınızı kontrol edin.</small><br>
-                        <button onclick="reloadEvents()" style="margin-top: 20px; padding: 10px 20px; background: #667eea; border: none; color: white; border-radius: 5px; cursor: pointer;">
-                            Tekrar Dene
-                        </button>
-                    </div>`;
+                    `<div style="color: #ff4444;">❌ Olaylar yüklenemedi!</div>`;
             }
         }
 
         function renderEvents() {
-            const container = document.getElementById('eventsContainer');
+            const container = document.getElementById('eventMarkers');
             container.innerHTML = '';
+            const centerPosition = 2500;
 
             events.forEach((event) => {
-                const yearDiff = event.year - currentYear;
-                const position = 50 + (yearDiff * 3);
+                const offset = (event.year - currentYear) * pixelsPerYear;
+                const position = centerPosition + offset;
 
-                const eventDiv = document.createElement('div');
-                eventDiv.className = 'event';
-                eventDiv.style.left = position + '%';
+                const marker = document.createElement('div');
+                marker.className = 'event-marker';
+                marker.style.left = position + 'px';
 
-                let color = getEventColor(event.year);
+                const dot = document.createElement('div');
+                dot.className = 'event-dot';
 
-                const categoryBadge = event.category ? 
-                    `<span class="event-category">${event.category}</span>` : '';
-
-                eventDiv.innerHTML = `
-                    <div class="event-marker" style="border-color: ${color}; background: ${color}"></div>
-                    <div class="event-date">${event.year}</div>
-                    <div class="event-info" style="border-color: ${color}">
-                        <h3>${event.title}</h3>
-                        <p>${event.description}</p>
-                        ${categoryBadge}
-                    </div>
+                const popup = document.createElement('div');
+                popup.className = 'event-popup';
+                popup.innerHTML = `
+                    <div class="event-year">${event.year}</div>
+                    <div class="event-title">${event.title}</div>
+                    <div class="event-description">${event.description}</div>
+                    ${event.category ? `<span class="event-category">${event.category}</span>` : ''}
                 `;
 
-                container.appendChild(eventDiv);
+                marker.appendChild(dot);
+                marker.appendChild(popup);
+                container.appendChild(marker);
             });
-        }
-
-        function getEventColor(year) {
-            if (year < currentYear - 20) return '#ff6b6b';
-            if (year < currentYear) return '#feca57';
-            if (year === currentYear) return '#48dbfb';
-            if (year < currentYear + 20) return '#0abde3';
-            return '#5f27cd';
         }
 
         function updateStats() {
@@ -396,22 +488,22 @@
         }
 
         function scrollToCenter() {
-            const container = document.querySelector('.timeline-container');
             const wrapper = document.getElementById('timelineWrapper');
-            container.scrollLeft = (wrapper.offsetWidth - container.offsetWidth) / 2;
+            const timeline = document.getElementById('timeline');
+            const centerPosition = 2500;
+            
+            wrapper.scrollLeft = centerPosition - (wrapper.offsetWidth / 2);
         }
 
         function addNewEvent() {
-            // GitHub Issue sayfasına yönlendir
             const issueUrl = `https://github.com/${GITHUB_USERNAME}/${REPO_NAME}/issues/new?template=new-event.yml&title=Yeni+Olay:+`;
             window.open(issueUrl, '_blank');
         }
 
-        function reloadEvents() {
-            loadEvents();
-        }
+        // Center label güncelle
+        document.getElementById('centerLabel').textContent = currentYear;
 
-        // Sayfa yüklendiğinde olayları getir
+        // Sayfa yüklendiğinde
         loadEvents();
     </script>
 </body>
