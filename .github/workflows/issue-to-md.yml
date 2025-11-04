@@ -82,6 +82,12 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          
+          if git diff --quiet; then
+            echo "No changes found."
+            exit 0
+          fi
+          
           if [ -f "${{ steps.generate_file.outputs.filepath }}" ]; then
             git add "${{ steps.generate_file.outputs.filepath }}"
             git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
@@ -89,6 +95,8 @@ jobs:
           else
             echo "No file to commit."
           fi
+
+          
 
       - name: Trigger 'Generate Events JSON' workflow
         env:
