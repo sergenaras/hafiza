@@ -15,17 +15,16 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             background: #ffffff;
             color: #333;
-            overflow-x: auto;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
         .container {
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Header - Minimal */
+        /* Header */
         .header {
             padding: 20px 40px;
             background: #fff;
@@ -33,8 +32,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
             z-index: 100;
         }
 
@@ -48,6 +45,7 @@
         .header-actions {
             display: flex;
             gap: 15px;
+            align-items: center;
         }
 
         .btn {
@@ -78,60 +76,62 @@
             border-color: #000;
         }
 
+        /* Zoom controls */
+        .zoom-info {
+            font-size: 13px;
+            color: #666;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+
         /* Timeline Container */
         .timeline-wrapper {
             flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 0;
-            overflow-x: auto;
-            overflow-y: visible;
-        }
-
-        .timeline {
             position: relative;
-            height: 120px;
-            min-width: 5000px;
-            width: max-content;
+            overflow: hidden;
+            cursor: grab;
         }
 
-        /* Main ruler line */
+        .timeline-wrapper.grabbing {
+            cursor: grabbing;
+        }
+
+        .timeline-canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.1s ease-out;
+        }
+
         .ruler-line {
             position: absolute;
-            top: 50%;
             left: 0;
             right: 0;
+            top: 50%;
             height: 2px;
             background: #333;
             transform: translateY(-50%);
         }
 
-        /* Year markers */
-        .year-marker {
+        /* Time markers */
+        .time-marker {
             position: absolute;
             top: 50%;
             transform: translateX(-50%);
         }
 
-        .year-marker::before {
-            content: '';
-            display: block;
-            width: 1px;
-            height: 20px;
+        .marker-line {
+            width: 2px;
             background: #666;
             margin: 0 auto;
-            transform: translateY(-10px);
         }
 
-        .year-marker.decade::before {
-            height: 30px;
+        .marker-line.major {
             background: #333;
-            width: 2px;
-            transform: translateY(-15px);
         }
 
-        .year-label {
+        .marker-label {
             position: absolute;
             top: 60%;
             left: 50%;
@@ -142,16 +142,15 @@
             margin-top: 8px;
         }
 
-        .year-marker.decade .year-label {
-            font-size: 14px;
+        .marker-line.major + .marker-label {
             font-weight: 500;
             color: #333;
-            margin-top: 12px;
+            font-size: 14px;
         }
 
-        /* Center indicator (current year) */
+        /* Center indicator */
         .center-indicator {
-            position: fixed;
+            position: absolute;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
@@ -163,7 +162,7 @@
         }
 
         .center-label {
-            position: fixed;
+            position: absolute;
             left: 50%;
             top: calc(50% - 120px);
             transform: translateX(-50%);
@@ -187,8 +186,8 @@
         }
 
         .event-dot {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             background: #333;
             border: 3px solid #fff;
             border-radius: 50%;
@@ -197,13 +196,12 @@
         }
 
         .event-marker:hover .event-dot {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             background: #ff4444;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        /* Event popup */
         .event-popup {
             position: absolute;
             bottom: 100%;
@@ -264,50 +262,11 @@
             color: #666;
         }
 
-        /* Loading */
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 14px;
-            color: #999;
-        }
-
-        /* Controls */
-        .controls {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            gap: 10px;
-            z-index: 100;
-        }
-
-        .control-btn {
-            width: 44px;
-            height: 44px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .control-btn:hover {
-            background: #f5f5f5;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
         /* Stats */
         .stats {
-            position: fixed;
-            top: 80px;
-            left: 40px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
             background: white;
             border: 1px solid #e0e0e0;
             border-radius: 6px;
@@ -315,6 +274,7 @@
             font-size: 13px;
             color: #666;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            z-index: 90;
         }
 
         .stats span {
@@ -326,7 +286,31 @@
             color: #333;
         }
 
-        /* Responsive */
+        /* Instructions */
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 90;
+            pointer-events: none;
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            color: #999;
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 15px 20px;
@@ -336,14 +320,8 @@
                 font-size: 18px;
             }
 
-            .stats {
-                left: 20px;
-                font-size: 12px;
-            }
-
-            .controls {
-                bottom: 20px;
-                right: 20px;
+            .zoom-info {
+                display: none;
             }
         }
     </style>
@@ -353,155 +331,83 @@
         <div class="header">
             <div class="logo">HAFIZA</div>
             <div class="header-actions">
-                <button class="btn" onclick="scrollToCenter()">↻ Şimdi</button>
+                <div class="zoom-info" id="zoomInfo">Zoom: 1x (Yıllar)</div>
+                <button class="btn" onclick="resetView()">↻ Sıfırla</button>
                 <button class="btn btn-primary" onclick="addNewEvent()">+ Yeni Olay</button>
             </div>
         </div>
 
-        <div class="stats" id="stats">
-            <span>Toplam: <span class="number" id="totalEvents">-</span></span>
-            <span>Geçmiş: <span class="number" id="pastEvents">-</span></span>
-            <span>Gelecek: <span class="number" id="futureEvents">-</span></span>
-        </div>
+        <div class="timeline-wrapper" id="timelineWrapper">
+            <div id="loadingMessage" class="loading">Yükleniyor...</div>
 
-        <div class="center-indicator"></div>
-        <div class="center-label" id="centerLabel">2025</div>
+            <div class="stats" id="stats" style="display: none;">
+                <span>Toplam: <span class="number" id="totalEvents">-</span></span>
+                <span>Geçmiş: <span class="number" id="pastEvents">-</span></span>
+                <span>Gelecek: <span class="number" id="futureEvents">-</span></span>
+            </div>
 
-        <div id="loadingMessage" class="loading">Yükleniyor...</div>
+            <div class="center-indicator"></div>
+            <div class="center-label" id="centerLabel">ŞİMDİ</div>
 
-        <div class="timeline-wrapper" id="timelineWrapper" style="display: none;">
-            <div class="timeline" id="timeline">
+            <div class="timeline-canvas" id="timelineCanvas">
                 <div class="ruler-line"></div>
-                <div id="yearMarkers"></div>
+                <div id="timeMarkers"></div>
                 <div id="eventMarkers"></div>
             </div>
-        </div>
-    </div>
 
-    <div class="controls">
-        <button class="control-btn" onclick="zoomOut()" title="Uzaklaş">-</button>
-        <button class="control-btn" onclick="zoomIn()" title="Yakınlaş">+</button>
+            <div class="instructions">
+                🖱️ Sürükle: Pan | 🔍 Mouse Wheel: Zoom
+            </div>
+        </div>
     </div>
 
     <script>
         const GITHUB_USERNAME = 'sergenaras';
         const REPO_NAME = 'hafiza';
         const BRANCH = 'main';
-        
         const EVENTS_JSON_URL = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/${REPO_NAME}@${BRANCH}/events/events.json`;
-        
-        const currentYear = new Date().getFullYear();
+
+        // Timeline state
         let events = [];
+        let zoom = 1; // 1 = years, 12 = months, 365 = days, 8760 = hours
+        let offsetX = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startOffsetX = 0;
 
-        // Zoom seviyeleri
-        const zoomLevels = [25, 100, 500]; // Yıl başına piksel
-        let currentZoomLevel = 1; // Başlangıç zoom seviyesi (100px)
-        
-        function getPixelsPerYear() {
-            return zoomLevels[currentZoomLevel];
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const currentDay = now.getDate();
+
+        // Zoom levels
+        const ZOOM_LEVELS = [
+            { scale: 1, label: 'Yıllar', unit: 'year', pixelsPerUnit: 50, majorEvery: 10 },
+            { scale: 12, label: 'Aylar', unit: 'month', pixelsPerUnit: 50, majorEvery: 12 },
+            { scale: 365, label: 'Günler', unit: 'day', pixelsPerUnit: 10, majorEvery: 30 },
+            { scale: 8760, label: 'Saatler', unit: 'hour', pixelsPerUnit: 5, majorEvery: 24 }
+        ];
+
+        let currentZoomLevel = 0;
+
+        function getZoomLevel() {
+            return ZOOM_LEVELS[currentZoomLevel];
         }
 
-        function rerenderTimeline() {
-            const pixelsPerYear = getPixelsPerYear();
-            const timeline = document.getElementById('timeline');
-            const totalYears = 2150 - 1850;
-            const timelineWidth = totalYears * pixelsPerYear;
-            timeline.style.minWidth = timelineWidth + 'px';
-
-            createYearMarkers();
-            renderEvents();
-        }
-
-        function zoomIn() {
-            if (currentZoomLevel < zoomLevels.length - 1) {
-                currentZoomLevel++;
-                rerenderTimeline();
-                scrollToCenter();
-            }
-        }
-
-        function zoomOut() {
-            if (currentZoomLevel > 0) {
-                currentZoomLevel--;
-                rerenderTimeline();
-                scrollToCenter();
-            }
-        }
-
-        // Cetvel çizgileri oluştur
-        function createYearMarkers() {
-            const container = document.getElementById('yearMarkers');
-            container.innerHTML = ''; // Önceki işaretleri temizle
-            const startYear = 1850;
-            const endYear = 2150;
-            const pixelsPerYear = getPixelsPerYear();
-            const centerPosition = parseFloat(document.getElementById('timeline').style.minWidth) / 2;
-
-            for (let year = startYear; year <= endYear; year++) {
-                const offset = (year - currentYear) * pixelsPerYear;
-                const position = centerPosition + offset;
-
-                const isDecade = year % 10 === 0;
-                
-                const marker = document.createElement('div');
-                marker.className = `year-marker ${isDecade ? 'decade' : ''}`;
-                marker.style.left = position + 'px';
-
-                if (isDecade) {
-                    const label = document.createElement('div');
-                    label.className = 'year-label';
-                    label.textContent = year;
-                    marker.appendChild(label);
-                }
-                container.appendChild(marker);
-
-                // Ay işaretlerini ekle (sadece orta ve yüksek zoom seviyesinde)
-                if (currentZoomLevel > 0 && year < endYear) {
-                    for (let month = 1; month < 12; month++) {
-                        const monthOffset = (month / 12) * pixelsPerYear;
-                        const monthPosition = position + monthOffset;
-                        
-                        const monthMarker = document.createElement('div');
-                        monthMarker.className = 'year-marker';
-                        monthMarker.style.left = monthPosition + 'px';
-                        monthMarker.innerHTML = '<div style="width: 1px; height: 10px; background: #ccc; margin: 0 auto; transform: translateY(-5px);"></div>';
-                        
-                        // En yüksek zoom seviyesinde ay etiketlerini göster
-                        if (currentZoomLevel === zoomLevels.length - 1) {
-                             const monthLabel = document.createElement('div');
-                             monthLabel.className = 'year-label';
-                             monthLabel.textContent = month + 1;
-                             monthLabel.style.fontSize = '9px';
-                             monthLabel.style.marginTop = '2px';
-                             monthMarker.appendChild(monthLabel);
-                        }
-                        container.appendChild(monthMarker);
-                    }
-                }
-            }
-        }
-
+        // Load events
         async function loadEvents() {
             try {
-                document.getElementById('loadingMessage').style.display = 'block';
-                document.getElementById('timelineWrapper').style.display = 'none';
-                
                 const response = await fetch(`${EVENTS_JSON_URL}?t=${Date.now()}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
                 const data = await response.json();
                 events = data.events || [];
                 
-                rerenderTimeline();
                 updateStats();
-                
                 document.getElementById('loadingMessage').style.display = 'none';
-                document.getElementById('timelineWrapper').style.display = 'flex';
+                document.getElementById('stats').style.display = 'block';
                 
-                setTimeout(scrollToCenter, 100);
+                render();
             } catch (error) {
                 console.error('Olaylar yüklenirken hata:', error);
                 document.getElementById('loadingMessage').innerHTML = 
@@ -509,37 +415,102 @@
             }
         }
 
-        function getEventPosition(event) {
-            const pixelsPerYear = getPixelsPerYear();
-            const centerPosition = parseFloat(document.getElementById('timeline').style.minWidth) / 2;
+        function updateStats() {
+            const total = events.length;
+            const past = events.filter(e => e.year < currentYear).length;
+            const future = events.filter(e => e.year > currentYear).length;
 
-            let yearFraction = 0;
-            if (event.date) {
-                const dateParts = event.date.split('-');
-                if (dateParts.length === 3) {
-                    const eventDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-                    const startOfYear = new Date(eventDate.getFullYear(), 0, 1);
-                    const dayOfYear = ((eventDate - startOfYear) / (1000 * 60 * 60 * 24)) + 1;
-                    const daysInYear = (eventDate.getFullYear() % 4 === 0 && eventDate.getFullYear() % 100 !== 0) || eventDate.getFullYear() % 400 === 0 ? 366 : 365;
-                    yearFraction = dayOfYear / daysInYear;
-                }
-            }
-
-            const effectiveYear = parseFloat(event.year) + yearFraction;
-            const offset = (effectiveYear - currentYear) * pixelsPerYear;
-            return centerPosition + offset;
+            document.getElementById('totalEvents').textContent = total;
+            document.getElementById('pastEvents').textContent = past;
+            document.getElementById('futureEvents').textContent = future;
         }
 
-        function renderEvents() {
-            const container = document.getElementById('eventMarkers');
+        function render() {
+            const level = getZoomLevel();
+            const container = document.getElementById('timeMarkers');
+            const eventsContainer = document.getElementById('eventMarkers');
+            const wrapper = document.getElementById('timelineWrapper');
+            
             container.innerHTML = '';
+            eventsContainer.innerHTML = '';
 
-            events.forEach((event) => {
-                const position = getEventPosition(event);
+            const centerX = wrapper.offsetWidth / 2;
+            const visibleRange = wrapper.offsetWidth / level.pixelsPerUnit;
+            
+            // Calculate time range based on zoom level
+            let startTime, endTime, currentTime;
+            
+            if (level.unit === 'year') {
+                currentTime = currentYear;
+                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
+                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
+            } else if (level.unit === 'month') {
+                currentTime = currentYear * 12 + currentMonth;
+                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
+                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
+            } else if (level.unit === 'day') {
+                const startOfYear = new Date(currentYear, 0, 1);
+                currentTime = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24)) + currentYear * 365;
+                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
+                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
+            } else { // hours
+                currentTime = currentYear * 8760 + Math.floor((now - new Date(currentYear, 0, 1)) / (1000 * 60 * 60));
+                startTime = Math.floor(currentTime - visibleRange / 2 - offsetX / level.pixelsPerUnit);
+                endTime = Math.ceil(currentTime + visibleRange / 2 - offsetX / level.pixelsPerUnit);
+            }
+
+            // Draw time markers
+            for (let t = startTime; t <= endTime; t++) {
+                const isMajor = t % level.majorEvery === 0;
+                const offsetFromCurrent = t - currentTime;
+                const x = centerX + (offsetFromCurrent * level.pixelsPerUnit) + offsetX;
+
+                const marker = document.createElement('div');
+                marker.className = 'time-marker';
+                marker.style.left = x + 'px';
+
+                const line = document.createElement('div');
+                line.className = `marker-line ${isMajor ? 'major' : ''}`;
+                line.style.height = isMajor ? '30px' : '15px';
+                line.style.transform = isMajor ? 'translateY(-15px)' : 'translateY(-7px)';
+                marker.appendChild(line);
+
+                if (isMajor) {
+                    const label = document.createElement('div');
+                    label.className = 'marker-label';
+                    label.textContent = formatTimeLabel(t, level.unit);
+                    marker.appendChild(label);
+                }
+
+                container.appendChild(marker);
+            }
+
+            // Draw events
+            events.forEach(event => {
+                let eventTime;
+                if (level.unit === 'year') {
+                    eventTime = event.year;
+                } else if (level.unit === 'month') {
+                    const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
+                    eventTime = eventDate.getFullYear() * 12 + eventDate.getMonth();
+                } else if (level.unit === 'day') {
+                    const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
+                    const startOfYear = new Date(eventDate.getFullYear(), 0, 1);
+                    eventTime = Math.floor((eventDate - startOfYear) / (1000 * 60 * 60 * 24)) + eventDate.getFullYear() * 365;
+                } else { // hours
+                    const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
+                    eventTime = eventDate.getFullYear() * 8760 + Math.floor((eventDate - new Date(eventDate.getFullYear(), 0, 1)) / (1000 * 60 * 60));
+                }
+
+                const offsetFromCurrent = eventTime - currentTime;
+                const x = centerX + (offsetFromCurrent * level.pixelsPerUnit) + offsetX;
+
+                // Only render if visible
+                if (x < -100 || x > wrapper.offsetWidth + 100) return;
 
                 const marker = document.createElement('div');
                 marker.className = 'event-marker';
-                marker.style.left = position + 'px';
+                marker.style.left = x + 'px';
 
                 const dot = document.createElement('div');
                 dot.className = 'event-dot';
@@ -555,26 +526,80 @@
 
                 marker.appendChild(dot);
                 marker.appendChild(popup);
-                container.appendChild(marker);
+                eventsContainer.appendChild(marker);
             });
+
+            // Update zoom info
+            document.getElementById('zoomInfo').textContent = `Zoom: ${level.scale}x (${level.label})`;
         }
 
-        function updateStats() {
-            const total = events.length;
-            const past = events.filter(e => e.year < currentYear).length;
-            const future = events.filter(e => e.year > currentYear).length;
-
-            document.getElementById('totalEvents').textContent = total;
-            document.getElementById('pastEvents').textContent = past;
-            document.getElementById('futureEvents').textContent = future;
+        function formatTimeLabel(value, unit) {
+            if (unit === 'year') {
+                return value;
+            } else if (unit === 'month') {
+                const year = Math.floor(value / 12);
+                const month = value % 12;
+                const monthNames = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+                return `${monthNames[month]} ${year}`;
+            } else if (unit === 'day') {
+                const year = Math.floor(value / 365);
+                const dayOfYear = value % 365;
+                const date = new Date(year, 0, 1);
+                date.setDate(dayOfYear + 1);
+                return `${date.getDate()}/${date.getMonth() + 1}/${year}`;
+            } else { // hour
+                const year = Math.floor(value / 8760);
+                const hourOfYear = value % 8760;
+                const date = new Date(year, 0, 1);
+                date.setHours(hourOfYear);
+                return `${date.getDate()}/${date.getMonth() + 1} ${date.getHours()}:00`;
+            }
         }
 
-        function scrollToCenter() {
-            const wrapper = document.getElementById('timelineWrapper');
-            const timeline = document.getElementById('timeline');
-            const centerPosition = 2500;
+        // Mouse wheel zoom
+        document.getElementById('timelineWrapper').addEventListener('wheel', (e) => {
+            e.preventDefault();
             
-            wrapper.scrollLeft = centerPosition - (wrapper.offsetWidth / 2);
+            if (e.deltaY < 0) {
+                // Zoom in
+                if (currentZoomLevel < ZOOM_LEVELS.length - 1) {
+                    currentZoomLevel++;
+                    render();
+                }
+            } else {
+                // Zoom out
+                if (currentZoomLevel > 0) {
+                    currentZoomLevel--;
+                    render();
+                }
+            }
+        });
+
+        // Drag to pan
+        const wrapper = document.getElementById('timelineWrapper');
+        wrapper.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startOffsetX = offsetX;
+            wrapper.classList.add('grabbing');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            offsetX = startOffsetX + dx;
+            render();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            wrapper.classList.remove('grabbing');
+        });
+
+        function resetView() {
+            currentZoomLevel = 0;
+            offsetX = 0;
+            render();
         }
 
         function addNewEvent() {
@@ -582,10 +607,7 @@
             window.open(issueUrl, '_blank');
         }
 
-        // Center label güncelle
-        document.getElementById('centerLabel').textContent = currentYear;
-
-        // Sayfa yüklendiğinde
+        // Initialize
         loadEvents();
     </script>
 </body>
