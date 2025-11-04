@@ -3,8 +3,7 @@ name: ⚙️ Issue to Markdown
 on:
   issues:
     types:
-      - opened
-      - edited
+      - labeled
 
 jobs:
   create_md_from_issue:
