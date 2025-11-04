@@ -30,7 +30,8 @@ jobs:
           body="${{ github.event.issue.body }}"
           
           # Sed komutları ile her bir bölümün altındaki ilk satırı alıyoruz.
-          # 'tr -d "\r"' komutu Windows satır sonu karakterlerini temizler.
+          # 'tr -d "
+          # "' komutu Windows satır sonu karakterlerini temizler.
           year=$(echo "$body" | sed -n '/### Yıl/{n;p;}' | tr -d '\r')
           title=$(echo "$body" | sed -n '/### Başlık/{n;p;}' | tr -d '\r')
           description=$(echo "$body" | awk '/### Açıklama/{f=1;next} /### Kategori/{f=0} f' | sed '1d;$d' | sed '$d' | tr -d '\r')
@@ -46,42 +47,43 @@ jobs:
 
       - name: Generate Markdown file
         id: generate_file
+        env:
+          YEAR: ${{ steps.extract_data.outputs.year }}
+          TITLE: ${{ steps.extract_data.outputs.title }}
+          DATE: ${{ steps.extract_data.outputs.date }}
+          CATEGORY: ${{ steps.extract_data.outputs.category }}
+          DESCRIPTION: ${{ steps.extract_data.outputs.description }}
         run: |
           # Dosya adı için başlığı temizle (küçük harf, boşluk yerine tire)
-          filename_title=$(echo "${{ steps.extract_data.outputs.title }}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' -e 's/--+/-/g' -e 's/^-//' -e 's/-$//')
-          filename="${{ steps.extract_data.outputs.year }}"-${filename_title}.md"
+          filename_title=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' -e 's/--+/-/g' -e 's/^-//' -e 's/-$//')
+          filename="${YEAR}-${filename_title}.md"
           filepath="events/data/${filename}"
 
-          # Markdown içeriğini oluştur
-          {
-            echo "---"
-            echo "year: ${{ steps.extract_data.outputs.year }}"
-            echo "title: \"${{ steps.extract_data.outputs.title }}\""
-            # Sadece doluysa tarih ve kategori ekle
-            if [ -n "${{ steps.extract_data.outputs.date }}" ]; then
-              echo "date: ${{ steps.extract_data.outputs.date }}"
-            fi
-            if [ -n "${{ steps.extract_data.outputs.category }}" ]; then
-              echo "category: ${{ steps.extract_data.outputs.category }}"
-            fi
-            echo "---"
-            echo ""
-            echo "${{ steps.extract_data.outputs.description }}"
-          } > "$filepath"
+          # Güvenlik için 'heredoc' kullanarak dosyayı oluştur
+          cat <<EOF > "$filepath"
+          ---
+          year: $YEAR
+          title: "$TITLE"
+          $(test -n "$DATE" && echo "date: $DATE")
+          $(test -n "$CATEGORY" && echo "category: $CATEGORY")
+          ---
+
+          $DESCRIPTION
+          EOF
 
           echo "filename=$filename" >> $GITHUB_OUTPUT
           echo "filepath=$filepath" >> $GITHUB_OUTPUT
           echo "✅ Markdown file generated at $filepath"
 
       - name: Commit and push new event file
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add "${{ steps.generate_file.outputs.filepath }}"
           git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger 'Generate Events JSON' workflow
         env:
