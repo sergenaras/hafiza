@@ -1,0 +1,73 @@
+name: 🎯 Yeni Olay Ekle
+description: Zaman çizelgesine yeni bir olay ekleyin
+title: "Yeni Olay: "
+labels: ["new-event"]
+assignees:
+  - sergenaras
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Zaman Çizelgesine Yeni Olay Ekleyin
+        Bu formu doldurarak zaman çizelgesine yeni bir olay ekleyebilirsiniz.
+        
+  - type: input
+    id: year
+    attributes:
+      label: Yıl
+      description: Olayın gerçekleştiği veya gerçekleşeceği yıl
+      placeholder: "Örnek: 2024"
+    validations:
+      required: true
+
+  - type: input
+    id: title
+    attributes:
+      label: Başlık
+      description: Olay başlığı (kısa ve öz)
+      placeholder: "Örnek: Yapay Zeka Devrimi"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Açıklama
+      description: Olay hakkında detaylı açıklama
+      placeholder: "Olayın detaylı açıklamasını buraya yazın..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Kategori
+      description: Olayın kategorisi
+      options:
+        - teknoloji
+        - bilim
+        - tarih
+        - kültür
+        - spor
+        - politika
+        - diğer
+    validations:
+      required: false
+
+  - type: input
+    id: date
+    attributes:
+      label: Tam Tarih (Opsiyonel)
+      description: Gün/Ay bilgisi varsa ekleyin
+      placeholder: "Örnek: 2024-03-15"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Onay
+      description: Lütfen aşağıdaki kutuyu işaretleyin
+      options:
+        - label: Bu bilgilerin doğru olduğunu onaylıyorum
+          required: true
