@@ -133,34 +133,35 @@
 
         .marker-label {
             position: absolute;
-            top: 50%;
-            left: 100%;
-            transform: translateY(-50%);
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-90deg);
+            transform-origin: center;
             font-size: 11px;
             color: #666;
             white-space: nowrap;
-            margin-left: 6px;
-            background: white;
-            padding: 2px 6px;
-            border-radius: 3px;
         }
 
         .marker-label.year-label {
             font-weight: 600;
-            color: #333;
-            font-size: 13px;
+            color: #000;
+            font-size: 16px;
+            top: 40px;
+            transform: translateX(-50%) rotate(0deg);
         }
 
         .marker-label.month-label {
             font-weight: 400;
-            color: #666;
-            font-size: 10px;
+            color: #333;
+            font-size: 11px;
+            top: -30px;
         }
 
         .marker-label.day-label {
             font-weight: 400;
-            color: #999;
-            font-size: 9px;
+            color: #666;
+            font-size: 10px;
+            top: -25px;
         }
 
         /* Center indicator */
@@ -400,26 +401,26 @@
             { 
                 scale: 1, 
                 label: 'Yıllar', 
-                pixelsPerYear: 50, 
+                pixelsPerYear: 80, 
                 showYears: true, 
                 showMonths: false, 
-                showDays: false,
-                yearInterval: 10 // Her 10 yılda bir göster
-            },
-            { 
-                scale: 2, 
-                label: 'Yıllar + Aylar', 
-                pixelsPerYear: 200, 
-                showYears: true, 
-                showMonths: true, 
                 showDays: false,
                 yearInterval: 1 // Her yılı göster
             },
             { 
+                scale: 2, 
+                label: 'Yıllar + Aylar', 
+                pixelsPerYear: 400, 
+                showYears: true, 
+                showMonths: true, 
+                showDays: false,
+                yearInterval: 1
+            },
+            { 
                 scale: 3, 
                 label: 'Aylar + Günler', 
-                pixelsPerYear: 2000, 
-                showYears: false, 
+                pixelsPerYear: 3000, 
+                showYears: true, 
                 showMonths: true, 
                 showDays: true,
                 yearInterval: 1
@@ -494,9 +495,11 @@
                     marker.style.left = x + 'px';
 
                     const line = document.createElement('div');
-                    line.className = 'marker-line major';
-                    line.style.height = '30px';
-                    line.style.transform = 'translateY(-15px)';
+                    line.className = 'marker-line';
+                    line.style.height = '25px';
+                    line.style.width = '1px';
+                    line.style.background = '#999';
+                    line.style.transform = 'translateY(-12px)';
                     marker.appendChild(line);
 
                     const label = document.createElement('div');
@@ -521,8 +524,10 @@
 
                     const yearLine = document.createElement('div');
                     yearLine.className = 'marker-line major';
-                    yearLine.style.height = '40px';
-                    yearLine.style.transform = 'translateY(-20px)';
+                    yearLine.style.height = '35px';
+                    yearLine.style.width = '2px';
+                    yearLine.style.background = '#000';
+                    yearLine.style.transform = 'translateY(-17px)';
                     yearMarker.appendChild(yearLine);
 
                     const yearLabel = document.createElement('div');
@@ -545,6 +550,7 @@
                         monthLine.className = 'marker-line';
                         monthLine.style.height = '20px';
                         monthLine.style.width = '1px';
+                        monthLine.style.background = '#666';
                         monthLine.style.transform = 'translateY(-10px)';
                         monthMarker.appendChild(monthLine);
 
@@ -571,7 +577,7 @@
                         const monthX = yearX + (month * pixelsPerMonth);
                         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-                        // Draw month marker
+                        // Draw month marker (thick) - only at start of visible months
                         const monthMarker = document.createElement('div');
                         monthMarker.className = 'time-marker';
                         monthMarker.style.left = monthX + 'px';
@@ -579,17 +585,19 @@
                         const monthLine = document.createElement('div');
                         monthLine.className = 'marker-line major';
                         monthLine.style.height = '35px';
+                        monthLine.style.width = '2px';
+                        monthLine.style.background = '#000';
                         monthLine.style.transform = 'translateY(-17px)';
                         monthMarker.appendChild(monthLine);
 
                         const monthLabel = document.createElement('div');
                         monthLabel.className = 'marker-label month-label';
-                        monthLabel.textContent = `${monthNames[month]} ${year}`;
+                        monthLabel.textContent = monthNames[month];
                         monthMarker.appendChild(monthLabel);
 
                         container.appendChild(monthMarker);
 
-                        // Draw days
+                        // Draw ALL days with numbers
                         for (let day = 1; day <= daysInMonth; day++) {
                             const daysSinceYearStart = new Date(year, month, day) - new Date(year, 0, 1);
                             const daysCount = daysSinceYearStart / (1000 * 60 * 60 * 24);
@@ -603,17 +611,33 @@
                             dayLine.className = 'marker-line';
                             dayLine.style.height = '15px';
                             dayLine.style.width = '1px';
+                            dayLine.style.background = '#999';
                             dayLine.style.transform = 'translateY(-7px)';
                             dayMarker.appendChild(dayLine);
 
-                            if (day % 5 === 0) { // Her 5 günde bir label
-                                const dayLabel = document.createElement('div');
-                                dayLabel.className = 'marker-label day-label';
-                                dayLabel.textContent = `${day}`;
-                                dayMarker.appendChild(dayLabel);
-                            }
+                            // Show ALL day numbers horizontally above
+                            const dayLabel = document.createElement('div');
+                            dayLabel.className = 'marker-label day-label';
+                            dayLabel.style.transform = 'translateX(-50%) rotate(0deg)';
+                            dayLabel.style.top = '-20px';
+                            dayLabel.textContent = day;
+                            dayMarker.appendChild(dayLabel);
 
                             container.appendChild(dayMarker);
+                        }
+
+                        // Add year label at the end of months
+                        if (month === 11) {
+                            const yearEndMarker = document.createElement('div');
+                            yearEndMarker.className = 'time-marker';
+                            yearEndMarker.style.left = (yearX + level.pixelsPerYear) + 'px';
+
+                            const yearEndLabel = document.createElement('div');
+                            yearEndLabel.className = 'marker-label year-label';
+                            yearEndLabel.textContent = year;
+                            yearEndMarker.appendChild(yearEndLabel);
+
+                            container.appendChild(yearEndMarker);
                         }
                     }
                 }
