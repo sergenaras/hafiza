@@ -36,6 +36,13 @@
       "description": "anılar, şimdi gözümde canlandılarrrr"
     },
     {
+      "year": 2025,
+      "title": "Kağnı Arabası",
+      "date": "2025-11-07",
+      "category": "diğer",
+      "description": "çok önemlidir herkes için olmasa da kağnı demek anadolu demektir"
+    },
+    {
       "year": 2030,
       "title": "İlk İnsanlı Mars Misyonu",
       "date": "2030-07-01",
@@ -51,8 +58,8 @@
     }
   ],
   "metadata": {
-    "total_events": 7,
-    "generated_at": "2025-11-04T21:38:54.909249Z",
+    "total_events": 8,
+    "generated_at": "2025-11-05T06:42:49.718297Z",
     "generator": "Zaman Yolculuğu Event Generator v1.0"
   }
 }
