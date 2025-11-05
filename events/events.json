@@ -37,6 +37,13 @@
     },
     {
       "year": 2025,
+      "title": "Karamürsel Geçidi",
+      "date": "2025-11-06",
+      "category": "teknoloji",
+      "description": "kayobilalllerin oradan aşağı sapınca görülebilir"
+    },
+    {
+      "year": 2025,
       "title": "Kağnı Arabası",
       "date": "2025-11-07",
       "category": "diğer",
@@ -58,8 +65,8 @@
     }
   ],
   "metadata": {
-    "total_events": 8,
-    "generated_at": "2025-11-05T06:42:49.718297Z",
+    "total_events": 9,
+    "generated_at": "2025-11-05T06:59:28.950252Z",
     "generator": "Zaman Yolculuğu Event Generator v1.0"
   }
 }
