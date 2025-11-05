@@ -2,8 +2,8 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hafıza - Zaman Çizelgesi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hafıza Cetveli</title>
     <style>
         * {
             margin: 0;
@@ -16,9 +16,12 @@
             background: #ffffff;
             color: #333;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .container {
+        .app {
+            width: 100vw;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -26,350 +29,211 @@
 
         /* Header */
         .header {
-            padding: 20px 40px;
-            background: #fff;
-            border-bottom: 1px solid #e0e0e0;
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
             z-index: 100;
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: 300;
+            font-size: 16px;
+            font-weight: 400;
             color: #333;
-            letter-spacing: 2px;
+            letter-spacing: 0.5px;
         }
 
-        .header-actions {
+        .header-controls {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
         }
 
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-            margin: 0 10px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #2196F3;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        .control-mode {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            color: #333;
-            text-decoration: none;
-        }
-
-        .btn:hover {
+        /* Toggle Button */
+        .toggle-group {
+            display: flex;
             background: #f5f5f5;
-            border-color: #999;
+            border-radius: 6px;
+            padding: 3px;
         }
 
-        .btn-primary {
-            background: #333;
-            color: #fff;
-            border-color: #333;
-        }
-
-        .btn-primary:hover {
-            background: #000;
-            border-color: #000;
-        }
-
-        /* Zoom controls */
-        .zoom-info {
-            font-size: 13px;
-            color: #666;
+        .toggle-btn {
             padding: 6px 12px;
-            background: #f5f5f5;
+            font-size: 13px;
+            border: none;
+            background: transparent;
+            color: #666;
+            cursor: pointer;
             border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Add Event Button */
+        .btn-add {
+            padding: 8px 16px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #000;
         }
 
         /* Timeline Container */
-        .timeline-wrapper {
+        .timeline-container {
             flex: 1;
             position: relative;
             overflow: hidden;
+        }
+
+        #timelineCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             cursor: grab;
         }
 
-        .timeline-wrapper.grabbing {
+        #timelineCanvas.grabbing {
             cursor: grabbing;
         }
 
-        .timeline-canvas {
-            position: absolute;
+        /* Event Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            transition: transform 0.1s ease-out;
-        }
-
-        .ruler-line {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 50%;
-            height: 2px;
-            background: #333;
-            transform: translateY(-50%);
-        }
-
-        /* Time markers */
-        .time-marker {
-            position: absolute;
-            top: 50%;
-            transform: translateX(-50%);
-        }
-
-        .marker-line {
-            width: 2px;
-            background: #666;
-            margin: 0 auto;
-        }
-
-        .marker-line.major {
-            background: #333;
-        }
-
-        .marker-label {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%) rotate(-90deg);
-            transform-origin: center;
-            font-size: 11px;
-            color: #666;
-            white-space: nowrap;
-        }
-
-        .marker-label.year-label {
-            font-weight: 600;
-            color: #000;
-            font-size: 16px;
-            top: 40px;
-            transform: translateX(-50%) rotate(0deg);
-        }
-
-        .marker-label.month-label {
-            font-weight: 400;
-            color: #333;
-            font-size: 10px;
-            top: -35px;
-            min-width: 40px;
-            text-align: center;
-        }
-
-        .marker-label.day-label {
-            font-weight: 400;
-            color: #666;
-            font-size: 9px;
-            top: -22px;
-            min-width: 12px;
-            text-align: center;
-        }
-
-        /* Center indicator */
-        .center-indicator {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 2px;
-            height: 200px;
-            background: #ff4444;
-            z-index: 50;
-            pointer-events: none;
-        }
-
-        .center-label {
-            position: absolute;
-            left: 50%;
-            top: calc(50% - 120px);
-            transform: translateX(-50%);
-            background: #ff4444;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-            z-index: 51;
-            pointer-events: none;
-        }
-
-        /* Events */
-        .event-marker {
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .event-dot {
-            width: 12px;
-            height: 12px;
-            background: #333;
-            border: 3px solid #fff;
-            border-radius: 50%;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .event-marker:hover .event-dot {
-            width: 16px;
-            height: 16px;
-            background: #ff4444;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .event-popup {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-bottom: 15px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 16px;
-            min-width: 250px;
-            max-width: 350px;
+            background: rgba(0, 0, 0, 0.5);
             display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
         }
 
-        .event-marker:hover .event-popup {
-            display: block;
+        .modal-overlay.active {
+            display: flex;
         }
 
-        .event-popup::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 8px solid transparent;
-            border-top-color: white;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .event-year {
-            font-size: 11px;
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        .modal-date {
+            font-size: 13px;
             color: #999;
-            margin-bottom: 4px;
-        }
-
-        .event-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #333;
             margin-bottom: 8px;
         }
 
-        .event-description {
-            font-size: 13px;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        .event-category {
-            display: inline-block;
-            font-size: 11px;
-            padding: 3px 8px;
-            background: #f0f0f0;
-            border-radius: 3px;
-            margin-top: 8px;
-            color: #666;
-        }
-
-        /* Stats */
-        .stats {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 12px 16px;
-            font-size: 13px;
-            color: #666;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            z-index: 90;
-        }
-
-        .stats span {
-            margin-right: 16px;
-        }
-
-        .stats .number {
+        .modal-title {
+            font-size: 22px;
             font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .modal-description {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .modal-category {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
             color: #333;
         }
 
-        /* Instructions */
-        .instructions {
+        /* Tooltip */
+        .tooltip {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 10px 20px;
+            padding: 8px 12px;
             border-radius: 6px;
-            font-size: 12px;
-            z-index: 90;
+            font-size: 13px;
             pointer-events: none;
+            z-index: 999;
+            display: none;
+            white-space: nowrap;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tooltip.active {
+            display: block;
         }
 
         /* Loading */
@@ -382,528 +246,149 @@
             color: #999;
         }
 
+        /* Zoom indicator */
+        .zoom-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .zoom-indicator.active {
+            opacity: 1;
+        }
+
+        /* Instructions */
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
             .header {
-                padding: 15px 20px;
+                padding: 0 15px;
             }
 
             .logo {
-                font-size: 18px;
+                font-size: 14px;
             }
 
-            .zoom-info {
+            .instructions {
                 display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">HAFIZA</div>
-            <div class="header-actions">
-                <span class="control-mode">Kontrol:</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="controlToggle" checked>
-                    <span class="slider"></span>
-                </label>
-                <div class="zoom-info" id="zoomInfo">Zoom: 1x (Yıllar)</div>
-                <button class="btn" onclick="resetView()">↻ Sıfırla</button>
-                <button class="btn btn-primary" onclick="addNewEvent()">+ Yeni Olay</button>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
+            <div class="header-controls">
+                <!-- Zoom Mode Toggle -->
+                <div class="toggle-group">
+                    <button class="toggle-btn active" data-mode="pinch" data-i18n="zoomPinch">
+                        Pinch Zoom
+                    </button>
+                    <button class="toggle-btn" data-mode="doubleclick" data-i18n="zoomDoubleClick">
+                        Çift Tıklama
+                    </button>
+                </div>
+                
+                <!-- Add Event Button -->
+                <button class="btn-add" onclick="openNewEventDialog()" data-i18n="addEvent">
+                    + Olay Ekle
+                </button>
+            </div>
+        </header>
+
+        <!-- Timeline Container -->
+        <div class="timeline-container">
+            <div class="loading" id="loading" data-i18n="loading">Yükleniyor...</div>
+            <canvas id="timelineCanvas"></canvas>
+            
+            <!-- Tooltip -->
+            <div class="tooltip" id="tooltip"></div>
+            
+            <!-- Zoom Indicator -->
+            <div class="zoom-indicator" id="zoomIndicator">x1</div>
+            
+            <!-- Instructions -->
+            <div class="instructions" id="instructions">
+                <span data-i18n="instructionsPinch">🤏 Pinch: Zoom | 👆 Sürükle: Hareket</span>
             </div>
         </div>
 
-        <div class="timeline-wrapper" id="timelineWrapper">
-            <div id="loadingMessage" class="loading">Yükleniyor...</div>
-
-            <div class="stats" id="stats" style="display: none;">
-                <span>Toplam: <span class="number" id="totalEvents">-</span></span>
-                <span>Geçmiş: <span class="number" id="pastEvents">-</span></span>
-                <span>Gelecek: <span class="number" id="futureEvents">-</span></span>
-            </div>
-
-            <div class="center-indicator"></div>
-            <div class="center-label" id="centerLabel">ŞİMDİ</div>
-
-            <div class="timeline-canvas" id="timelineCanvas">
-                <div class="ruler-line"></div>
-                <div id="timeMarkers"></div>
-                <div id="eventMarkers"></div>
-            </div>
-
-            <div class="instructions">
-                🖱️ Sürükle: Hareket Et | 🔍 Mouse Wheel: Zoom (3 Seviye)
+        <!-- Event Detail Modal -->
+        <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <div>
+                        <div class="modal-date" id="modalDate"></div>
+                        <h2 class="modal-title" id="modalTitle"></h2>
+                    </div>
+                    <button class="modal-close" onclick="closeModal()">×</button>
+                </div>
+                <p class="modal-description" id="modalDescription"></p>
+                <span class="modal-category" id="modalCategory"></span>
             </div>
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="i18n.js"></script>
+    <script src="timeline.js"></script>
+    
     <script>
-        const GITHUB_USERNAME = 'sergenaras';
-        const REPO_NAME = 'hafiza';
-        const BRANCH = 'main';
-        const EVENTS_JSON_URL = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/${REPO_NAME}@${BRANCH}/events/events.json`;
+        // Initialize app
+        window.addEventListener('DOMContentLoaded', () => {
+            initI18n();
+            initTimeline();
+        });
 
-        // Timeline state
-        let events = [];
-        let zoom = 1; // 1 = years, 12 = months, 365 = days, 8760 = hours
-        let offsetX = 0;
-        let isDragging = false;
-        let startX = 0;
-        let startOffsetX = 0;
-
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const currentDay = now.getDate();
-
-        // Zoom levels
-        const ZOOM_LEVELS = [
-            { 
-                scale: 1, 
-                label: 'Yıllar', 
-                pixelsPerYear: 120, // Arttırdım: daha fazla alan
-                showYears: true, 
-                showMonths: false, 
-                showDays: false,
-                yearInterval: 1
-            },
-            { 
-                scale: 2, 
-                label: 'Yıllar + Aylar', 
-                pixelsPerYear: 600, // Arttırdım: aylar için yeterli alan
-                showYears: true, 
-                showMonths: true, 
-                showDays: false,
-                yearInterval: 1
-            },
-            { 
-                scale: 3, 
-                label: 'Aylar + Günler', 
-                pixelsPerYear: 6000, // Çok arttırdım: her günün en az 16px genişliği olacak
-                showYears: true, 
-                showMonths: true, 
-                showDays: true,
-                yearInterval: 1
-            }
-        ];
-
-        let currentZoomLevel = 0;
-
-        function getZoomLevel() {
-            return ZOOM_LEVELS[currentZoomLevel];
-        }
-
-        // Load events
-        async function loadEvents() {
-            try {
-                const response = await fetch(`${EVENTS_JSON_URL}?t=${Date.now()}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const data = await response.json();
-                events = data.events || [];
-                
-                updateStats();
-                document.getElementById('loadingMessage').style.display = 'none';
-                document.getElementById('stats').style.display = 'block';
-                
-                render();
-            } catch (error) {
-                console.error('Olaylar yüklenirken hata:', error);
-                document.getElementById('loadingMessage').innerHTML = 
-                    `<div style="color: #ff4444;">❌ Olaylar yüklenemedi!</div>`;
-            }
-        }
-
-        function updateStats() {
-            const total = events.length;
-            const past = events.filter(e => e.year < currentYear).length;
-            const future = events.filter(e => e.year > currentYear).length;
-
-            document.getElementById('totalEvents').textContent = total;
-            document.getElementById('pastEvents').textContent = past;
-            document.getElementById('futureEvents').textContent = future;
-        }
-
-        function render() {
-            const level = getZoomLevel();
-            const container = document.getElementById('timeMarkers');
-            const eventsContainer = document.getElementById('eventMarkers');
-            const wrapper = document.getElementById('timelineWrapper');
-            
-            container.innerHTML = '';
-            eventsContainer.innerHTML = '';
-
-            const centerX = wrapper.offsetWidth / 2;
-            const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
-                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-            
-            // Calculate visible range in years
-            const visibleYears = wrapper.offsetWidth / level.pixelsPerYear;
-            const startYear = Math.floor(currentYear - visibleYears / 2 - (offsetX / level.pixelsPerYear));
-            const endYear = Math.ceil(currentYear + visibleYears / 2 - (offsetX / level.pixelsPerYear));
-
-            // LEVEL 1: Only Years
-            if (level.showYears && !level.showMonths) {
-                for (let year = startYear; year <= endYear; year++) {
-                    if (year % level.yearInterval !== 0) continue;
-                    
-                    const offsetFromCurrent = year - currentYear;
-                    const x = centerX + (offsetFromCurrent * level.pixelsPerYear) + offsetX;
-
-                    const marker = document.createElement('div');
-                    marker.className = 'time-marker';
-                    marker.style.left = x + 'px';
-
-                    const line = document.createElement('div');
-                    line.className = 'marker-line';
-                    line.style.height = '25px';
-                    line.style.width = '1px';
-                    line.style.background = '#999';
-                    line.style.transform = 'translateY(-12px)';
-                    marker.appendChild(line);
-
-                    const label = document.createElement('div');
-                    label.className = 'marker-label year-label';
-                    label.textContent = year;
-                    marker.appendChild(label);
-
-                    container.appendChild(marker);
-                }
-            }
-            
-            // LEVEL 2: Years (thick) + Months (thin)
-            else if (level.showYears && level.showMonths && !level.showDays) {
-                for (let year = startYear; year <= endYear; year++) {
-                    const yearOffsetFromCurrent = year - currentYear;
-                    const yearX = centerX + (yearOffsetFromCurrent * level.pixelsPerYear) + offsetX;
-
-                    // Draw year marker (thick)
-                    const yearMarker = document.createElement('div');
-                    yearMarker.className = 'time-marker';
-                    yearMarker.style.left = yearX + 'px';
-
-                    const yearLine = document.createElement('div');
-                    yearLine.className = 'marker-line major';
-                    yearLine.style.height = '35px';
-                    yearLine.style.width = '2px';
-                    yearLine.style.background = '#000';
-                    yearLine.style.transform = 'translateY(-17px)';
-                    yearMarker.appendChild(yearLine);
-
-                    const yearLabel = document.createElement('div');
-                    yearLabel.className = 'marker-label year-label';
-                    yearLabel.textContent = year;
-                    yearMarker.appendChild(yearLabel);
-
-                    container.appendChild(yearMarker);
-
-                    // Draw months (thin)
-                    const pixelsPerMonth = level.pixelsPerYear / 12;
-                    for (let month = 0; month < 12; month++) {
-                        const monthX = yearX + (month * pixelsPerMonth);
-                        
-                        const monthMarker = document.createElement('div');
-                        monthMarker.className = 'time-marker';
-                        monthMarker.style.left = monthX + 'px';
-
-                        const monthLine = document.createElement('div');
-                        monthLine.className = 'marker-line';
-                        monthLine.style.height = '20px';
-                        monthLine.style.width = '1px';
-                        monthLine.style.background = '#666';
-                        monthLine.style.transform = 'translateY(-10px)';
-                        monthMarker.appendChild(monthLine);
-
-                        const monthLabel = document.createElement('div');
-                        monthLabel.className = 'marker-label month-label';
-                        monthLabel.textContent = monthNames[month];
-                        monthMarker.appendChild(monthLabel);
-
-                        container.appendChild(monthMarker);
-                    }
-                }
-            }
-            
-            // LEVEL 3: Months + Days
-            else if (level.showMonths && level.showDays) {
-                const pixelsPerMonth = level.pixelsPerYear / 12;
-                const pixelsPerDay = level.pixelsPerYear / 365;
-                
-                for (let year = startYear; year <= endYear; year++) {
-                    const yearOffsetFromCurrent = year - currentYear;
-                    const yearX = centerX + (yearOffsetFromCurrent * level.pixelsPerYear) + offsetX;
-
-                    for (let month = 0; month < 12; month++) {
-                        const monthX = yearX + (month * pixelsPerMonth);
-                        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-                        // Draw month marker (thick) - only at start of visible months
-                        const monthMarker = document.createElement('div');
-                        monthMarker.className = 'time-marker';
-                        monthMarker.style.left = monthX + 'px';
-
-                        const monthLine = document.createElement('div');
-                        monthLine.className = 'marker-line major';
-                        monthLine.style.height = '35px';
-                        monthLine.style.width = '2px';
-                        monthLine.style.background = '#000';
-                        monthLine.style.transform = 'translateY(-17px)';
-                        monthMarker.appendChild(monthLine);
-
-                        const monthLabel = document.createElement('div');
-                        monthLabel.className = 'marker-label month-label';
-                        monthLabel.textContent = monthNames[month];
-                        monthMarker.appendChild(monthLabel);
-
-                        container.appendChild(monthMarker);
-
-                        // Draw ALL days with numbers
-                        for (let day = 1; day <= daysInMonth; day++) {
-                            const daysSinceYearStart = new Date(year, month, day) - new Date(year, 0, 1);
-                            const daysCount = daysSinceYearStart / (1000 * 60 * 60 * 24);
-                            const dayX = yearX + (daysCount * pixelsPerDay);
-
-                            const dayMarker = document.createElement('div');
-                            dayMarker.className = 'time-marker';
-                            dayMarker.style.left = dayX + 'px';
-
-                            const dayLine = document.createElement('div');
-                            dayLine.className = 'marker-line';
-                            dayLine.style.height = '15px';
-                            dayLine.style.width = '1px';
-                            dayLine.style.background = '#999';
-                            dayLine.style.transform = 'translateY(-7px)';
-                            dayMarker.appendChild(dayLine);
-
-                            // Show ALL day numbers horizontally above
-                            const dayLabel = document.createElement('div');
-                            dayLabel.className = 'marker-label day-label';
-                            dayLabel.style.transform = 'translateX(-50%) rotate(0deg)';
-                            dayLabel.style.top = '-20px';
-                            dayLabel.textContent = day;
-                            dayMarker.appendChild(dayLabel);
-
-                            container.appendChild(dayMarker);
-                        }
-
-                        // Add year label at the end of months
-                        if (month === 11) {
-                            const yearEndMarker = document.createElement('div');
-                            yearEndMarker.className = 'time-marker';
-                            yearEndMarker.style.left = (yearX + level.pixelsPerYear) + 'px';
-
-                            const yearEndLabel = document.createElement('div');
-                            yearEndLabel.className = 'marker-label year-label';
-                            yearEndLabel.textContent = year;
-                            yearEndMarker.appendChild(yearEndLabel);
-
-                            container.appendChild(yearEndMarker);
-                        }
-                    }
-                }
-            }
-
-            // Draw events
-            events.forEach(event => {
-                const eventDate = event.date ? new Date(event.date) : new Date(event.year, 0, 1);
-                const eventYear = eventDate.getFullYear();
-                const eventMonth = eventDate.getMonth();
-                const eventDay = eventDate.getDate();
-                
-                const yearOffset = eventYear - currentYear;
-                const monthOffset = eventMonth / 12;
-                const daysSinceYearStart = (eventDate - new Date(eventYear, 0, 1)) / (1000 * 60 * 60 * 24);
-                const dayOffset = daysSinceYearStart / 365;
-                
-                const totalOffset = yearOffset + monthOffset + dayOffset;
-                const x = centerX + (totalOffset * level.pixelsPerYear) + offsetX;
-
-                // Only render if visible
-                if (x < -100 || x > wrapper.offsetWidth + 100) return;
-
-                const marker = document.createElement('div');
-                marker.className = 'event-marker';
-                marker.style.left = x + 'px';
-
-                const dot = document.createElement('div');
-                dot.className = 'event-dot';
-
-                const popup = document.createElement('div');
-                popup.className = 'event-popup';
-                popup.innerHTML = `
-                    <div class="event-year">${event.date || event.year}</div>
-                    <div class="event-title">${event.title}</div>
-                    <div class="event-description">${event.description}</div>
-                    ${event.category ? `<span class="event-category">${event.category}</span>` : ''}
-                `;
-
-                marker.appendChild(dot);
-                marker.appendChild(popup);
-                eventsContainer.appendChild(marker);
+        // Zoom mode toggle
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                window.timeline.setZoomMode(btn.dataset.mode);
+                updateInstructions(btn.dataset.mode);
             });
+        });
 
-            // Update zoom info
-            document.getElementById('zoomInfo').textContent = `Seviye ${currentZoomLevel + 1}/3: ${level.label}`;
-        }
-
-        // Mouse wheel zoom
-        document.getElementById('timelineWrapper').addEventListener('wheel', (e) => {
-            e.preventDefault();
-            
-            if (e.deltaY < 0) {
-                // Zoom in
-                if (currentZoomLevel < ZOOM_LEVELS.length - 1) {
-                    currentZoomLevel++;
-                    render();
-                }
+        function updateInstructions(mode) {
+            const instructions = document.getElementById('instructions');
+            if (mode === 'pinch') {
+                instructions.innerHTML = '<span data-i18n="instructionsPinch">🤏 Pinch: Zoom | 👆 Sürükle: Hareket</span>';
             } else {
-                // Zoom out
-                if (currentZoomLevel > 0) {
-                    currentZoomLevel--;
-                    render();
-                }
+                instructions.innerHTML = '<span data-i18n="instructionsDoubleClick">🖱️ Çift Tık: Zoom | 🔽 Basılı Tut & Sürükle: Hareket</span>';
             }
-        });
-
-        // Drag to pan
-        const wrapper = document.getElementById('timelineWrapper');
-        wrapper.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startOffsetX = offsetX;
-            wrapper.classList.add('grabbing');
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            offsetX = startOffsetX + dx;
-            render();
-        });
-
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            wrapper.classList.remove('grabbing');
-        });
-
-        function resetView() {
-            currentZoomLevel = 0;
-            offsetX = 0;
-            render();
+            initI18n();
         }
 
-        function addNewEvent() {
-            const issueUrl = `https://github.com/${GITHUB_USERNAME}/${REPO_NAME}/issues/new?template=new-event.yml&title=Yeni+Olay:+`;
-            window.open(issueUrl, '_blank');
+        function openNewEventDialog() {
+            window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 
-        // Kontrol modu yönetimi
-        let isAdvancedMode = true;
-        let lastClickTime = 0;
-        
-        const controlToggle = document.getElementById('controlToggle');
-        const wrapper = document.getElementById('timelineWrapper');
-        const instructionsText = document.querySelector('.instructions');
-
-        controlToggle.addEventListener('change', function() {
-            isAdvancedMode = this.checked;
-            updateControlMode();
-        });
-
-        function updateControlMode() {
-            if (isAdvancedMode) {
-                // Gelişmiş mod: Mouse wheel zoom + sürükle
-                instructionsText.textContent = '🖱️ Sürükle: Hareket Et | 🔍 Mouse Wheel: Zoom (3 Seviye)';
-                wrapper.onwheel = handleMouseWheel;
-                wrapper.ondblclick = null;
-            } else {
-                // Basit mod: Çift tıklama zoom + sürükle
-                instructionsText.textContent = '🖱️ Tıkla-Sürükle: Hareket Et | 🔍 Çift Tıkla: Yakınlaştır';
-                wrapper.onwheel = null;
-                wrapper.ondblclick = handleDoubleClick;
-            }
+        function closeModal(event) {
+            if (event && event.target.className !== 'modal-overlay') return;
+            document.getElementById('modalOverlay').classList.remove('active');
         }
-
-        function handleDoubleClick(e) {
-            const now = Date.now();
-            // Çift tıklama kontrolü
-            if (now - lastClickTime < 300) {
-                if (currentZoomLevel < ZOOM_LEVELS.length - 1) {
-                    currentZoomLevel++;
-                } else {
-                    currentZoomLevel = 0;
-                }
-                render();
-            }
-            lastClickTime = now;
-        }
-
-        function handleMouseWheel(e) {
-            e.preventDefault();
-            if (e.deltaY < 0 && currentZoomLevel < ZOOM_LEVELS.length - 1) {
-                currentZoomLevel++;
-                render();
-            } else if (e.deltaY > 0 && currentZoomLevel > 0) {
-                currentZoomLevel--;
-                render();
-            }
-        }
-
-        // Kontrol modu yönetimi
-        let isAdvancedMode = true;
-        let lastClickTime = 0;
-        
-        const controlToggle = document.getElementById('controlToggle');
-        const instructionsText = document.querySelector('.instructions');
-
-        controlToggle.addEventListener('change', function() {
-            isAdvancedMode = this.checked;
-            updateControlMode();
-        });
-
-        function updateControlMode() {
-            if (isAdvancedMode) {
-                // Gelişmiş mod: Mouse wheel zoom + sürükle
-                instructionsText.textContent = '🖱️ Sürükle: Hareket Et | 🔍 Mouse Wheel: Zoom (3 Seviye)';
-                wrapper.onwheel = handleMouseWheel;
-                wrapper.ondblclick = null;
-            } else {
-                // Basit mod: Çift tıklama zoom + sürükle
-                instructionsText.textContent = '🖱️ Tıkla-Sürükle: Hareket Et | 🔍 Çift Tıkla: Yakınlaştır';
-                wrapper.onwheel = null;
-                wrapper.ondblclick = handleDoubleClick;
-            }
-        }
-
-        function handleDoubleClick(e) {
-            const now = Date.now();
-            // Çift tıklama kontrolü
-            if (now - lastClickTime < 300) {
-                if (currentZoomLevel < ZOOM_LEVELS.length - 1) {
-                    currentZoomLevel++;
-                } else {
-                    currentZoomLevel = 0;
-                }
-                render();
-            }
-            lastClickTime = now;
-        }
-
-        function handleMouseWheel(e) {
-            e.preventDefault();
-            if (e.deltaY < 0 && currentZoomLevel < ZOOM_LEVELS.length - 1) {
-                currentZoomLevel++;
-                render();
-            } else if (e.deltaY > 0 && currentZoomLevel > 0) {
-                currentZoomLevel--;
-                render();
-            }
-        }
-
-        // Initialize
-        loadEvents();
-        updateControlMode();
-        updateControlMode();
     </script>
 </body>
 </html>

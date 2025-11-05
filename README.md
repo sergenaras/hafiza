@@ -1,240 +1,200 @@
-# 🚀 Zaman Yolculuğu - İnteraktif Tarih Çizelgesi
+# 🚀 Hafıza Cetveli - Modern Timeline
 
-Geçmişten geleceğe uzanan, tamamen GitHub tabanlı, statik ama dinamik bir zaman çizelgesi projesi.
+Profesyonel, Canvas-tabanlı, yüksek performanslı zaman çizelgesi uygulaması.
 
-![Timeline Preview](https://img.shields.io/badge/Status-Active-success)
-![GitHub Pages](https://img.shields.io/badge/Hosted%20on-GitHub%20Pages-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+## ✨ Özellikler
 
-## 🌟 Özellikler
+### 🎯 3 Zoom Seviyesi
+- **×1 - Yıllar**: Geniş bakış, her yıl görünür
+- **×2 - Aylar**: Yıllar + aylar, detaylı görünüm
+- **×3 - Günler**: Tam detay, her gün numaralandırılmış
 
-- ✨ **Tamamen Otomatik**: Markdown dosyaları otomatik olarak JSON'a dönüştürülür
-- 🎯 **GitHub Issues ile Katkı**: Yeni olaylar GitHub Issue formu ile eklenir
-- 🔄 **GitHub Actions**: Her değişiklik otomatik olarak işlenir
-- 📱 **Responsive**: Mobil ve masaüstü uyumlu
-- 🎨 **Görsel**: Geçmişten geleceğe renk geçişli tasarım
-- 🌐 **Statik**: Tamamen GitHub Pages üzerinde çalışır
+### 🖱️ İki Zoom Modu
+1. **Pinch Zoom** (Mac Trackpad benzeri)
+   - İki parmakla yakınlaştır/uzaklaştır
+   - Sürükle ile hareket
+   
+2. **Çift Tıklama**
+   - Çift tıkla → Zoom
+   - Basılı tut & sürükle → Hareket
 
-## 🚀 Kurulum
+### 📊 Event Özellikleri
+- Gri çubuklar ile gösterim
+- Aynı gündeki olaylar otomatik stack'lenir
+- Hover ile tooltip
+- Tıkla ile detaylı modal
+- Modal dışına tıkla ile kapat
 
-### 1. Repository'yi Fork Edin veya Clone Edin
+### 🌍 Çoklu Dil
+- Türkçe (varsayılan)
+- İngilizce
+- Kolayca genişletilebilir
 
-```bash
-git clone https://github.com/KULLANICI-ADI/REPO-ADI.git
-cd REPO-ADI
-```
+### ⚡ Performans
+- Canvas-based rendering
+- Virtual rendering (sadece görünür alan)
+- Smooth 60 FPS animasyonlar
+- RequestAnimationFrame kullanımı
 
-### 2. GitHub Ayarları
+## 🛠️ Kurulum
 
-1. **Settings → Pages** bölümüne gidin
-2. **Source** olarak `main` branch seçin
-3. **Save** butonuna tıklayın
-4. Siteniz `https://KULLANICI-ADI.github.io/REPO-ADI/` adresinde yayınlanacak
-
-### 3. Dosyaları Yapılandırın
-
-#### `index.html` dosyasında şunları güncelleyin:
-
-```javascript
-const GITHUB_USERNAME = 'KULLANICI-ADI';  // GitHub kullanıcı adınız
-const REPO_NAME = 'REPO-ADI';              // Repository adı
-const BRANCH = 'main';                     // veya 'master'
-```
-
-#### `.github/ISSUE_TEMPLATE/new-event.yml` dosyasında:
-
-```yaml
-assignees:
-  - KULLANICI-ADI  # GitHub kullanıcı adınızı yazın
-```
-
-### 4. İlk JSON Oluşturma
-
-Yerel olarak test etmek için:
+### 1. Dosyaları Repoya Yükle
 
 ```bash
-python scripts/generate-json.py
-```
+# Tüm dosyaları hafiza repo'suna kopyala
+cp -r hafiza-timeline/* ~/hafiza/
 
-Ardından commit edin:
-
-```bash
-git add events/events.json
-git commit -m "Initial events.json"
+cd ~/hafiza
+git add .
+git commit -m "Add modern timeline interface"
 git push
 ```
 
-## 📝 Yeni Olay Ekleme
+### 2. Config Ayarları
 
-### Yöntem 1: GitHub Issues (Önerilen)
+`config.js` dosyasını düzenle:
 
-1. Sitenizde **"+ Yeni Olay Ekle"** butonuna tıklayın
-2. GitHub Issue formunu doldurun
-3. Issue oluşturulacak
-4. Maintainer olarak siz:
-   - Issue'yu onaylayın
-   - Aşağıdaki şekilde yeni bir `.md` dosyası oluşturun
-   - Commit edin
-   - GitHub Actions otomatik olarak `events.json` güncelleyecek
-
-### Yöntem 2: Doğrudan Markdown Dosyası Ekleme
-
-`events/data/` klasörüne yeni bir `.md` dosyası ekleyin:
-
-**Dosya adı formatı:** `YILI-baslik.md` (örn: `2024-ai-devrimi.md`)
-
-**İçerik formatı:**
-
-```markdown
----
-year: 2024
-title: "Yapay Zeka Devrimi"
-date: 2024-03-15
-category: teknoloji
----
-
-Burada olay hakkında detaylı açıklama yazılır. Birden fazla paragraf olabilir.
-
-İkinci paragraf da eklenebilir.
+```javascript
+GITHUB_USERNAME: 'sergenaras',  // Kullanıcı adınız
+REPO_NAME: 'hafiza',            // Repo adınız
+BRANCH: 'main',                 // Branch adınız
 ```
 
-**Zorunlu alanlar:**
-- `year`: Olayın yılı (integer)
-- `title`: Olay başlığı (string)
+### 3. GitHub Pages
 
-**Opsiyonel alanlar:**
-- `date`: Tam tarih (YYYY-MM-DD formatında)
-- `category`: Kategori (teknoloji, bilim, tarih, kültür, spor, politika, diğer)
+- Settings → Pages
+- Source: `main` branch, `/ (root)`
+- Save
 
-## 🔧 Nasıl Çalışır?
+Site: `https://sergenaras.github.io/hafiza/`
 
-```
-┌─────────────────┐
-│  MD Dosyası     │
-│  Oluştur/Düzenle│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Git Push       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ GitHub Actions  │
-│  Tetiklenir     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ generate-json.py│
-│  Çalışır        │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ events.json     │
-│  Güncellenir    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Auto Commit    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  GitHub Pages   │
-│  Güncellenir    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Site JSON'ı    │
-│  Fetch Eder     │
-└─────────────────┘
-```
-
-## 📁 Proje Yapısı
+## 📁 Dosya Yapısı
 
 ```
-.
-├── index.html                      # Ana timeline sayfası
-├── events/
-│   ├── events.json                 # Otomatik oluşturulan JSON
-│   └── data/
-│       ├── 1969-moon-landing.md
-│       ├── 1989-berlin-wall.md
-│       └── ...
-├── .github/
-│   ├── workflows/
-│   │   └── generate-events.yml     # GitHub Actions workflow
-│   └── ISSUE_TEMPLATE/
-│       └── new-event.yml           # Issue formu
-├── scripts/
-│   └── generate-json.py            # JSON generator script
-└── README.md
+hafiza-timeline/
+├── index.html          # Ana sayfa
+├── config.js           # Ayarlar & ENV değişkenleri
+├── i18n.js             # Çoklu dil sistemi
+├── timeline.js         # Ana timeline motoru
+└── README.md           # Bu dosya
 ```
 
 ## 🎨 Özelleştirme
 
-### Renk Şeması
+### Renkleri Değiştir
 
-`index.html` içinde CSS değişkenlerini düzenleyin:
-
-```css
-/* Geçmiş olaylar için renk */
-#ff6b6b → #YENI_RENK
-
-/* Gelecek olaylar için renk */
-#5f27cd → #YENI_RENK
-```
-
-### Zaman Ölçeği
-
-Her yıl için piksel miktarını değiştirin:
+`config.js` → `COLORS`:
 
 ```javascript
-const position = 50 + (yearDiff * 3); // 3'ü değiştirin
+COLORS: {
+    background: '#ffffff',
+    todayMarker: '#ff4444',
+    eventBar: '#999999',
+    // ...
+}
 ```
 
-## 🔒 Güvenlik
+### Zoom Seviyelerini Ayarla
 
-- Tüm veriler public GitHub repo'sunda saklanır
-- Katkılar Issue ve PR sistemi ile moderasyona tabidir
-- GitHub Actions `GITHUB_TOKEN` ile çalışır (ek token gerekmez)
+`config.js` → `ZOOM_LEVELS`:
 
-## 📊 İstatistikler
+```javascript
+{
+    pixelsPerYear: 150,  // Arttır = Daha geniş
+    showYears: true,
+    showMonths: false,
+    showDays: false
+}
+```
 
-Site otomatik olarak gösterir:
-- Toplam olay sayısı
-- Geçmiş olay sayısı
-- Gelecek olay sayısı
+### Dil Ekle
 
-## 🤝 Katkıda Bulunma
+`i18n.js` → `translations`:
 
-1. Repository'yi fork edin
-2. Yeni bir branch oluşturun (`git checkout -b yeni-olay`)
-3. Değişikliklerinizi commit edin
-4. Branch'inizi push edin
-5. Pull Request oluşturun
+```javascript
+de: {
+    appName: 'Erinnerung Timeline',
+    // ...
+}
+```
 
-## 📜 Lisans
+## 🔧 Teknik Detaylar
 
-MIT License - Detaylar için LICENSE dosyasına bakın.
+### Teknolojiler
+- Vanilla JavaScript (framework yok!)
+- Canvas API (performans)
+- CSS3 animations
+- Touch events API
 
-## 🙏 Teşekkürler
+### Tarayıcı Desteği
+- Chrome/Edge 90+
+- Firefox 88+
+- Safari 14+
+- Mobile Safari
+- Chrome Android
 
-Bu proje şu teknolojileri kullanır:
-- GitHub Pages (hosting)
-- GitHub Actions (automation)
-- jsdelivr CDN (fast JSON delivery)
-- Python (JSON generation)
+### Performans Özellikleri
+- Virtual rendering
+- Event pooling
+- RequestAnimationFrame
+- Debounced resize
+- Touch gesture optimization
 
-## 📞 İletişim
+## 📊 Veri Formatı
 
-Sorularınız için [Issue açın](https://github.com/KULLANICI-ADI/REPO-ADI/issues)!
+JSON yapısı (`events/events.json`):
+
+```json
+{
+  "events": [
+    {
+      "year": 2024,
+      "title": "Olay Başlığı",
+      "date": "2024-03-15",
+      "category": "teknoloji",
+      "description": "Detaylı açıklama..."
+    }
+  ]
+}
+```
+
+## 🎯 Kullanım
+
+### Zoom Yapma
+- **Pinch Mode**: İki parmak yakınlaştır/uzaklaştır
+- **Double Click Mode**: Çift tıkla
+
+### Hareket Etme
+- **Pinch Mode**: Sürükle
+- **Double Click Mode**: Basılı tut & sürükle
+
+### Olay Görüntüleme
+- **Hover**: Kısa bilgi (tooltip)
+- **Tıkla**: Detaylı bilgi (modal)
+- **Modal**: Dışına tıkla = kapat
+
+## 🚀 Performans İpuçları
+
+1. **Çok olay varsa**: `EVENT_MAX_STACK` değerini düşür
+2. **Yavaşlık**: `pixelsPerYear` değerlerini azalt
+3. **Animasyon**: `ANIMATION_DURATION` değiştir
+
+## 📝 Lisans
+
+MIT License - Özgürce kullanın!
+
+## 🙏 Katkıda Bulunma
+
+1. Fork edin
+2. Feature branch oluşturun
+3. Commit edin
+4. Push edin
+5. Pull Request açın
+
+## 📞 Destek
+
+Sorun mu var? GitHub Issues'de bildirin!
 
 ---
 
-⭐ **Beğendiyseniz yıldız vermeyi unutmayın!**
+**Yıldız vermeyi unutmayın!** ⭐
