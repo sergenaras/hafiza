@@ -48,6 +48,57 @@
             align-items: center;
         }
 
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin: 0 10px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .control-mode {
+            font-size: 14px;
+            color: #666;
+        }
+
         .btn {
             padding: 8px 16px;
             background: #fff;
@@ -351,6 +402,11 @@
         <div class="header">
             <div class="logo">HAFIZA</div>
             <div class="header-actions">
+                <span class="control-mode">Kontrol:</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="controlToggle" checked>
+                    <span class="slider"></span>
+                </label>
                 <div class="zoom-info" id="zoomInfo">Zoom: 1x (Yıllar)</div>
                 <button class="btn" onclick="resetView()">↻ Sıfırla</button>
                 <button class="btn btn-primary" onclick="addNewEvent()">+ Yeni Olay</button>
@@ -741,8 +797,113 @@
             window.open(issueUrl, '_blank');
         }
 
+        // Kontrol modu yönetimi
+        let isAdvancedMode = true;
+        let lastClickTime = 0;
+        
+        const controlToggle = document.getElementById('controlToggle');
+        const wrapper = document.getElementById('timelineWrapper');
+        const instructionsText = document.querySelector('.instructions');
+
+        controlToggle.addEventListener('change', function() {
+            isAdvancedMode = this.checked;
+            updateControlMode();
+        });
+
+        function updateControlMode() {
+            if (isAdvancedMode) {
+                // Gelişmiş mod: Mouse wheel zoom + sürükle
+                instructionsText.textContent = '🖱️ Sürükle: Hareket Et | 🔍 Mouse Wheel: Zoom (3 Seviye)';
+                wrapper.onwheel = handleMouseWheel;
+                wrapper.ondblclick = null;
+            } else {
+                // Basit mod: Çift tıklama zoom + sürükle
+                instructionsText.textContent = '🖱️ Tıkla-Sürükle: Hareket Et | 🔍 Çift Tıkla: Yakınlaştır';
+                wrapper.onwheel = null;
+                wrapper.ondblclick = handleDoubleClick;
+            }
+        }
+
+        function handleDoubleClick(e) {
+            const now = Date.now();
+            // Çift tıklama kontrolü
+            if (now - lastClickTime < 300) {
+                if (currentZoomLevel < ZOOM_LEVELS.length - 1) {
+                    currentZoomLevel++;
+                } else {
+                    currentZoomLevel = 0;
+                }
+                render();
+            }
+            lastClickTime = now;
+        }
+
+        function handleMouseWheel(e) {
+            e.preventDefault();
+            if (e.deltaY < 0 && currentZoomLevel < ZOOM_LEVELS.length - 1) {
+                currentZoomLevel++;
+                render();
+            } else if (e.deltaY > 0 && currentZoomLevel > 0) {
+                currentZoomLevel--;
+                render();
+            }
+        }
+
+        // Kontrol modu yönetimi
+        let isAdvancedMode = true;
+        let lastClickTime = 0;
+        
+        const controlToggle = document.getElementById('controlToggle');
+        const instructionsText = document.querySelector('.instructions');
+
+        controlToggle.addEventListener('change', function() {
+            isAdvancedMode = this.checked;
+            updateControlMode();
+        });
+
+        function updateControlMode() {
+            if (isAdvancedMode) {
+                // Gelişmiş mod: Mouse wheel zoom + sürükle
+                instructionsText.textContent = '🖱️ Sürükle: Hareket Et | 🔍 Mouse Wheel: Zoom (3 Seviye)';
+                wrapper.onwheel = handleMouseWheel;
+                wrapper.ondblclick = null;
+            } else {
+                // Basit mod: Çift tıklama zoom + sürükle
+                instructionsText.textContent = '🖱️ Tıkla-Sürükle: Hareket Et | 🔍 Çift Tıkla: Yakınlaştır';
+                wrapper.onwheel = null;
+                wrapper.ondblclick = handleDoubleClick;
+            }
+        }
+
+        function handleDoubleClick(e) {
+            const now = Date.now();
+            // Çift tıklama kontrolü
+            if (now - lastClickTime < 300) {
+                if (currentZoomLevel < ZOOM_LEVELS.length - 1) {
+                    currentZoomLevel++;
+                } else {
+                    currentZoomLevel = 0;
+                }
+                render();
+            }
+            lastClickTime = now;
+        }
+
+        function handleMouseWheel(e) {
+            e.preventDefault();
+            if (e.deltaY < 0 && currentZoomLevel < ZOOM_LEVELS.length - 1) {
+                currentZoomLevel++;
+                render();
+            } else if (e.deltaY > 0 && currentZoomLevel > 0) {
+                currentZoomLevel--;
+                render();
+            }
+        }
+
         // Initialize
         loadEvents();
+        updateControlMode();
+        updateControlMode();
     </script>
 </body>
 </html>
