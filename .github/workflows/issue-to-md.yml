@@ -1,4 +1,4 @@
-name: ⚙️ Issue to Markdown
+name: Issue to Markdown
 
 on:
   issues:
@@ -7,27 +7,16 @@ on:
 
 jobs:
   create_md_from_issue:
-    # Sadece "new-event" etiketine sahip issue'lar için çalış
     if: contains(github.event.issue.labels.*.name, 'new-event')
     runs-on: ubuntu-latest
     permissions:
-      # Issue'ları okumak için
       issues: read
-      # Kodu checkout yapmak ve commit atmak için
       contents: write
-      # Başka bir workflow'u tetiklemek için
       actions: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: DEBUG - Print Issue Body
-        run: |
-          echo "The raw issue body is:"
-          echo "------------------------------------"
-          echo "${{ github.event.issue.body }}"
-          echo "------------------------------------"
 
       - name: Extract data from issue form
         id: extract_data
@@ -56,7 +45,7 @@ jobs:
           DESCRIPTION: ${{ steps.extract_data.outputs.description }}
         run: |
           # Dosya adı için başlığı temizle (küçük harf, boşluk yerine tire)
-          filename_title=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' -e 's/--+/-/g' -e 's/^-//' -e 's/-$//')
+          filename_title=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
           filename="${YEAR}-${filename_title}.md"
           filepath="events/data/${filename}"
 
@@ -74,7 +63,7 @@ jobs:
 
           echo "filename=$filename" >> $GITHUB_OUTPUT
           echo "filepath=$filepath" >> $GITHUB_OUTPUT
-          echo "✅ Markdown file generated at $filepath"
+          echo "Markdown file generated at $filepath"
 
       - name: Commit and push new event file
         env:
@@ -87,7 +76,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Commit atılacak yeni değişiklik bulunamadı."
           else
-            git commit -m "✨ Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
+            git commit -m "Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
             git push
           fi
 
