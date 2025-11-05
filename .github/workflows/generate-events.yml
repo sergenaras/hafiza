@@ -1,12 +1,6 @@
 name: Generate Events JSON
 
 on:
-  push:
-    paths:
-      - 'events/data/*.md'
-  pull_request:
-    paths:
-      - 'events/data/*.md'
   workflow_dispatch:
 
 jobs:
@@ -45,7 +39,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add events/events.json
-          git commit -m "🤖 Auto-update events.json [skip ci]"
+          git commit -m "🤖 Auto-update events.json"
           git push
 
       - name: No changes detected

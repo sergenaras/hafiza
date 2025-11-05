@@ -76,7 +76,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Commit atılacak yeni değişiklik bulunamadı."
           else
-            git commit -m "Yeni olay ekle: ${{ steps.extract_data.outputs.title }}" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
+            git commit -m "Yeni olay ekle: ${{ steps.extract_data.outputs.title }} [skip ci]" -m "Issue #${{ github.event.issue.number }} üzerinden eklendi."
             git push
           fi
 
