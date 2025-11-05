@@ -29,6 +29,13 @@
       "description": "Büyük dil modelleri ve üretken yapay zeka teknolojileri günlük hayatın vazgeçilmez bir parçası haline geldi. ChatGPT, Claude ve benzeri AI araçları iş dünyasından eğitime, sanattan bilime her alanda devrim yarattı. AI asistanları milyonlarca insan tarafından günlük olarak kullanılmaya başlandı."
     },
     {
+      "year": 2024,
+      "title": "Kem ",
+      "date": "2024-01-01",
+      "category": "None",
+      "description": "kem ve gam"
+    },
+    {
       "year": 2025,
       "title": "Anılar",
       "date": "2025-11-03",
@@ -65,8 +72,8 @@
     }
   ],
   "metadata": {
-    "total_events": 9,
-    "generated_at": "2025-11-05T06:59:28.950252Z",
+    "total_events": 10,
+    "generated_at": "2025-11-05T07:35:17.240889Z",
     "generator": "Zaman Yolculuğu Event Generator v1.0"
   }
 }
