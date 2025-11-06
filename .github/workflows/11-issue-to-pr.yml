@@ -19,12 +19,9 @@ jobs:
 
       - name: Parse issue body
         id: parse
-        # HATA DÜZELTMESİ: 'cat << EOF' yerine, 'body'i doğrudan env (ortam değişkeni) olarak al
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Yeni şablona göre parse et (Artık 'year' yok, 'date' ve 'sources' var)
-          # 'awk' komutları, başlıklar ve içerik arasındaki boş satırları atlamak için güncellendi
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
@@ -34,8 +31,9 @@ jobs:
           # Yılı, 'date' alanından al (YYYY-AA-GG)
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
-          # Dosya adı için başlığı temizle
-          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9çğıöşü]/-/g' | sed 's/--\+/-/g' | sed 's/^-//' -e 's/-$//')
+          # HATA DÜZELTMESİ: 'sed' komut zinciri düzeltildi
+          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
+          
           FILENAME="${YEAR}-${SLUG}.md"
           
           # Çıktıları ayarla
