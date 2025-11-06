@@ -9,6 +9,9 @@ window.i18n = {
             loading: 'Yükleniyor...',
             addEvent: '+ Olay Ekle',
             
+            // YENİ EKLENDİ
+            goToDate: 'Tarihe Git', 
+            
             // Zoom modes
             zoomPinch: 'Pinch Zoom',
             zoomDoubleClick: 'Çift Tıklama',
@@ -56,7 +59,9 @@ window.i18n = {
             
             // Time references
             today: 'Bugün',
-            // now: 'Şimdi',
+            
+            // YORUM KALDIRILDI
+            now: 'Şimdi', 
             
             // Stats
             totalEvents: 'Toplam',
@@ -76,6 +81,9 @@ window.i18n = {
             appName: 'Memory Timeline',
             loading: 'Loading...',
             addEvent: '+ Add Event',
+
+            // YENİ EKLENDİ
+            goToDate: 'Go to Date',
             
             // Zoom modes
             zoomPinch: 'Pinch Zoom',
@@ -190,7 +198,7 @@ window.i18n = {
             return `${this.t('months.full')[month]} ${year}`;
         }
         
-        return date.toLocaleDateString(this.currentLanguage);
+        return date.toLocaleString(this.currentLanguage);
     }
 };
 
