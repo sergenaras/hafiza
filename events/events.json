@@ -36,6 +36,13 @@
       "description": "kem ve gam"
     },
     {
+      "year": 2024,
+      "title": "Gün Batımı",
+      "date": "2024-11-05",
+      "category": "kültür",
+      "description": "günler de batar be"
+    },
+    {
       "year": 2025,
       "title": "Anılar",
       "date": "2025-11-03",
@@ -72,8 +79,8 @@
     }
   ],
   "metadata": {
-    "total_events": 10,
-    "generated_at": "2025-11-05T07:35:17.240889Z",
+    "total_events": 11,
+    "generated_at": "2025-11-06T14:11:04.865424Z",
     "generator": "Zaman Yolculuğu Event Generator v1.0"
   }
 }
