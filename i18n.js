@@ -56,7 +56,7 @@ window.i18n = {
             
             // Time references
             today: 'Bugün',
-            now: 'Şimdi',
+            // now: 'Şimdi',
             
             // Stats
             totalEvents: 'Toplam',
