@@ -7,11 +7,9 @@ class Timeline {
         
         // State
         this.events = [];
-        this.zoomLevel = 0; // 0, 1, 2 (years, months, days)
+        this.zoomLevel = 0;
         this.offsetX = 0;
         this.targetOffsetX = 0;
-        this.zoomMode = 'pinch'; // 'pinch' or 'doubleclick'
-        this.isAnimating = false;
         
         // Touch/Mouse state
         this.isDragging = false;
@@ -19,8 +17,8 @@ class Timeline {
         this.lastY = 0;
         this.touchStartDistance = 0;
         this.lastTouchDistance = 0;
-        this.clickCount = 0;
-        this.clickTimer = null;
+        this.lastClickTime = 0;
+        this.lastClickX = 0;
         
         // Hover state
         this.hoveredEvent = null;
@@ -377,11 +375,9 @@ class Timeline {
     }
     
     onMouseDown(e) {
-        if (this.zoomMode === 'doubleclick') {
-            this.isDragging = true;
-            this.lastX = e.clientX;
-            this.canvas.classList.add('grabbing');
-        }
+        this.isDragging = true;
+        this.lastX = e.clientX;
+        this.canvas.classList.add('grabbing');
     }
     
     onMouseMove(e) {
@@ -389,7 +385,7 @@ class Timeline {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        if (this.isDragging && this.zoomMode === 'doubleclick') {
+        if (this.isDragging) {
             const dx = e.clientX - this.lastX;
             this.offsetX += dx;
             this.lastX = e.clientX;
@@ -412,8 +408,6 @@ class Timeline {
     }
     
     onWheel(e) {
-        if (this.zoomMode !== 'pinch') return;
-        
         e.preventDefault();
         
         // Pan with shift, zoom without
@@ -442,8 +436,34 @@ class Timeline {
     }
     
     onDoubleClick(e) {
-        if (this.zoomMode === 'doubleclick') {
-            this.zoomIn();
+        const rect = this.canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        
+        // Check if shift key is held for zoom out
+        if (e.shiftKey) {
+            this.zoomOut();
+            return;
+        }
+        
+        // Zoom in toward clicked position
+        if (this.zoomLevel < window.ENV.ZOOM_LEVELS.length - 1) {
+            // Calculate how far from center the click was
+            const distanceFromCenter = clickX - this.centerX;
+            
+            // Before zoom, calculate what time position was clicked
+            const oldLevel = window.ENV.ZOOM_LEVELS[this.zoomLevel];
+            const clickedTimeOffset = (distanceFromCenter - this.offsetX) / oldLevel.pixelsPerYear;
+            
+            // Zoom in
+            this.zoomLevel++;
+            const newLevel = window.ENV.ZOOM_LEVELS[this.zoomLevel];
+            
+            // Adjust offset so clicked position stays under cursor
+            const newPixelOffset = clickedTimeOffset * newLevel.pixelsPerYear;
+            this.offsetX = distanceFromCenter - newPixelOffset;
+            
+            this.showZoomIndicator();
+            this.render();
         }
     }
     
@@ -470,7 +490,7 @@ class Timeline {
             this.offsetX += dx;
             this.lastX = e.touches[0].clientX;
             this.render();
-        } else if (e.touches.length === 2 && this.zoomMode === 'pinch') {
+        } else if (e.touches.length === 2) {
             const dx = e.touches[1].clientX - e.touches[0].clientX;
             const dy = e.touches[1].clientY - e.touches[0].clientY;
             const distance = Math.sqrt(dx*dx + dy*dy);
@@ -567,10 +587,6 @@ class Timeline {
         setTimeout(() => {
             indicator.classList.remove('active');
         }, 1500);
-    }
-    
-    setZoomMode(mode) {
-        this.zoomMode = mode;
     }
     
     reset() {

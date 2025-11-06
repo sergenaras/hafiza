@@ -300,16 +300,6 @@
         <header class="header">
             <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
             <div class="header-controls">
-                <!-- Zoom Mode Toggle -->
-                <div class="toggle-group">
-                    <button class="toggle-btn active" data-mode="pinch" data-i18n="zoomPinch">
-                        Pinch Zoom
-                    </button>
-                    <button class="toggle-btn" data-mode="doubleclick" data-i18n="zoomDoubleClick">
-                        Çift Tıklama
-                    </button>
-                </div>
-                
                 <!-- Add Event Button -->
                 <button class="btn-add" onclick="openNewEventDialog()" data-i18n="addEvent">
                     + Olay Ekle
@@ -330,7 +320,7 @@
             
             <!-- Instructions -->
             <div class="instructions" id="instructions">
-                <span data-i18n="instructionsPinch">🤏 Pinch: Zoom | 👆 Sürükle: Hareket</span>
+                <span data-i18n="instructions">🖱️ Çift Tıkla: Zoom | 🤏 Pinch: Zoom | 👆 Sürükle: Hareket | ⇧ Shift + Çift Tıkla: Zoom Out</span>
             </div>
         </div>
 
@@ -360,26 +350,6 @@
             initI18n();
             initTimeline();
         });
-
-        // Zoom mode toggle
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                window.timeline.setZoomMode(btn.dataset.mode);
-                updateInstructions(btn.dataset.mode);
-            });
-        });
-
-        function updateInstructions(mode) {
-            const instructions = document.getElementById('instructions');
-            if (mode === 'pinch') {
-                instructions.innerHTML = '<span data-i18n="instructionsPinch">🤏 Pinch: Zoom | 👆 Sürükle: Hareket</span>';
-            } else {
-                instructions.innerHTML = '<span data-i18n="instructionsDoubleClick">🖱️ Çift Tık: Zoom | 🔽 Basılı Tut & Sürükle: Hareket</span>';
-            }
-            initI18n();
-        }
 
         function openNewEventDialog() {
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
