@@ -7,10 +7,11 @@ class Timeline {
         
         // State
         this.events = [];
-        this.zoomLevel = 0;
+        this.zoomLevel = 0; // 0, 1, 2 (years, months, days)
         this.offsetX = 0;
         this.targetOffsetX = 0;
-        this.targetDate = null; // Gidilen tarih (mavi çizgi için)
+        this.zoomMode = 'pinch'; // 'pinch' or 'doubleclick'
+        this.isAnimating = false;
         
         // Touch/Mouse state
         this.isDragging = false;
@@ -18,8 +19,8 @@ class Timeline {
         this.lastY = 0;
         this.touchStartDistance = 0;
         this.lastTouchDistance = 0;
-        this.lastClickTime = 0;
-        this.lastClickX = 0;
+        this.clickCount = 0;
+        this.clickTimer = null;
         
         // Hover state
         this.hoveredEvent = null;
@@ -27,9 +28,6 @@ class Timeline {
         
         // Today reference
         this.today = new Date();
-        this.currentYear = this.today.getFullYear();
-        this.currentMonth = this.today.getMonth();
-        this.currentDay = this.today.getDate();
         
         // Initialize
         this.resize();
@@ -49,7 +47,7 @@ class Timeline {
         this.width = rect.width;
         this.height = rect.height;
         this.centerX = this.width / 2;
-        this.centerY = this.height * 0.7; // Cetveli aşağı çektik (0.5'ten 0.7'ye)
+        this.centerY = this.height / 2;
         
         this.render();
     }
@@ -136,29 +134,20 @@ class Timeline {
         // Draw today marker
         this.renderTodayMarker(ctx, level);
         
-        // Draw target date marker (blue)
-        if (this.targetDate) {
-            this.renderTargetDateMarker(ctx, level);
-        }
-        
         // Draw events
         this.renderEvents(ctx, level);
-        
-        // Draw target date events above ruler
-        if (this.targetDate) {
-            this.renderTargetDateEvents(ctx, level);
-        }
     }
     
     // Render Years View (Level 1)
     renderYearsView(ctx, level) {
         const yearWidth = level.pixelsPerYear;
+        const currentYear = this.today.getFullYear();
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + this.currentYear;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + this.currentYear;
+        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear;
+        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear;
         
         for (let year = startYear; year <= endYear; year++) {
-            const x = this.centerX + ((year - this.currentYear) * yearWidth) + this.offsetX;
+            const x = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
             
             // Year line
             ctx.strokeStyle = window.ENV.COLORS.yearLine;
@@ -180,12 +169,13 @@ class Timeline {
     renderMonthsView(ctx, level) {
         const yearWidth = level.pixelsPerYear;
         const monthWidth = yearWidth / 12;
+        const currentYear = this.today.getFullYear();
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + this.currentYear - 1;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + this.currentYear + 1;
+        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
+        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
         
         for (let year = startYear; year <= endYear; year++) {
-            const yearX = this.centerX + ((year - this.currentYear) * yearWidth) + this.offsetX;
+            const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
             
             // Year line (thick)
             ctx.strokeStyle = window.ENV.COLORS.yearLineThick;
@@ -213,11 +203,15 @@ class Timeline {
                 ctx.lineTo(monthX, this.centerY + 12);
                 ctx.stroke();
                 
-                // Month label (horizontal, ABOVE the ruler - like day numbers)
+                // Month label (vertical)
+                ctx.save();
+                ctx.translate(monthX, this.centerY - 20);
+                ctx.rotate(-Math.PI / 2);
                 ctx.fillStyle = window.ENV.COLORS.textLight;
-                ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'left';  // Sol hizalı, çizgiden başlasın
-                ctx.fillText(window.i18n.t('months.full')[month], monthX + 3, this.centerY - 18);
+                ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(window.i18n.t('months.full')[month], 0, 0);
+                ctx.restore();
             }
         }
     }
@@ -226,12 +220,13 @@ class Timeline {
     renderDaysView(ctx, level) {
         const yearWidth = level.pixelsPerYear;
         const dayWidth = yearWidth / 365;
+        const currentYear = this.today.getFullYear();
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + this.currentYear - 1;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + this.currentYear + 1;
+        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
+        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
         
         for (let year = startYear; year <= endYear; year++) {
-            const yearX = this.centerX + ((year - this.currentYear) * yearWidth) + this.offsetX;
+            const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
             
             // Draw months
             for (let month = 0; month < 12; month++) {
@@ -248,11 +243,15 @@ class Timeline {
                 ctx.lineTo(monthX, this.centerY + 18);
                 ctx.stroke();
                 
-                // Month label (horizontal, ABOVE the ruler)
+                // Month label (vertical)
+                ctx.save();
+                ctx.translate(monthX, this.centerY - 25);
+                ctx.rotate(-Math.PI / 2);
                 ctx.fillStyle = window.ENV.COLORS.text;
-                ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'left';  // Sol hizalı
-                ctx.fillText(window.i18n.t('months.full')[month], monthX + 3, this.centerY - 25);
+                ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(window.i18n.t('months.full')[month], 0, 0);
+                ctx.restore();
                 
                 // Draw days
                 for (let day = 1; day <= daysInMonth; day++) {
@@ -270,7 +269,7 @@ class Timeline {
                     
                     // Day number (horizontal, above ruler)
                     ctx.fillStyle = window.ENV.COLORS.textVeryLight;
-                    ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.fillText(day.toString(), dayX, this.centerY - 15);
                 }
@@ -294,18 +293,7 @@ class Timeline {
     
     // Render today marker
     renderTodayMarker(ctx, level) {
-        const yearWidth = level.pixelsPerYear;
-        const currentYear = this.today.getFullYear();
-        
-        // Calculate exact position including day of year
-        let dayOffset = 0;
-        if (level.showDays || level.showMonths) {
-            const dayOfYear = this.getDayOfYear(this.today);
-            const dayWidth = yearWidth / 365;
-            dayOffset = dayOfYear * dayWidth;
-        }
-        
-        const x = this.centerX + dayOffset + this.offsetX;
+        const x = this.centerX + this.offsetX;
         
         // Red line
         ctx.strokeStyle = window.ENV.COLORS.todayMarker;
@@ -325,11 +313,12 @@ class Timeline {
     // Render events
     renderEvents(ctx, level) {
         const yearWidth = level.pixelsPerYear;
+        const currentYear = this.today.getFullYear();
         
         this.events.forEach(event => {
             const eventDate = event.date;
             const eventYear = eventDate.getFullYear();
-            const yearOffset = (eventYear - this.currentYear) * yearWidth;
+            const yearOffset = (eventYear - currentYear) * yearWidth;
             
             let dayOffset = 0;
             if (level.showDays || level.showMonths) {
@@ -344,11 +333,11 @@ class Timeline {
             if (x < -50 || x > this.width + 50) return;
             
             // Event bar
-            const barHeight = 15;  // Daha büyük
-            const barSpacing = 4;
+            const barHeight = window.ENV.EVENT_BAR_HEIGHT;
+            const barSpacing = window.ENV.EVENT_BAR_SPACING;
             const yOffset = (event.stackLevel || 0) * (barHeight + barSpacing);
-            const y = this.centerY - 50 - yOffset;  // Daha yukarıda
-            const barWidth = 4;  // Daha kalın
+            const y = this.centerY - 40 - yOffset;
+            const barWidth = 3;
             
             // Color
             const isHovered = this.hoveredEvent === event;
@@ -386,9 +375,11 @@ class Timeline {
     }
     
     onMouseDown(e) {
-        this.isDragging = true;
-        this.lastX = e.clientX;
-        this.canvas.classList.add('grabbing');
+        if (this.zoomMode === 'doubleclick') {
+            this.isDragging = true;
+            this.lastX = e.clientX;
+            this.canvas.classList.add('grabbing');
+        }
     }
     
     onMouseMove(e) {
@@ -396,7 +387,7 @@ class Timeline {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        if (this.isDragging) {
+        if (this.isDragging && this.zoomMode === 'doubleclick') {
             const dx = e.clientX - this.lastX;
             this.offsetX += dx;
             this.lastX = e.clientX;
@@ -419,6 +410,8 @@ class Timeline {
     }
     
     onWheel(e) {
+        if (this.zoomMode !== 'pinch') return;
+        
         e.preventDefault();
         
         // Pan with shift, zoom without
@@ -447,34 +440,8 @@ class Timeline {
     }
     
     onDoubleClick(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        
-        // Check if shift key is held for zoom out
-        if (e.shiftKey) {
-            this.zoomOut();
-            return;
-        }
-        
-        // Zoom in toward clicked position
-        if (this.zoomLevel < window.ENV.ZOOM_LEVELS.length - 1) {
-            // Calculate how far from center the click was
-            const distanceFromCenter = clickX - this.centerX;
-            
-            // Before zoom, calculate what time position was clicked
-            const oldLevel = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-            const clickedTimeOffset = (distanceFromCenter - this.offsetX) / oldLevel.pixelsPerYear;
-            
-            // Zoom in
-            this.zoomLevel++;
-            const newLevel = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-            
-            // Adjust offset so clicked position stays under cursor
-            const newPixelOffset = clickedTimeOffset * newLevel.pixelsPerYear;
-            this.offsetX = distanceFromCenter - newPixelOffset;
-            
-            this.showZoomIndicator();
-            this.render();
+        if (this.zoomMode === 'doubleclick') {
+            this.zoomIn();
         }
     }
     
@@ -501,7 +468,7 @@ class Timeline {
             this.offsetX += dx;
             this.lastX = e.touches[0].clientX;
             this.render();
-        } else if (e.touches.length === 2) {
+        } else if (e.touches.length === 2 && this.zoomMode === 'pinch') {
             const dx = e.touches[1].clientX - e.touches[0].clientX;
             const dy = e.touches[1].clientY - e.touches[0].clientY;
             const distance = Math.sqrt(dx*dx + dy*dy);
@@ -599,174 +566,19 @@ class Timeline {
             indicator.classList.remove('active');
         }, 1500);
     }
-
+    
+    setZoomMode(mode) {
+        this.zoomMode = mode;
+    }
+    
+    reset() {
+        this.zoomLevel = 0;
+        this.offsetX = 0;
+        this.render();
+    }
+}
 
 // Initialize timeline
 function initTimeline() {
     window.timeline = new Timeline('timelineCanvas');
 }
-
-    goToToday() {
-        this.zoomLevel = 0;
-        this.offsetX = 0;
-        this.render();
-    }
-    
-    goToDate(targetDate) {
-        const yearDiff = targetDate.getFullYear() - this.currentYear;
-        const monthDiff = targetDate.getMonth() - this.currentMonth;
-        const dayDiff = targetDate.getDate() - this.currentDay;
-        
-        const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-        const yearWidth = level.pixelsPerYear;
-        
-        let totalOffset = yearDiff * yearWidth;
-        
-        if (level.showMonths || level.showDays) {
-            totalOffset += (monthDiff / 12) * yearWidth;
-        }
-        
-        if (level.showDays) {
-            totalOffset += (dayDiff / 365) * yearWidth;
-        }
-        
-        this.offsetX = -totalOffset;
-        this.render();
-    }
-}
-
-Timeline.prototype.goToToday = function() {
-    this.zoomLevel = 0;
-    this.offsetX = 0;
-    this.targetDate = null; // Clear blue marker
-    this.render();
-};
-
-Timeline.prototype.goToDate = function(targetDate) {
-    // Save target date for blue marker
-    this.targetDate = new Date(targetDate);
-    
-    const yearDiff = targetDate.getFullYear() - this.currentYear;
-    const monthDiff = targetDate.getMonth() - this.currentMonth;
-    const dayDiff = targetDate.getDate() - this.currentDay;
-    
-    const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-    const yearWidth = level.pixelsPerYear;
-    
-    let totalOffset = yearDiff * yearWidth;
-    
-    if (level.showMonths || level.showDays) {
-        totalOffset += (monthDiff / 12) * yearWidth;
-    }
-    
-    if (level.showDays) {
-        totalOffset += (dayDiff / 365) * yearWidth;
-    }
-    
-    this.offsetX = -totalOffset;
-    this.render();
-};
-
-// Add these methods to Timeline class
-
-renderTargetDateMarker(ctx, level) {
-    const yearWidth = level.pixelsPerYear;
-    
-    // Calculate exact position including day of year
-    let dayOffset = 0;
-    const yearDiff = this.targetDate.getFullYear() - this.currentYear;
-    
-    if (level.showDays || level.showMonths) {
-        const dayOfYear = this.getDayOfYear(this.targetDate);
-        const dayWidth = yearWidth / 365;
-        dayOffset = dayOfYear * dayWidth;
-    }
-    
-    const x = this.centerX + (yearDiff * yearWidth) + dayOffset + this.offsetX;
-    
-    // Blue line
-    ctx.strokeStyle = '#4a90e2';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([5, 5]); // Dashed line
-    ctx.beginPath();
-    ctx.moveTo(x, 80);
-    ctx.lineTo(x, this.centerY + 100);
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset
-    
-    // Date label
-    ctx.fillStyle = '#4a90e2';
-    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center';
-    const dateStr = window.formatDate(this.targetDate, 'short');
-    ctx.fillText(dateStr, x, 70);
-}
-
-renderTargetDateEvents(ctx, level) {
-    // Find events on target date
-    const targetDateKey = this.getDateKey(this.targetDate);
-    const eventsOnDate = this.events.filter(event => 
-        this.getDateKey(event.date) === targetDateKey
-    );
-    
-    if (eventsOnDate.length === 0) return;
-    
-    const yearWidth = level.pixelsPerYear;
-    let dayOffset = 0;
-    const yearDiff = this.targetDate.getFullYear() - this.currentYear;
-    
-    if (level.showDays || level.showMonths) {
-        const dayOfYear = this.getDayOfYear(this.targetDate);
-        const dayWidth = yearWidth / 365;
-        dayOffset = dayOfYear * dayWidth;
-    }
-    
-    const centerX = this.centerX + (yearDiff * yearWidth) + dayOffset + this.offsetX;
-    
-    // Draw events in a box above the ruler
-    const boxWidth = 300;
-    const boxHeight = 40 + (eventsOnDate.length * 30);
-    const boxX = Math.max(20, Math.min(centerX - boxWidth/2, this.width - boxWidth - 20));
-    const boxY = 100;
-    
-    // Box background
-    ctx.fillStyle = 'rgba(74, 144, 226, 0.95)';
-    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-    
-    // Box border
-    ctx.strokeStyle = '#357abd';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-    
-    // Title
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(window.formatDate(this.targetDate, 'full'), boxX + 15, boxY + 20);
-    
-    // Events
-    ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
-    eventsOnDate.forEach((event, index) => {
-        const y = boxY + 45 + (index * 30);
-        
-        // Bullet point
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(boxX + 15, y - 4, 3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Event title (truncated)
-        let title = event.title;
-        if (title.length > 35) {
-            title = title.substring(0, 32) + '...';
-        }
-        ctx.fillText(title, boxX + 25, y);
-    });
-    
-    // Click hint
-    ctx.font = 'italic 10px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.textAlign = 'center';
-    ctx.fillText('Detaylar için olaya tıklayın', boxX + boxWidth/2, boxY + boxHeight - 10);
-}
-
