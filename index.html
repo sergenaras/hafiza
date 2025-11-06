@@ -205,14 +205,15 @@
             background: #357abd;
         }
         
-        .btn-dark {
+        /* KALDIRILDI: .btn-dark sınıfı */
+        /* .btn-dark {
             background: #333;
             color: white;
             border: none;
         }
         .btn-dark:hover {
             background: #000;
-        }
+        } */
 
         /* Gizli Elemanlar (Canvas'ın ihtiyacı olan) */
         .hidden-elements {
@@ -234,7 +235,7 @@
                 Bugüne Dön
             </button>
             
-            <button class="btn-dark" onclick="openNewEventDialog()" data-i18n="addEvent">
+            <button class="btn btn-primary" onclick="openNewEventDialog()" data-i18n="addEvent">
                 + Olay Ekle
             </button>
         </div>
@@ -280,46 +281,35 @@
     <script src="timeline.js"></script>
     
     <script>
-        // Global değişkenler
-        let allEvents = []; // 'timeline.js'den gelen tüm olayların kopyası
-        let currentSelectedEvent = null; // Şu an seçili olan olayı takip et
+        let allEvents = []; 
+        let currentSelectedEvent = null; 
 
-        // --- 1. Başlatma Fonksiyonları ---
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
-            // Timeline'ı başlat (Bu, 'loadEvents'i tetikleyecek)
             initTimeline();
             
-            // Tarih girişini bugüne ayarla
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
         });
 
-        // YENİ: Bu fonksiyon 'timeline.js' yüklendiğinde tetiklenecek
         function initializeUI(events) {
-            allEvents = events; // Verinin kopyasını al
+            allEvents = events; 
             populateCategoryFilter(allEvents);
-            populateEventList(allEvents); // Başlangıçta "tümü"nü göster
+            populateEventList(allEvents); 
         }
-
-        // --- 2. Panel Doldurma Fonksiyonları ---
 
         function populateCategoryFilter(events) {
             const filterSelect = document.getElementById('categoryFilter');
-            
-            // Kategorileri dinamik olarak bul
             const categories = new Set(events.map(event => event.category || 'diğer'));
             
-            filterSelect.innerHTML = ''; // "Yükleniyor..."u temizle
+            filterSelect.innerHTML = ''; 
             
-            // "Tümü" seçeneği (Onayladığımız gibi)
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
             allOption.textContent = 'Tümü';
             filterSelect.appendChild(allOption);
             
-            // Diğer kategoriler
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -330,22 +320,20 @@
 
         function populateEventList(eventsToShow) {
             const listContainer = document.getElementById('eventListContainer');
-            listContainer.innerHTML = ''; // Listeyi temizle
+            listContainer.innerHTML = ''; 
 
             if (eventsToShow.length === 0) {
-                listContainer.innerHTML = '<li>Bu kategoride olay bulunamadı.</li>';
+                listContainer.innerHTML = '<li style="padding: 12px 8px; color: #888;">Bu kategoride olay bulunamadı.</li>';
                 return;
             }
 
             eventsToShow.forEach(event => {
                 const li = document.createElement('li');
                 li.className = 'event-list-item';
-                // YENİ: Bu olayın şu an seçili olup olmadığını kontrol et
                 if (currentSelectedEvent && currentSelectedEvent.title === event.title && currentSelectedEvent.date.getTime() === event.date.getTime()) {
                     li.classList.add('selected');
                 }
                 
-                // Olay tıklandığında hem detayı göster hem cetvele git
                 li.onclick = () => {
                     selectEvent(event);
                 };
@@ -382,8 +370,6 @@
             `;
         }
 
-        // --- 3. Olay (Event) Yöneticileri ---
-
         function filterCategory() {
             const filterSelect = document.getElementById('categoryFilter');
             const selectedCategory = filterSelect.value;
@@ -399,30 +385,21 @@
             populateEventList(filteredEvents);
         }
 
-        // Hem listeden hem de cetvelden gelen ortak fonksiyon
         function selectEvent(event) {
-            // YENİ: Seçimi global olarak sakla
             currentSelectedEvent = event;
-            
-            // 1. Olay Detayları panelini güncelle
             updateDetailsPanel(event);
             
-            // 2. Zaman çizelgesini o tarihe götür
             if (window.timeline) {
                 window.timeline.goToDate(event.date);
             }
 
-            // 3. YENİ: Olay listesini yeniden çiz (doğru öğenin 'selected' olması için)
-            filterCategory(); // Bu, mevcut filtreyi koruyarak listeyi yeniler
+            filterCategory(); 
         }
-
-        // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
         function goToToday() {
             if (window.timeline) {
                 window.timeline.goToToday();
             }
-            // YENİ: Bugün'e gidince seçimi temizle
             currentSelectedEvent = null;
             updateDetailsPanel(null);
             filterCategory();
