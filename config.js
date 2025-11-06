@@ -1,44 +1,94 @@
+// Configuration / Environment Variables
 window.ENV = {
-    EVENTS_JSON_URL: './events.json', // URL of your events JSON file
-    GITHUB_ISSUE_URL: 'https://github.com/sergeneraras/hafiza/issues/new?assignees=sergeneraras&labels=event&projects=&template=olay-ekle.md&title=Yeni+olay%3A+%5BOLAY+ADI%5D', // URL for adding new events
-
-    // Zoom Levels Configuration
+    // GitHub Repository Settings (Geri geldi)
+    GITHUB_USERNAME: 'sergenaras',
+    REPO_NAME: 'hafiza',
+    BRANCH: 'main',
+    
+    // Data Source (Geri geldi)
+    get EVENTS_JSON_URL() {
+        return `https://cdn.jsdelivr.net/gh/${this.GITHUB_USERNAME}/${this.REPO_NAME}@${this.BRANCH}/events/events.json`;
+    },
+    
+    // GitHub Issue URL (Geri geldi)
+    get GITHUB_ISSUE_URL() {
+        return `https://github.com/${this.GITHUB_USERNAME}/${this.REPO_NAME}/issues/new?template=new-event.yml&title=Yeni+Olay:+`;
+    },
+    
+    // Timeline Settings
     ZOOM_LEVELS: [
-        { id: 1, label: 'Years', pixelsPerYear: 50 },    // Default - 50 pixels per year
-        { id: 2, label: 'Months', pixelsPerYear: 150 },   // 150 pixels per year
-        { id: 3, label: 'Days', pixelsPerYear: 730 }     // ~2 pixels per day
+        {
+            id: 1,
+            name: 'years',
+            pixelsPerYear: 150,      // Her yıl 150px
+            showYears: true,
+            showMonths: false,
+            showDays: false
+        },
+        {
+            id: 2,
+            name: 'months',
+            pixelsPerYear: 1800,     // Her yıl 1800px = Her ay 150px
+            showYears: true,
+            showMonths: true,
+            showDays: false
+        },
+        {
+            id: 3,
+            name: 'days',
+            pixelsPerYear: 10950,    // Her yıl 10950px = Her gün ~30px
+            showYears: true,
+            showMonths: true,
+            showDays: true
+        }
     ],
-
-    // Layout Settings
-    LAYOUT: {
-        rulerYOffset: 0, // Cetvelin dikey merkezden ofseti. 0 = tam orta.
-        eventBarBaseY: 60, // Olay çubuklarının cetvele göre dikey ofseti
-        monthLabelOffset: 60, // Ay etiketlerinin cetvele göre dikey ofseti (döndürüldüğü için X ekseninde)
-        markerLineLength: 60, // Today/Hover çizgisinin uzunluğu
-        infoBoxY: 20 // KALDIRILDI, artık index.html'deki panel kullanılıyor
-    },
-
-    // Event Bar Settings
-    EVENT_BAR_HEIGHT: 12,
-    EVENT_BAR_SPACING: 4, // Space between stacked event bars
-    EVENT_MAX_STACK: 3, // Maximum number of events to stack vertically before overlapping
-
-    // Colors
+    
+    // Visual Settings (Yeni Renk Paleti)
     COLORS: {
-        background: '#f4f4f4',
-        ruler: '#ccc',
-        todayMarker: '#e74c3c', // Red
-        hoverMarker: '#3498db', // Blue
-        yearLine: '#aaa',
-        yearLineThick: '#888',
-        monthLine: '#bbb',
-        dayLine: '#ddd',
-        text: '#333',
-        textLight: '#777',
-        textVeryLight: '#999',
-        eventBar: '#6c5ce7', // Purple
-        eventBarHover: '#a29bfe' // Lighter purple
+        background: '#FFFFFF',
+        text: '#212121',
+        textLight: '#757575',
+        textVeryLight: '#BDBDBD',
+        
+        ruler: '#E0E0E0',
+        todayMarker: '#E53935',    // Güçlü Kırmızı
+        hoverMarker: '#1E88E5',    // Güçlü Mavi
+        
+        yearLine: '#BDBDBD',
+        yearLineThick: '#757575',
+        monthLine: '#EEEEEE',
+        dayLine: '#F5F5F5',
+        
+        eventBar: '#757575',
+        eventBarHover: '#1E88E5'   // Mavi
     },
 
-    MIN_PINCH_DISTANCE: 10 // Minimum pixel change for pinch zoom to register
+    // Yerleşim Ayarları (Doğru ve güncel)
+    LAYOUT: {
+        rulerYOffset: 0,       // DÜZELTME: 0 olarak ayarlandı (ortalamak için)
+        infoBoxY: 80,          // Bu artık kullanılmıyor ama kalsın
+        eventBarBaseY: -60,    // Olay çubuklarının cetvele göre dikey konumu (cetvelin 60px üstü)
+        markerLineLength: 40,  // Kırmızı ve mavi çizgilerin toplam uzunluğu
+        monthLabelOffset: 25   // Ay isimlerinin cetvelden dikey uzaklığı
+    },
+    
+    // Event Display Settings
+    EVENT_BAR_HEIGHT: 8,
+    EVENT_BAR_SPACING: 4,
+    EVENT_MAX_STACK: 5,
+    
+    // Animation Settings
+    ANIMATION_DURATION: 300,
+    ANIMATION_EASING: 'easeOutCubic',
+    
+    // Touch/Gesture Settings
+    PINCH_ZOOM_SENSITIVITY: 0.005,
+    MIN_PINCH_DISTANCE: 50,
+    DOUBLE_CLICK_DELAY: 300,
+    
+    // Language (EN ÖNEMLİ DÜZELTME - Geri geldi)
+    DEFAULT_LANGUAGE: 'tr',
+    
+    // Cache Settings
+    CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
 };
