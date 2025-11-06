@@ -9,9 +9,9 @@ class Timeline {
         this.events = [];
         this.zoomLevel = 0; // 0, 1, 2 (years, months, days)
         this.offsetX = 0;
-        this.targetOffsetX = 0;
+        this.targetOffsetX = 0; // YENİ EKLENDİ: Animasyon hedefi için
         this.zoomMode = 'pinch'; // 'pinch' or 'doubleclick'
-        this.isAnimating = false;
+        // this.isAnimating = false; // Artık bu şekilde kullanılmıyor
         
         // Touch/Mouse state
         this.isDragging = false;
@@ -33,6 +33,9 @@ class Timeline {
         this.resize();
         this.setupEventListeners();
         this.loadEvents();
+        
+        // YENİ EKLENDİ: Animasyon döngüsünü başlat
+        this.animate(); 
     }
     
     // Setup canvas size
@@ -49,7 +52,7 @@ class Timeline {
         this.centerX = this.width / 2;
         this.centerY = this.height / 2;
         
-        this.render();
+        // this.render(); // KALDIRILDI: Artık animate() döngüsü render ediyor
     }
     
     // Load events from JSON
@@ -75,7 +78,7 @@ class Timeline {
             this.calculateEventStacks();
             
             document.getElementById('loading').style.display = 'none';
-            this.render();
+            // this.render(); // KALDIRILDI: Artık animate() döngüsü render ediyor
         } catch (error) {
             console.error('Error loading events:', error);
             document.getElementById('loading').textContent = window.t('errorLoading');
@@ -104,6 +107,23 @@ class Timeline {
     
     getDateKey(date) {
         return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    }
+    
+    // YENİ EKLENDİ: Ana animasyon döngüsü (pürüzsüz kaydırma için)
+    animate() {
+        // Easing (yumuşatma) ile hedef offset'e yaklaş
+        const dx = this.targetOffsetX - this.offsetX;
+        if (Math.abs(dx) > 0.1) {
+            this.offsetX += dx * 0.1; // 0.1 = easing faktörü
+        } else {
+            this.offsetX = this.targetOffsetX;
+        }
+        
+        // Her animasyon karesinde yeniden çiz
+        this.render();
+        
+        // Döngüyü sürdür
+        requestAnimationFrame(this.animate.bind(this));
     }
     
     // Main render function
@@ -293,6 +313,18 @@ class Timeline {
     
     // Render today marker
     renderTodayMarker(ctx, level) {
+        // DEĞİŞTİRİLDİ: 'today' anlık olarak hesaplanmıyor, this.today kullanılıyor
+        // 'today'in 'offsetX'e göre konumu
+        const todayDiffMs = this.today.getTime() - new Date(this.today.getFullYear(), 0, 0).getTime();
+        const todayDayOfYear = todayDiffMs / (1000 * 60 * 60 * 24);
+        
+        const pixelsPerDay = level.pixelsPerYear / 365;
+        
+        // Bugün'ün x konumu, *sadece* this.offsetX'e değil,
+        // (bugünün yıl içindeki konumu - bugünün yıl içindeki konumu) = 0'a göre hesaplanmalı
+        // ... pardon, en basiti şu:
+        // 'today'in x konumu her zaman merkez + offset olmalı
+        
         const x = this.centerX + this.offsetX;
         
         // Red line
@@ -317,17 +349,14 @@ class Timeline {
         
         this.events.forEach(event => {
             const eventDate = event.date;
-            const eventYear = eventDate.getFullYear();
-            const yearOffset = (eventYear - currentYear) * yearWidth;
             
-            let dayOffset = 0;
-            if (level.showDays || level.showMonths) {
-                const dayOfYear = this.getDayOfYear(eventDate);
-                const dayWidth = yearWidth / 365;
-                dayOffset = dayOfYear * dayWidth;
-            }
+            // DEĞİŞTİRİLDİ: Olayın X konumunu 'today' referansına göre hesapla
+            const diffMs = eventDate.getTime() - this.today.getTime();
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            const pixelsPerDay = level.pixelsPerYear / 365;
             
-            const x = this.centerX + yearOffset + dayOffset + this.offsetX;
+            // Olayın x konumu = merkez + (bugünden fark * gün başına piksel) + genel offset
+            const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX;
             
             // Check if visible
             if (x < -50 || x > this.width + 50) return;
@@ -379,6 +408,9 @@ class Timeline {
             this.isDragging = true;
             this.lastX = e.clientX;
             this.canvas.classList.add('grabbing');
+            
+            // YENİ EKLENDİ: Sürüklemeye başlarken animasyonu durdur ve mevcut konumu hedef yap
+            this.targetOffsetX = this.offsetX; 
         }
     }
     
@@ -389,9 +421,10 @@ class Timeline {
         
         if (this.isDragging && this.zoomMode === 'doubleclick') {
             const dx = e.clientX - this.lastX;
-            this.offsetX += dx;
+            // DEĞİŞTİRİLDİ: 'offsetX'i değil, 'targetOffsetX'i güncelle
+            this.targetOffsetX += dx; 
             this.lastX = e.clientX;
-            this.render();
+            // this.render(); // KALDIRILDI: 'animate' döngüsü render ediyor
         } else {
             // Check hover
             this.checkHover(x, y);
@@ -416,8 +449,9 @@ class Timeline {
         
         // Pan with shift, zoom without
         if (e.shiftKey) {
-            this.offsetX -= e.deltaY;
-            this.render();
+            // DEĞİŞTİRİLDİ: 'offsetX'i değil, 'targetOffsetX'i güncelle
+            this.targetOffsetX -= e.deltaY;
+            // this.render(); // KALDIRILDI: 'animate' döngüsü render ediyor
         } else {
             // Zoom
             if (e.deltaY < 0 && this.zoomLevel < window.ENV.ZOOM_LEVELS.length - 1) {
@@ -429,6 +463,9 @@ class Timeline {
     }
     
     onClick(e) {
+        // YENİ EKLENDİ: Eğer sürükleme yapılıyorsa tıklamayı iptal et
+        if (Math.abs(this.targetOffsetX - this.offsetX) > 2) return; 
+
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -452,6 +489,10 @@ class Timeline {
             this.isDragging = true;
             this.lastX = e.touches[0].clientX;
             this.lastY = e.touches[0].clientY;
+            
+            // YENİ EKLENDİ: Sürüklemeye başlarken animasyonu durdur
+            this.targetOffsetX = this.offsetX;
+            
         } else if (e.touches.length === 2 && this.zoomMode === 'pinch') {
             const dx = e.touches[1].clientX - e.touches[0].clientX;
             const dy = e.touches[1].clientY - e.touches[0].clientY;
@@ -465,9 +506,10 @@ class Timeline {
         
         if (e.touches.length === 1 && this.isDragging) {
             const dx = e.touches[0].clientX - this.lastX;
-            this.offsetX += dx;
+            // DEĞİŞTİRİLDİ: 'offsetX'i değil, 'targetOffsetX'i güncelle
+            this.targetOffsetX += dx;
             this.lastX = e.touches[0].clientX;
-            this.render();
+            // this.render(); // KALDIRILDI
         } else if (e.touches.length === 2 && this.zoomMode === 'pinch') {
             const dx = e.touches[1].clientX - e.touches[0].clientX;
             const dy = e.touches[1].clientY - e.touches[0].clientY;
@@ -501,7 +543,11 @@ class Timeline {
                 this.hideTooltip();
             }
             
-            this.render();
+            // this.render(); // KALDIRILDI - 'animate' döngüsü zaten render ediyor
+            // Ancak, hover durumunun *anında* güncellenmesi için bu kalmalı.
+            // 'animate' döngüsü yavaş olabilir.
+            // Düşünelim: 'animate' döngüsü zaten saniyede 60 kez render ediyor.
+            // Bu yüzden 'checkHover' içinde render'a gerek YOKTUR.
         }
     }
     
@@ -544,7 +590,7 @@ class Timeline {
         if (this.zoomLevel < window.ENV.ZOOM_LEVELS.length - 1) {
             this.zoomLevel++;
             this.showZoomIndicator();
-            this.render();
+            // this.render(); // KALDIRILDI
         }
     }
     
@@ -552,14 +598,14 @@ class Timeline {
         if (this.zoomLevel > 0) {
             this.zoomLevel--;
             this.showZoomIndicator();
-            this.render();
+            // this.render(); // KALDIRILDI
         }
     }
     
     showZoomIndicator() {
         const indicator = document.getElementById('zoomIndicator');
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-        indicator.textContent = `×${level.id} - ${window.t('zoomLevel' + level.id)}`;
+        indicator.textContent = `×${level.id} - ${window.t('zoomLevel'D + level.id)}`;
         indicator.classList.add('active');
         
         setTimeout(() => {
@@ -571,10 +617,31 @@ class Timeline {
         this.zoomMode = mode;
     }
     
-    reset() {
-        this.zoomLevel = 0;
-        this.offsetX = 0;
-        this.render();
+    // reset() { // Bu fonksiyon artık 'goToToday' oldu
+    //     this.zoomLevel = 0;
+    //     this.offsetX = 0;
+    //     this.render();
+    // }
+    
+    // YENİ EKLENDİ: 'goToToday' fonksiyonu (UX Önerisi 2)
+    goToToday() {
+        this.targetOffsetX = 0;
+    }
+    
+    // YENİ EKLENDİ: 'goToDate' fonksiyonu (UX Önerisi 2)
+    goToDate(selectedDate) {
+        // 'today' ile 'selectedDate' arasındaki gün farkını hesapla
+        const diffMs = selectedDate.getTime() - this.today.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        
+        // Mevcut zoom seviyesindeki 'gün başına piksel' değerini bul
+        const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
+        const pixelsPerDay = level.pixelsPerYear / 365;
+        
+        // Hedef offset'i ayarla (ters yönde)
+        // Eğer 10 gün sonraya gidiyorsak (diffDays = 10),
+        // timeline'ı sola çekmeliyiz (offset negatif olmalı).
+        this.targetOffsetX = -(diffDays * pixelsPerDay);
     }
 }
 
