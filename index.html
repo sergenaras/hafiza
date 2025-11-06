@@ -52,6 +52,49 @@
             align-items: center;
         }
 
+        /* Date Input */
+        .date-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #333;
+            background: white;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #999;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+        }
+
+        .btn:hover {
+            background: #e5e5e5;
+            border-color: #999;
+        }
+
+        .btn-go {
+            background: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+
+        .btn-go:hover {
+            background: #357abd;
+            border-color: #357abd;
+        }
+
         /* Toggle Button */
         .toggle-group {
             display: flex;
@@ -300,6 +343,17 @@
         <header class="header">
             <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
             <div class="header-controls">
+                <!-- Date Navigation -->
+                <input type="date" id="dateInput" class="date-input" />
+                <button class="btn btn-go" onclick="goToDate()" data-i18n="goToDate">
+                    Git
+                </button>
+                
+                <!-- Reset Button -->
+                <button class="btn" onclick="goToToday()" data-i18n="goToToday">
+                    📍 Bugüne Dön
+                </button>
+                
                 <!-- Add Event Button -->
                 <button class="btn-add" onclick="openNewEventDialog()" data-i18n="addEvent">
                     + Olay Ekle
@@ -349,7 +403,26 @@
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
             initTimeline();
+            
+            // Set date input to today
+            const today = new Date();
+            document.getElementById('dateInput').valueAsDate = today;
         });
+
+        function goToToday() {
+            if (window.timeline) {
+                window.timeline.goToToday();
+            }
+        }
+
+        function goToDate() {
+            const dateInput = document.getElementById('dateInput');
+            const selectedDate = dateInput.valueAsDate;
+            
+            if (selectedDate && window.timeline) {
+                window.timeline.goToDate(selectedDate);
+            }
+        }
 
         function openNewEventDialog() {
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');

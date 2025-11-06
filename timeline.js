@@ -588,15 +588,66 @@ class Timeline {
             indicator.classList.remove('active');
         }, 1500);
     }
-    
-    reset() {
-        this.zoomLevel = 0;
-        this.offsetX = 0;
-        this.render();
-    }
-}
+
 
 // Initialize timeline
 function initTimeline() {
     window.timeline = new Timeline('timelineCanvas');
 }
+
+    goToToday() {
+        this.zoomLevel = 0;
+        this.offsetX = 0;
+        this.render();
+    }
+    
+    goToDate(targetDate) {
+        const yearDiff = targetDate.getFullYear() - this.currentYear;
+        const monthDiff = targetDate.getMonth() - this.currentMonth;
+        const dayDiff = targetDate.getDate() - this.currentDay;
+        
+        const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
+        const yearWidth = level.pixelsPerYear;
+        
+        let totalOffset = yearDiff * yearWidth;
+        
+        if (level.showMonths || level.showDays) {
+            totalOffset += (monthDiff / 12) * yearWidth;
+        }
+        
+        if (level.showDays) {
+            totalOffset += (dayDiff / 365) * yearWidth;
+        }
+        
+        this.offsetX = -totalOffset;
+        this.render();
+    }
+}
+
+Timeline.prototype.goToToday = function() {
+    this.zoomLevel = 0;
+    this.offsetX = 0;
+    this.render();
+};
+
+Timeline.prototype.goToDate = function(targetDate) {
+    const yearDiff = targetDate.getFullYear() - this.currentYear;
+    const monthDiff = targetDate.getMonth() - this.currentMonth;
+    const dayDiff = targetDate.getDate() - this.currentDay;
+    
+    const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
+    const yearWidth = level.pixelsPerYear;
+    
+    let totalOffset = yearDiff * yearWidth;
+    
+    if (level.showMonths || level.showDays) {
+        totalOffset += (monthDiff / 12) * yearWidth;
+    }
+    
+    if (level.showDays) {
+        totalOffset += (dayDiff / 365) * yearWidth;
+    }
+    
+    this.offsetX = -totalOffset;
+    this.render();
+};
