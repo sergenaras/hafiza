@@ -330,12 +330,25 @@ class Timeline {
                 const monthDiffDays = this.daysFromToday(monthStart);
                 const monthX = this.centerX + (monthDiffDays * pixelsPerDay) + this.offsetX;
 
+                // Ekran dışında kalanları çizmeyi atla
+                if (monthX < -this.width / 2 || monthX > this.width * 1.5) {
+                    continue;
+                }
+
                 ctx.strokeStyle = window.ENV.COLORS.yearLineThick;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(monthX, baselineY - 18);
                 ctx.lineTo(monthX, baselineY + 18);
                 ctx.stroke();
+                
+                // ***** DÜZELTME: Yıl etiketini Ocak ayının altına çiz *****
+                if (month === 0) {
+                    ctx.fillStyle = window.ENV.COLORS.text;
+                    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(year.toString(), monthX, baselineY + 40);
+                }
                 
                 // --- Ay Etiketi Çizimi ---
                 const monthText = window.i18n.t('months.full')[month];
@@ -380,6 +393,9 @@ class Timeline {
                     
                     // 1 Ocak çizgisini tekrar çizmeyi atla (zaten ay çizgisi olarak çizildi)
                     if (day > 1) {
+                        // Performans için ekran dışı çizimleri atla
+                        if (dayX < 0 || dayX > this.width) continue; 
+
                         ctx.strokeStyle = window.ENV.COLORS.dayLine;
                         ctx.lineWidth = 1;
                         ctx.beginPath();
@@ -387,6 +403,9 @@ class Timeline {
                         ctx.lineTo(dayX, baselineY + 8);
                         ctx.stroke();
                     }
+                    
+                    // Performans için ekran dışı çizimleri atla
+                    if (dayX < 0 || dayX > this.width) continue; 
                     
                     // Gün numarası
                     ctx.fillStyle = window.ENV.COLORS.textVeryLight;
@@ -398,12 +417,8 @@ class Timeline {
         }
     }
     
-    // Gündelik hesaplama için bu fonksiyona artık gerek yok.
-    // getDayOfYear(date) { ... }
-    
     // Render today marker
     renderTodayMarker(ctx, level, baselineY) {
-        // 'today'in gün farkı 0'dır, bu yüzden X konumu her zaman merkez + offset'tir.
         const x = this.centerX + this.offsetX; 
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2;
 
@@ -416,10 +431,10 @@ class Timeline {
         ctx.stroke();
         
         // "Şimdi" label
-        // ctx.fillStyle = window.ENV.COLORS.todayMarker;
-        // ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-        // ctx.textAlign = 'center';
-        // ctx.fillText(window.t('now').toUpperCase(), x, window.ENV.LAYOUT.infoBoxY + 40);
+        ctx.fillStyle = window.ENV.COLORS.todayMarker;
+        ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(window.t('now').toUpperCase(), x, window.ENV.LAYOUT.infoBoxY + 40);
     }
     
     // Render events
@@ -428,7 +443,6 @@ class Timeline {
 
         this.events.forEach(event => {
             const eventDate = event.date;
-            // Olayın X konumunu 'today' referansına göre HASSAS olarak hesapla
             const diffDays = this.daysFromToday(eventDate);
             const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX;
             
