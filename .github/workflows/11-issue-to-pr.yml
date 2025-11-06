@@ -1,4 +1,4 @@
-name: 11 - Issue üzerinden olay oluştur.
+name: 11 - Create Event PR from Issue
 
 on:
   issues:
@@ -19,14 +19,12 @@ jobs:
 
       - name: Parse issue body
         id: parse
+        # HATA DÜZELTMESİ: 'cat << EOF' yerine, 'body'i doğrudan env (ortam değişkeni) olarak al
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Get issue body
-          ISSUE_BODY=$(cat << 'EOF'
-          ${{ github.event.issue.body }}
-          EOF
-          )
-          
           # Yeni şablona göre parse et (Artık 'year' yok, 'date' ve 'sources' var)
+          # 'awk' komutları, başlıklar ve içerik arasındaki boş satırları atlamak için güncellendi
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
@@ -42,7 +40,9 @@ jobs:
           
           # Çıktıları ayarla
           echo "title=$TITLE" >> $GITHUB_OUTPUT
-          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          echo "$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "sources<<EOF" >> $GITHUB_OUTPUT
