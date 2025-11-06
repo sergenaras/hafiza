@@ -28,7 +28,7 @@ window.ENV = {
         {
             id: 2,
             name: 'months',
-            pixelsPerYear: 1200,     // Her yıl 1200px = Her ay 100px
+            pixelsPerYear: 1800,     // Arttırdım: Her yıl 1800px = Her ay 150px
             showYears: true,
             showMonths: true,
             showDays: false
@@ -36,7 +36,7 @@ window.ENV = {
         {
             id: 3,
             name: 'days',
-            pixelsPerYear: 7300,     // Her yıl 7300px = Her gün ~20px
+            pixelsPerYear: 10950,    // Arttırdım: Her yıl 10950px = Her gün ~30px
             showYears: true,
             showMonths: true,
             showDays: true

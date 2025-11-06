@@ -269,7 +269,7 @@ class Timeline {
                     
                     // Day number (horizontal, above ruler)
                     ctx.fillStyle = window.ENV.COLORS.textVeryLight;
-                    ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.fillText(day.toString(), dayX, this.centerY - 15);
                 }
@@ -293,7 +293,18 @@ class Timeline {
     
     // Render today marker
     renderTodayMarker(ctx, level) {
-        const x = this.centerX + this.offsetX;
+        const yearWidth = level.pixelsPerYear;
+        const currentYear = this.today.getFullYear();
+        
+        // Calculate exact position including day of year
+        let dayOffset = 0;
+        if (level.showDays || level.showMonths) {
+            const dayOfYear = this.getDayOfYear(this.today);
+            const dayWidth = yearWidth / 365;
+            dayOffset = dayOfYear * dayWidth;
+        }
+        
+        const x = this.centerX + dayOffset + this.offsetX;
         
         // Red line
         ctx.strokeStyle = window.ENV.COLORS.todayMarker;
