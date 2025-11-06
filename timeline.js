@@ -378,11 +378,11 @@ class Timeline {
         ctx.stroke();
         
         // "Şimdi" label
-        ctx.fillStyle = window.ENV.COLORS.todayMarker;
-        ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-        ctx.textAlign = 'center';
-        // Etiketi çizginin biraz üstüne koy (info box'ın altı)
-        ctx.fillText(window.t('now').toUpperCase(), x, window.ENV.LAYOUT.infoBoxY + 40);
+        // ctx.fillStyle = window.ENV.COLORS.todayMarker;
+        // ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+        // ctx.textAlign = 'center';
+        // // Etiketi çizginin biraz üstüne koy (info box'ın altı)
+        // ctx.fillText(window.t('now').toUpperCase(), x, window.ENV.LAYOUT.infoBoxY + 40);
     }
     
     // Render events
