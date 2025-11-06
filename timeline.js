@@ -605,7 +605,7 @@ class Timeline {
     showZoomIndicator() {
         const indicator = document.getElementById('zoomIndicator');
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-        indicator.textContent = `×${level.id} - ${window.t('zoomLevel'D + level.id)}`;
+        indicator.textContent = `×${level.id} - ${window.t('zoomLevel' + level.id)}`;
         indicator.classList.add('active');
         
         setTimeout(() => {
