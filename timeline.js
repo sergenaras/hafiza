@@ -28,6 +28,9 @@ class Timeline {
         
         // Today reference
         this.today = new Date();
+        this.currentYear = this.today.getFullYear();
+        this.currentMonth = this.today.getMonth();
+        this.currentDay = this.today.getDate();
         
         // Initialize
         this.resize();
@@ -141,13 +144,12 @@ class Timeline {
     // Render Years View (Level 1)
     renderYearsView(ctx, level) {
         const yearWidth = level.pixelsPerYear;
-        const currentYear = this.today.getFullYear();
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear;
+        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + this.currentYear;
+        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + this.currentYear;
         
         for (let year = startYear; year <= endYear; year++) {
-            const x = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
+            const x = this.centerX + ((year - this.currentYear) * yearWidth) + this.offsetX;
             
             // Year line
             ctx.strokeStyle = window.ENV.COLORS.yearLine;
@@ -169,13 +171,12 @@ class Timeline {
     renderMonthsView(ctx, level) {
         const yearWidth = level.pixelsPerYear;
         const monthWidth = yearWidth / 12;
-        const currentYear = this.today.getFullYear();
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
+        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + this.currentYear - 1;
+        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + this.currentYear + 1;
         
         for (let year = startYear; year <= endYear; year++) {
-            const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
+            const yearX = this.centerX + ((year - this.currentYear) * yearWidth) + this.offsetX;
             
             // Year line (thick)
             ctx.strokeStyle = window.ENV.COLORS.yearLineThick;
@@ -220,13 +221,12 @@ class Timeline {
     renderDaysView(ctx, level) {
         const yearWidth = level.pixelsPerYear;
         const dayWidth = yearWidth / 365;
-        const currentYear = this.today.getFullYear();
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
+        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + this.currentYear - 1;
+        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + this.currentYear + 1;
         
         for (let year = startYear; year <= endYear; year++) {
-            const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
+            const yearX = this.centerX + ((year - this.currentYear) * yearWidth) + this.offsetX;
             
             // Draw months
             for (let month = 0; month < 12; month++) {
@@ -324,12 +324,11 @@ class Timeline {
     // Render events
     renderEvents(ctx, level) {
         const yearWidth = level.pixelsPerYear;
-        const currentYear = this.today.getFullYear();
         
         this.events.forEach(event => {
             const eventDate = event.date;
             const eventYear = eventDate.getFullYear();
-            const yearOffset = (eventYear - currentYear) * yearWidth;
+            const yearOffset = (eventYear - this.currentYear) * yearWidth;
             
             let dayOffset = 0;
             if (level.showDays || level.showMonths) {
@@ -344,11 +343,11 @@ class Timeline {
             if (x < -50 || x > this.width + 50) return;
             
             // Event bar
-            const barHeight = window.ENV.EVENT_BAR_HEIGHT;
-            const barSpacing = window.ENV.EVENT_BAR_SPACING;
+            const barHeight = 15;  // Daha büyük
+            const barSpacing = 4;
             const yOffset = (event.stackLevel || 0) * (barHeight + barSpacing);
-            const y = this.centerY - 40 - yOffset;
-            const barWidth = 3;
+            const y = this.centerY - 50 - yOffset;  // Daha yukarıda
+            const barWidth = 4;  // Daha kalın
             
             // Color
             const isHovered = this.hoveredEvent === event;
