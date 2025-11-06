@@ -26,6 +26,8 @@ class Timeline {
         
         // Today reference
         this.today = new Date();
+        // 'today'i saat, dakika ve saniyelerden arındırarak günün başlangıcı yap
+        this.today.setHours(0, 0, 0, 0); 
         
         // Initialize
         this.resize();
@@ -66,6 +68,9 @@ class Timeline {
                 description: event.description,
                 category: event.category || 'diğer'
             }));
+            
+            // Olay tarihlerini de normalleştir
+            this.events.forEach(event => event.date.setHours(0,0,0,0));
             
             // Sort by date
             this.events.sort((a, b) => a.date - b.date);
@@ -163,18 +168,37 @@ class Timeline {
         this.renderInfoBox(ctx);
     }
     
+    // --- YENİ: GÜN HASSASİYETİNDE ÇİZİM FONKSİYONLARI ---
+
+    // X koordinatını 'today'e göre gün farkına çeviren yardımcı
+    daysFromToday(date) {
+        const diffMs = date.getTime() - this.today.getTime();
+        return diffMs / (1000 * 60 * 60 * 24);
+    }
+
     // Render Years View (Level 1)
     renderYearsView(ctx, level, baselineY) {
-        const yearWidth = level.pixelsPerYear;
-        const currentYear = this.today.getFullYear();
+        const pixelsPerDay = level.pixelsPerYear / 365;
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear;
+        // Ekranda görünen piksel aralığına göre tarih aralığını bul
+        const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
+        const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
+        
+        const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
+        const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
+        
+        const startYear = startDate.getFullYear();
+        const endYear = endDate.getFullYear();
         
         for (let year = startYear; year <= endYear; year++) {
-            const x = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
+            // Yılın başlangıç tarihini (1 Ocak) al
+            const yearStartDate = new Date(year, 0, 1);
+            // 'today'e göre gün farkını bul
+            const diffDays = this.daysFromToday(yearStartDate);
+            // X koordinatını hesapla
+            const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX;
             
-            // Year line
+            // Yıl çizgisi
             ctx.strokeStyle = window.ENV.COLORS.yearLine;
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -182,7 +206,7 @@ class Timeline {
             ctx.lineTo(x, baselineY + 15);
             ctx.stroke();
             
-            // Year label
+            // Yıl etiketi
             ctx.fillStyle = window.ENV.COLORS.text;
             ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
@@ -192,20 +216,26 @@ class Timeline {
     
     // Render Months View (Level 2)
     renderMonthsView(ctx, level, baselineY) {
-        const yearWidth = level.pixelsPerYear;
-        const monthWidth = yearWidth / 12;
-        const currentYear = this.today.getFullYear();
+        const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
+        const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
+        const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
+        
+        const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
+        const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
+
+        const startYear = startDate.getFullYear();
+        const endYear = endDate.getFullYear();
         
         const renderedMonthLabels = [];
 
         for (let year = startYear; year <= endYear; year++) {
-            const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
+            // Yılın 1 Ocak çizgisini çiz
+            const yearStartDate = new Date(year, 0, 1);
+            const yearDiffDays = this.daysFromToday(yearStartDate);
+            const yearX = this.centerX + (yearDiffDays * pixelsPerDay) + this.offsetX;
             
-            // Year line (thick)
             ctx.strokeStyle = window.ENV.COLORS.yearLineThick;
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -213,30 +243,37 @@ class Timeline {
             ctx.lineTo(yearX, baselineY + 20);
             ctx.stroke();
             
-            // Year label
             ctx.fillStyle = window.ENV.COLORS.text;
             ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(year.toString(), yearX, baselineY + 40);
             
-            // Month lines and labels
+            // Ay çizgileri ve etiketleri
             for (let month = 0; month < 12; month++) {
-                const monthX = yearX + (month * monthWidth);
+                // Her ayın 1. gününün tam tarihini al
+                const monthStartDate = new Date(year, month, 1);
+                // 'today'e göre gün farkını bul
+                const monthDiffDays = this.daysFromToday(monthStartDate);
+                // X koordinatını hesapla
+                const monthX = this.centerX + (monthDiffDays * pixelsPerDay) + this.offsetX;
                 
-                // Month line (thin)
-                ctx.strokeStyle = window.ENV.COLORS.monthLine;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(monthX, baselineY - 12);
-                ctx.lineTo(monthX, baselineY + 12);
-                ctx.stroke();
+                // Ay çizgisi (1 Ocak'ı tekrar çizmemek için atla)
+                if (month > 0) {
+                    ctx.strokeStyle = window.ENV.COLORS.monthLine;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(monthX, baselineY - 12);
+                    ctx.lineTo(monthX, baselineY + 12);
+                    ctx.stroke();
+                }
                 
+                // --- Ay Etiketi Çizimi (Okunaklılık) ---
                 const monthText = window.i18n.t('months.full')[month];
-                ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif'; // Fontu ölçümden önce ayarla
+                ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
                 const textMetrics = ctx.measureText(monthText);
                 const textWidth = textMetrics.width;
-                const textHeight = 10; // Yaklaşık font yüksekliği
-                
+                const textHeight = 10; 
+
                 const labelRect = {
                     x: monthX - textHeight, 
                     y: baselineY - monthLabelOffset - textWidth,
@@ -246,8 +283,7 @@ class Timeline {
 
                 let canRender = true;
                 for (const existingLabel of renderedMonthLabels) {
-                    if (labelRect.x < existingLabel.x + existingLabel.width &&
-                        labelRect.x + labelRect.width > existingLabel.x) { // Sadece X ekseninde çakışma kontrolü
+                    if (labelRect.x < existingLabel.x + existingLabel.width) { 
                         canRender = false;
                         break;
                     }
@@ -259,10 +295,7 @@ class Timeline {
                     ctx.rotate(-Math.PI / 2);
                     ctx.fillStyle = window.ENV.COLORS.textLight;
                     ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-                    
-                    // DÜZELTME: 'right' yerine 'left' kullanarak cetvelin üstüne (yukarı) çiz
                     ctx.textAlign = 'left'; 
-                    
                     ctx.fillText(monthText, 0, 0);
                     ctx.restore();
                     renderedMonthLabels.push(labelRect);
@@ -273,27 +306,30 @@ class Timeline {
     
     // Render Days View (Level 3)
     renderDaysView(ctx, level, baselineY) {
-        const yearWidth = level.pixelsPerYear;
-        const dayWidth = yearWidth / 365;
-        const currentYear = this.today.getFullYear();
+        const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
         
-        const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
-        const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
+        const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
+        const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
+        
+        const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
+        const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
+
+        const startYear = startDate.getFullYear();
+        const endYear = endDate.getFullYear();
         
         const renderedMonthLabels = [];
 
         for (let year = startYear; year <= endYear; year++) {
-            const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
-            
-            // Draw months
+            // Aylar
             for (let month = 0; month < 12; month++) {
                 const monthStart = new Date(year, month, 1);
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const dayOfYear = this.getDayOfYear(monthStart);
-                const monthX = yearX + (dayOfYear * dayWidth);
                 
-                // Month line (thick)
+                // Ay başlangıç çizgisini çiz
+                const monthDiffDays = this.daysFromToday(monthStart);
+                const monthX = this.centerX + (monthDiffDays * pixelsPerDay) + this.offsetX;
+
                 ctx.strokeStyle = window.ENV.COLORS.yearLineThick;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -303,10 +339,10 @@ class Timeline {
                 
                 // --- Ay Etiketi Çizimi ---
                 const monthText = window.i18n.t('months.full')[month];
-                ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif'; // Fontu ölçümden önce ayarla
+                ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
                 const textMetrics = ctx.measureText(monthText);
                 const textWidth = textMetrics.width;
-                const textHeight = 11; // Yaklaşık font yüksekliği
+                const textHeight = 11; 
 
                 const labelRect = {
                     x: monthX - textHeight,
@@ -317,8 +353,7 @@ class Timeline {
 
                 let canRender = true;
                 for (const existingLabel of renderedMonthLabels) {
-                     if (labelRect.x < existingLabel.x + existingLabel.width &&
-                        labelRect.x + labelRect.width > existingLabel.x) {
+                     if (labelRect.x < existingLabel.x + existingLabel.width) {
                         canRender = false;
                         break;
                     }
@@ -330,59 +365,49 @@ class Timeline {
                     ctx.rotate(-Math.PI / 2);
                     ctx.fillStyle = window.ENV.COLORS.text;
                     ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-                    
-                    // DÜZELTME: 'right' yerine 'left' kullanarak cetvelin üstüne (yukarı) çiz
                     ctx.textAlign = 'left'; 
-                    
                     ctx.fillText(monthText, 0, 0);
                     ctx.restore();
                     renderedMonthLabels.push(labelRect);
                 }
 
-                // Draw days
+                // Günler
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = new Date(year, month, day);
-                    const dayOfYearNum = this.getDayOfYear(date);
-                    const dayX = yearX + (dayOfYearNum * dayWidth);
+                    // Her günün tam X koordinatını hesapla
+                    const dayDiffDays = this.daysFromToday(date);
+                    const dayX = this.centerX + (dayDiffDays * pixelsPerDay) + this.offsetX;
                     
-                    // Day line
-                    ctx.strokeStyle = window.ENV.COLORS.dayLine;
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(dayX, baselineY - 8);
-                    ctx.lineTo(dayX, baselineY + 8);
-                    ctx.stroke();
+                    // 1 Ocak çizgisini tekrar çizmeyi atla (zaten ay çizgisi olarak çizildi)
+                    if (day > 1) {
+                        ctx.strokeStyle = window.ENV.COLORS.dayLine;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(dayX, baselineY - 8);
+                        ctx.lineTo(dayX, baselineY + 8);
+                        ctx.stroke();
+                    }
                     
-                    // Day number (horizontal, above ruler)
+                    // Gün numarası
                     ctx.fillStyle = window.ENV.COLORS.textVeryLight;
                     ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.fillText(day.toString(), dayX, baselineY - 15);
                 }
             }
-            
-            // Year label at end
-            ctx.fillStyle = window.ENV.COLORS.text;
-            ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.textAlign = 'center';
-            const yearEndX = yearX + yearWidth;
-            ctx.fillText(year.toString(), yearEndX, baselineY + 40);
         }
     }
     
-    getDayOfYear(date) {
-        const start = new Date(date.getFullYear(), 0, 0);
-        const diff = date - start;
-        const oneDay = 1000 * 60 * 60 * 24;
-        return Math.floor(diff / oneDay);
-    }
+    // Gündelik hesaplama için bu fonksiyona artık gerek yok.
+    // getDayOfYear(date) { ... }
     
     // Render today marker
     renderTodayMarker(ctx, level, baselineY) {
-        const x = this.centerX + this.offsetX;
+        // 'today'in gün farkı 0'dır, bu yüzden X konumu her zaman merkez + offset'tir.
+        const x = this.centerX + this.offsetX; 
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2;
 
-        // Red line (KISA ÇİZGİ)
+        // Red line
         ctx.strokeStyle = window.ENV.COLORS.todayMarker;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -399,13 +424,12 @@ class Timeline {
     
     // Render events
     renderEvents(ctx, level, baselineY) {
+        const pixelsPerDay = level.pixelsPerYear / 365;
+
         this.events.forEach(event => {
             const eventDate = event.date;
-            
-            const diffMs = eventDate.getTime() - this.today.getTime();
-            const diffDays = diffMs / (1000 * 60 * 60 * 24);
-            const pixelsPerDay = level.pixelsPerYear / 365;
-            
+            // Olayın X konumunu 'today' referansına göre HASSAS olarak hesapla
+            const diffDays = this.daysFromToday(eventDate);
             const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX;
             
             if (x < -50 || x > this.width + 50) return;
@@ -546,7 +570,6 @@ class Timeline {
     
     onDoubleClick(e) {
         if (this.zoomMode === 'doubleclick') {
-            // YENİ: Tıklanan noktaya zoom yap
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             this.zoomIn(x);
@@ -583,7 +606,6 @@ class Timeline {
             const distance = Math.sqrt(dx*dx + dy*dy);
             
             if (Math.abs(distance - this.lastTouchDistance) > window.ENV.MIN_PINCH_DISTANCE) {
-                // YENİ: Pinch zoom için merkez noktasını hesapla
                 const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 const rect = this.canvas.getBoundingClientRect();
                 const mouseX = midX - rect.left;
@@ -646,73 +668,50 @@ class Timeline {
         document.getElementById('modalOverlay').classList.add('active');
     }
 
-    // --- YENİ: ODAKLI ZOOM YARDIMCI FONKSİYONLARI ---
+    // --- ODAKLI ZOOM YARDIMCI FONKSİYONLARI ---
 
-    /**
-     * Ekrandaki bir X koordinatını, 'today'den kaç gün fark olduğuna dönüştürür.
-     */
     xToDays(x, zoomLevel) {
         const level = window.ENV.ZOOM_LEVELS[zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
-        // 'today' marker'ından (merkez + offset) olan piksel farkını bul
         const screenOffset = x - this.centerX - this.offsetX;
         const diffDays = screenOffset / pixelsPerDay;
         return diffDays;
     }
 
-    /**
-     * Belirli bir 'gün farkı'nın (today'den)
-     * yeni zoom seviyesinde, hedeflenen X noktasında olması için
-     * gereken yeni 'offsetX' değerini hesaplar.
-     */
     daysToOffsetX(diffDays, zoomLevel, targetX) {
         const level = window.ENV.ZOOM_LEVELS[zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
-        // Gün farkının yeni zoom seviyesindeki piksel karşılığı
         const screenOffset = diffDays * pixelsPerDay;
-        // Yeni offset = hedefX - merkez - (dünya koordinatı)
         const newOffsetX = targetX - this.centerX - screenOffset;
         return newOffsetX;
     }
 
-    // --- YENİ: ODAKLI ZOOM FONKSİYONLARI ---
+    // --- ODAKLI ZOOM FONKSİYONLARI ---
 
     zoomIn(mouseX = this.centerX) {
-        if (this.zoomLevel >= window.ENV.ZOOM_LEVELS.length - 1) return; // Zaten en yakın
+        if (this.zoomLevel >= window.ENV.ZOOM_LEVELS.length - 1) return;
 
-        // 1. Mevcut pozisyonu (gün farkı olarak) al
         const currentDays = this.xToDays(mouseX, this.zoomLevel);
-        
-        // 2. Yeni zoom seviyesini ayarla
         const newZoomLevel = this.zoomLevel + 1;
-
-        // 3. O 'gün farkı'nın yeni zoom seviyesinde 'mouseX'e gelmesi için gereken offset'i hesapla
         const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
 
-        // 4. Zoom ve offset'i uygula (animasyonu atlamak için ikisini de ayarla)
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
-        this.offsetX = newOffsetX; // Animasyonun "kaymasını" önlemek için
+        this.offsetX = newOffsetX; 
         
         this.showZoomIndicator();
     }
     
     zoomOut(mouseX = this.centerX) {
-        if (this.zoomLevel <= 0) return; // Zaten en uzak
+        if (this.zoomLevel <= 0) return;
 
-        // 1. Mevcut pozisyonu (gün farkı olarak) al
         const currentDays = this.xToDays(mouseX, this.zoomLevel);
-
-        // 2. Yeni zoom seviyesini ayarla
         const newZoomLevel = this.zoomLevel - 1;
-
-        // 3. O 'gün farkı'nın yeni zoom seviyesinde 'mouseX'e gelmesi için gereken offset'i hesapla
         const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
         
-        // 4. Zoom ve offset'i uygula
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
-        this.offsetX = newOffsetX; // Animasyonun "kaymasını" önlemek için
+        this.offsetX = newOffsetX; 
 
         this.showZoomIndicator();
     }
@@ -739,8 +738,11 @@ class Timeline {
     }
     
     goToDate(selectedDate) {
-        const diffMs = selectedDate.getTime() - this.today.getTime();
-        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        // 'selectedDate'in de saatini sıfırla
+        selectedDate.setHours(0,0,0,0);
+        
+        // 'today'e göre gün farkını hesapla
+        const diffDays = this.daysFromToday(selectedDate);
         
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
