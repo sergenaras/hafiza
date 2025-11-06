@@ -195,10 +195,14 @@ class Timeline {
         const yearWidth = level.pixelsPerYear;
         const monthWidth = yearWidth / 12;
         const currentYear = this.today.getFullYear();
+        const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset; // config'den al
         
         const startYear = Math.floor((0 - this.centerX - this.offsetX) / yearWidth) + currentYear - 1;
         const endYear = Math.ceil((this.width - this.centerX - this.offsetX) / yearWidth) + currentYear + 1;
         
+        // YENİ: Çizilen ay isimlerinin konumlarını saklayacak bir dizi
+        const renderedMonthLabels = [];
+
         for (let year = startYear; year <= endYear; year++) {
             const yearX = this.centerX + ((year - currentYear) * yearWidth) + this.offsetX;
             
@@ -228,15 +232,43 @@ class Timeline {
                 ctx.lineTo(monthX, baselineY + 12);
                 ctx.stroke();
                 
-                // Month label (vertical)
-                ctx.save();
-                ctx.translate(monthX, baselineY - 20);
-                ctx.rotate(-Math.PI / 2);
-                ctx.fillStyle = window.ENV.COLORS.textLight;
-                ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(window.i18n.t('months.full')[month], 0, 0);
-                ctx.restore();
+                // YENİ: Ay etiketini çizmeden önce çakışma kontrolü yap
+                const monthText = window.i18n.t('months.full')[month];
+                const textMetrics = ctx.measureText(monthText);
+                const textWidth = textMetrics.width;
+                const textHeight = parseInt(ctx.font); // Yaklaşık font yüksekliği
+                
+                // Ay etiketinin potansiyel bounding box'ı (dikey olduğu için x ve y değişir)
+                const labelRect = {
+                    x: monthX - textHeight, // Dikey döndüğü için x, height kadar sola kayar
+                    y: baselineY - monthLabelOffset - textWidth, // Y ekseni, etiketin en üst noktası
+                    width: textHeight, // Height, genişlik olur
+                    height: textWidth // Genişlik, height olur
+                };
+
+                let canRender = true;
+                for (const existingLabel of renderedMonthLabels) {
+                    // Basit bir çakışma kontrolü
+                    if (labelRect.x < existingLabel.x + existingLabel.width &&
+                        labelRect.x + labelRect.width > existingLabel.x &&
+                        labelRect.y < existingLabel.y + existingLabel.height &&
+                        labelRect.y + labelRect.height > existingLabel.y) {
+                        canRender = false;
+                        break;
+                    }
+                }
+
+                if (canRender) {
+                    ctx.save();
+                    ctx.translate(monthX, baselineY - monthLabelOffset); // config'den alınan offset
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.fillStyle = window.ENV.COLORS.textLight;
+                    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(monthText, 0, 0);
+                    ctx.restore();
+                    renderedMonthLabels.push(labelRect); // Çizilen etiketi kaydet
+                }
             }
         }
     }
@@ -309,6 +341,22 @@ class Timeline {
         }
     }
     
+    // YENİ: Mavi hover çizgisini çiz
+    renderHoverMarker(ctx, baselineY) {
+        if (this.hoverX === -1 || this.isDragging) return; // Sürüklerken gösterme
+
+        const markerLength = window.ENV.LAYOUT.markerLineLength / 2; // Marker'ın yarım uzunluğu
+
+        ctx.strokeStyle = window.ENV.COLORS.hoverMarker;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Çizgiyi cetvelin etrafında göster (KISA ÇİZGİ)
+        ctx.moveTo(this.hoverX, baselineY - markerLength);
+        ctx.lineTo(this.hoverX, baselineY + markerLength);
+        ctx.stroke();
+    }
+
+
     getDayOfYear(date) {
         const start = new Date(date.getFullYear(), 0, 0);
         const diff = date - start;
@@ -319,14 +367,14 @@ class Timeline {
     // Render today marker
     renderTodayMarker(ctx, level, baselineY) {
         const x = this.centerX + this.offsetX;
-        
-        // Red line
+        const markerLength = window.ENV.LAYOUT.markerLineLength / 2; // Marker'ın yarım uzunluğu
+
+        // Red line (KISA ÇİZGİ)
         ctx.strokeStyle = window.ENV.COLORS.todayMarker;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        // Çizgiyi tüm ekran yüksekliği boyunca çiz
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, this.height);
+        ctx.moveTo(x, baselineY - markerLength); // Cetvelin üstünden
+        ctx.lineTo(x, baselineY + markerLength); // Cetvelin altından
         ctx.stroke();
         
         // "Şimdi" label

@@ -52,7 +52,7 @@ window.ENV = {
         
         ruler: '#E0E0E0',
         todayMarker: '#E53935',    // Güçlü Kırmızı
-        hoverMarker: '#1E88E5',    // Güçlü Mavi (Yeni)
+        hoverMarker: '#1E88E5',    // Güçlü Mavi
         
         yearLine: '#BDBDBD',
         yearLineThick: '#757575',
@@ -67,7 +67,9 @@ window.ENV = {
     LAYOUT: {
         rulerYOffset: 150,     // Cetveli dikey merkezden 150px aşağıya kaydır
         infoBoxY: 80,          // Olay bilgi kutusunun dikey konumu (üstte)
-        eventBarBaseY: -60     // Olay çubuklarının cetvele göre dikey konumu (cetvelin 60px üstü)
+        eventBarBaseY: -60,    // Olay çubuklarının cetvele göre dikey konumu (cetvelin 60px üstü)
+        markerLineLength: 40,  // YENİ: Kırmızı ve mavi çizgilerin toplam uzunluğu (üstte 20px, altta 20px)
+        monthLabelOffset: 25   // YENİ: Ay isimlerinin cetvelden dikey uzaklığı
     },
     
     // Event Display Settings
