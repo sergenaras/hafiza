@@ -13,37 +13,31 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background: #ffffff;
+            background: #f4f4f4; /* Arka planı hafif gri yaptık */
             color: #333;
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-        }
-
-        .app {
-            width: 100vw;
-            height: 100vh;
             display: flex;
             flex-direction: column;
+            height: 100vh;
         }
 
-        /* Header */
+        /* 1. Header Alanı */
         .header {
             height: 60px;
             background: white;
-            border-bottom: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
-            z-index: 100;
+            padding: 0 24px;
+            flex-shrink: 0; /* Küçülmesin */
         }
 
         .logo {
-            font-size: 16px;
-            font-weight: 400;
-            color: #333;
-            letter-spacing: 0.5px;
+            font-size: 20px;
+            font-weight: 500;
         }
 
         .header-controls {
@@ -52,22 +46,141 @@
             align-items: center;
         }
 
-        /* Date Input */
+        /* 2. Ana İçerik Alanı (CSS Grid) */
+        .main-content {
+            flex: 1; /* Kalan tüm alanı kapla */
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: 1fr auto; /* Üst paneller esnek, alt cetvel sabit */
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden; /* Taşmayı engelle */
+        }
+
+        /* Paneller için ortak stil */
+        .panel {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* İçerik taşarsa */
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #111;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-body {
+            padding: 16px;
+            overflow-y: auto; /* Gerektiğinde scroll çıksın */
+            flex: 1; /* Kalan alanı doldur */
+        }
+
+        /* 2.1. Olay Detayları (Sol Üst) */
+        .panel-details {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+        }
+
+        /* 2.2. Olay Listesi (Sağ Üst) */
+        .panel-list {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        #categoryFilter {
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .event-list {
+            list-style: none;
+        }
+        .event-list-item {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+        }
+        .event-list-item:hover {
+            background-color: #f9f9f9;
+        }
+        /* YENİ: Seçilen olayı listede göstermek için */
+        .event-list-item.selected {
+            background-color: #e3f2fd; /* Açık mavi */
+        }
+        .event-list-item-title {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .event-list-item-date {
+            font-size: 12px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+
+        /* 2.3. Zaman Çizelgesi (Alt) */
+        .panel-timeline {
+            grid-column: 1 / 3; /* İki sütunu da kapla */
+            grid-row: 2 / 3;
+            height: 300px; /* Sabit yükseklik, ihtiyaca göre ayarlanabilir */
+            position: relative;
+        }
+
+        #timelineCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #timelineCanvas.grabbing {
+            cursor: grabbing;
+        }
+        
+        /* Olay Detayları İçeriği */
+        #details-content .placeholder {
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            margin-top: 40px;
+        }
+        #details-content h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        #details-content .date {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 16px;
+        }
+        #details-content .description {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Standart Butonlar (Header'daki) */
         .date-input {
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 13px;
-            color: #333;
-            background: white;
         }
 
-        .date-input:focus {
-            outline: none;
-            border-color: #999;
-        }
-
-        /* Buttons */
         .btn {
             padding: 8px 16px;
             background: #f5f5f5;
@@ -81,350 +194,247 @@
 
         .btn:hover {
             background: #e5e5e5;
-            border-color: #999;
         }
 
-        .btn-go {
+        .btn-primary {
             background: #4a90e2;
             color: white;
             border-color: #4a90e2;
         }
-
-        .btn-go:hover {
+        .btn-primary:hover {
             background: #357abd;
-            border-color: #357abd;
         }
-
-        /* Toggle Button */
-        .toggle-group {
-            display: flex;
-            background: #f5f5f5;
-            border-radius: 6px;
-            padding: 3px;
-        }
-
-        .toggle-btn {
-            padding: 6px 12px;
-            font-size: 13px;
-            border: none;
-            background: transparent;
-            color: #666;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .toggle-btn.active {
-            background: white;
-            color: #333;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        /* Add Event Button */
-        .btn-add {
-            padding: 8px 16px;
+        
+        .btn-dark {
             background: #333;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
         }
-
-        .btn-add:hover {
+        .btn-dark:hover {
             background: #000;
         }
 
-        /* Timeline Container */
-        .timeline-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #timelineCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: grab;
-        }
-
-        #timelineCanvas.grabbing {
-            cursor: grabbing;
-        }
-
-        /* Event Detail Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+        /* Gizli Elemanlar (Canvas'ın ihtiyacı olan) */
+        .hidden-elements {
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.2s;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideUp 0.3s;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 20px;
-        }
-
-        .modal-date {
-            font-size: 13px;
-            color: #999;
-            margin-bottom: 8px;
-        }
-
-        .modal-title {
-            font-size: 22px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 16px;
-        }
-
-        .modal-description {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #666;
-            margin-bottom: 16px;
-        }
-
-        .modal-category {
-            display: inline-block;
-            padding: 6px 12px;
-            background: #f5f5f5;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #999;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        /* Tooltip */
-        .tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            pointer-events: none;
-            z-index: 999;
-            display: none;
-            white-space: nowrap;
-            max-width: 250px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .tooltip.active {
-            display: block;
-        }
-
-        /* Loading */
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 14px;
-            color: #999;
-        }
-
-        /* Zoom indicator */
-        .zoom-indicator {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .zoom-indicator.active {
-            opacity: 1;
-        }
-
-        /* Instructions */
-        .instructions {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            pointer-events: none;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 0 15px;
-            }
-
-            .logo {
-                font-size: 14px;
-            }
-
-            .instructions {
-                display: none;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
-            <div class="header-controls">
-                <!-- Date Navigation -->
-                <input type="date" id="dateInput" class="date-input" />
-                <button class="btn btn-go" onclick="goToDate()" data-i18n="goToDate">
-                    Git
-                </button>
-                
-                <!-- Reset Button -->
-                <button class="btn" onclick="goToToday()" data-i18n="goToToday">
-                    📍 Bugüne Dön
-                </button>
-                
-                <!-- Add Event Button -->
-                <button class="btn-add" onclick="openNewEventDialog()" data-i18n="addEvent">
-                    + Olay Ekle
-                </button>
-            </div>
-        </header>
-
-        <!-- Timeline Container -->
-        <div class="timeline-container">
-            <div class="loading" id="loading" data-i18n="loading">Yükleniyor...</div>
-            <canvas id="timelineCanvas"></canvas>
+    <header class="header">
+        <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
+        <div class="header-controls">
+            <input type="date" id="dateInput" class="date-input" />
             
-            <!-- Tooltip -->
-            <div class="tooltip" id="tooltip"></div>
+            <button class="btn btn-primary" onclick="goToDate()" data-i18n="goToDate">
+                Tarihe Git
+            </button>
             
-            <!-- Zoom Indicator -->
-            <div class="zoom-indicator" id="zoomIndicator">x1</div>
+            <button class="btn" onclick="goToToday()" data-i18n="goToToday">
+                Bugüne Dön
+            </button>
             
-            <!-- Instructions -->
-            <div class="instructions" id="instructions">
-                <span data-i18n="instructions">🖱️ Çift Tıkla: Zoom | 🤏 Pinch: Zoom | 👆 Sürükle: Hareket | ⇧ Shift + Çift Tıkla: Zoom Out</span>
-            </div>
+            <button class="btn-dark" onclick="openNewEventDialog()" data-i18n="addEvent">
+                + Olay Ekle
+            </button>
         </div>
+    </header>
 
-        <!-- Event Detail Modal -->
-        <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-            <div class="modal" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <div>
-                        <div class="modal-date" id="modalDate"></div>
-                        <h2 class="modal-title" id="modalTitle"></h2>
-                    </div>
-                    <button class="modal-close" onclick="closeModal()">×</button>
+    <main class="main-content">
+        
+        <section class="panel panel-details">
+            <div class="panel-header">Olay Detayları</div>
+            <div class="panel-body" id="details-content">
+                <p class="placeholder">
+                    Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
+                </p>
                 </div>
-                <p class="modal-description" id="modalDescription"></p>
-                <span class="modal-category" id="modalCategory"></span>
+        </section>
+
+        <section class="panel panel-list">
+            <div class="panel-header">
+                <span>Olay Listesi</span>
+                <select id="categoryFilter" onchange="filterCategory()">
+                    <option value="tumu">Yükleniyor...</option>
+                </select>
             </div>
-        </div>
-    </div>
+            <div class="panel-body">
+                <ul class="event-list" id="eventListContainer">
+                    </ul>
+            </div>
+        </section>
+
+        <section class="panel panel-timeline">
+            <canvas id="timelineCanvas"></canvas>
+            <div class="hidden-elements">
+                <div id="loading">Yükleniyor...</div>
+                <div class="tooltip" id="tooltip"></div>
+                <div class="zoom-indicator" id="zoomIndicator">x1</div>
+            </div>
+        </section>
+        
+    </main>
 
     <script src="config.js"></script>
     <script src="i18n.js"></script>
     <script src="timeline.js"></script>
     
     <script>
-        // Initialize app
+        // Global değişkenler
+        let allEvents = []; // 'timeline.js'den gelen tüm olayların kopyası
+        let currentSelectedEvent = null; // Şu an seçili olan olayı takip et
+
+        // --- 1. Başlatma Fonksiyonları ---
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
+            // Timeline'ı başlat (Bu, 'loadEvents'i tetikleyecek)
             initTimeline();
             
-            // Set date input to today
+            // Tarih girişini bugüne ayarla
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
         });
 
+        // YENİ: Bu fonksiyon 'timeline.js' yüklendiğinde tetiklenecek
+        function initializeUI(events) {
+            allEvents = events; // Verinin kopyasını al
+            populateCategoryFilter(allEvents);
+            populateEventList(allEvents); // Başlangıçta "tümü"nü göster
+        }
+
+        // --- 2. Panel Doldurma Fonksiyonları ---
+
+        function populateCategoryFilter(events) {
+            const filterSelect = document.getElementById('categoryFilter');
+            
+            // Kategorileri dinamik olarak bul
+            const categories = new Set(events.map(event => event.category || 'diğer'));
+            
+            filterSelect.innerHTML = ''; // "Yükleniyor..."u temizle
+            
+            // "Tümü" seçeneği (Onayladığımız gibi)
+            const allOption = document.createElement('option');
+            allOption.value = 'tumu';
+            allOption.textContent = 'Tümü';
+            filterSelect.appendChild(allOption);
+            
+            // Diğer kategoriler
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = window.t(`categories.${category}`) || category;
+                filterSelect.appendChild(option);
+            });
+        }
+
+        function populateEventList(eventsToShow) {
+            const listContainer = document.getElementById('eventListContainer');
+            listContainer.innerHTML = ''; // Listeyi temizle
+
+            if (eventsToShow.length === 0) {
+                listContainer.innerHTML = '<li>Bu kategoride olay bulunamadı.</li>';
+                return;
+            }
+
+            eventsToShow.forEach(event => {
+                const li = document.createElement('li');
+                li.className = 'event-list-item';
+                // YENİ: Bu olayın şu an seçili olup olmadığını kontrol et
+                if (currentSelectedEvent && currentSelectedEvent.title === event.title && currentSelectedEvent.date.getTime() === event.date.getTime()) {
+                    li.classList.add('selected');
+                }
+                
+                // Olay tıklandığında hem detayı göster hem cetvele git
+                li.onclick = () => {
+                    selectEvent(event);
+                };
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'event-list-item-title';
+                titleDiv.textContent = event.title;
+
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'event-list-item-date';
+                dateDiv.textContent = window.formatDate(event.date, 'full');
+
+                li.appendChild(titleDiv);
+                li.appendChild(dateDiv);
+                listContainer.appendChild(li);
+            });
+        }
+
+        function updateDetailsPanel(event) {
+            const detailsContainer = document.getElementById('details-content');
+            
+            if (!event) {
+                detailsContainer.innerHTML = `
+                    <p class="placeholder">
+                        Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
+                    </p>`;
+                return;
+            }
+
+            detailsContainer.innerHTML = `
+                <h2>${event.title}</h2>
+                <div class="date">${window.formatDate(event.date, 'full')}</div>
+                <p class="description">${event.description || ''}</p>
+            `;
+        }
+
+        // --- 3. Olay (Event) Yöneticileri ---
+
+        function filterCategory() {
+            const filterSelect = document.getElementById('categoryFilter');
+            const selectedCategory = filterSelect.value;
+
+            let filteredEvents;
+
+            if (selectedCategory === 'tumu') {
+                filteredEvents = allEvents;
+            } else {
+                filteredEvents = allEvents.filter(event => (event.category || 'diğer') === selectedCategory);
+            }
+
+            populateEventList(filteredEvents);
+        }
+
+        // Hem listeden hem de cetvelden gelen ortak fonksiyon
+        function selectEvent(event) {
+            // YENİ: Seçimi global olarak sakla
+            currentSelectedEvent = event;
+            
+            // 1. Olay Detayları panelini güncelle
+            updateDetailsPanel(event);
+            
+            // 2. Zaman çizelgesini o tarihe götür
+            if (window.timeline) {
+                window.timeline.goToDate(event.date);
+            }
+
+            // 3. YENİ: Olay listesini yeniden çiz (doğru öğenin 'selected' olması için)
+            filterCategory(); // Bu, mevcut filtreyi koruyarak listeyi yeniler
+        }
+
+        // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
+
         function goToToday() {
             if (window.timeline) {
                 window.timeline.goToToday();
             }
+            // YENİ: Bugün'e gidince seçimi temizle
+            currentSelectedEvent = null;
+            updateDetailsPanel(null);
+            filterCategory();
         }
 
         function goToDate() {
             const dateInput = document.getElementById('dateInput');
-            const dateValue = dateInput.value; // Get value as string
+            const dateValue = dateInput.value;
             
             if (dateValue && window.timeline) {
-                const selectedDate = new Date(dateValue + 'T12:00:00'); // Add time to avoid timezone issues
+                const selectedDate = new Date(dateValue + 'T12:00:00'); 
                 window.timeline.goToDate(selectedDate);
-            } else {
-                alert('Lütfen bir tarih seçin');
             }
         }
 
@@ -432,10 +442,6 @@
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 
-        function closeModal(event) {
-            if (event && event.target.className !== 'modal-overlay') return;
-            document.getElementById('modalOverlay').classList.remove('active');
-        }
     </script>
 </body>
 </html>

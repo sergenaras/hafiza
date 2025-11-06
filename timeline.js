@@ -26,13 +26,12 @@ class Timeline {
         
         // Today reference
         this.today = new Date();
-        // 'today'i saat, dakika ve saniyelerden arındırarak günün başlangıcı yap
         this.today.setHours(0, 0, 0, 0); 
         
         // Initialize
         this.resize();
         this.setupEventListeners();
-        this.loadEvents();
+        this.loadEvents(); // Olayları yükle ve UI'ı tetikle
         
         // Animasyon döngüsünü başlat
         this.animate(); 
@@ -40,6 +39,7 @@ class Timeline {
     
     // Setup canvas size
     resize() {
+        // YENİ: Canvas artık panel-timeline içinde, boyutunu ondan almalı
         const rect = this.container.getBoundingClientRect();
         this.canvas.width = rect.width * window.devicePixelRatio;
         this.canvas.height = rect.height * window.devicePixelRatio;
@@ -50,7 +50,8 @@ class Timeline {
         this.width = rect.width;
         this.height = rect.height;
         this.centerX = this.width / 2;
-        this.centerY = this.height / 2; // Dikey merkez
+        // YENİ: centerY artık canvas'ın dikey merkezi, baselineY değil
+        this.centerY = this.height / 2; 
     }
     
     // Load events from JSON
@@ -69,19 +70,22 @@ class Timeline {
                 category: event.category || 'diğer'
             }));
             
-            // Olay tarihlerini de normalleştir
             this.events.forEach(event => event.date.setHours(0,0,0,0));
-            
-            // Sort by date
             this.events.sort((a, b) => a.date - b.date);
             
-            // Calculate event stacking
             this.calculateEventStacks();
             
+            // YENİ: 'loading' yazısını gizli div'den gizle
             document.getElementById('loading').style.display = 'none';
+
+            // YENİ: VERİYİ index.html'e GÖNDER!
+            if (window.initializeUI) {
+                window.initializeUI(this.events);
+            }
+
         } catch (error) {
             console.error('Error loading events:', error);
-            document.getElementById('loading').textContent = window.t('errorLoading');
+            // document.getElementById('loading').textContent = window.t('errorLoading');
         }
     }
     
@@ -97,7 +101,6 @@ class Timeline {
             dayGroups[dayKey].push(event);
         });
         
-        // Assign stack levels
         Object.values(dayGroups).forEach(group => {
             group.forEach((event, index) => {
                 event.stackLevel = Math.min(index, window.ENV.EVENT_MAX_STACK - 1);
@@ -111,18 +114,14 @@ class Timeline {
     
     // Ana animasyon döngüsü (pürüzsüz kaydırma için)
     animate() {
-        // Easing (yumuşatma) ile hedef offset'e yaklaş
         const dx = this.targetOffsetX - this.offsetX;
         if (Math.abs(dx) > 0.1) {
-            this.offsetX += dx * 0.1; // 0.1 = easing faktörü
+            this.offsetX += dx * 0.1; 
         } else {
             this.offsetX = this.targetOffsetX;
         }
         
-        // Her animasyon karesinde yeniden çiz
         this.render();
-        
-        // Döngüyü sürdür
         requestAnimationFrame(this.animate.bind(this));
     }
     
@@ -131,8 +130,12 @@ class Timeline {
         const ctx = this.ctx;
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         
-        // Cetvelin dikey konumunu config'den al
-        const baselineY = this.centerY + window.ENV.LAYOUT.rulerYOffset;
+        // DİKKAT: Artık 'rulerYOffset' canvas'ın *tam ortasına* göre hesaplanmalı
+        // 'config.js'deki ayar (150px) çok aşağıda kalabilir.
+        // Şimdilik, canvas'ın dikey merkezini (this.centerY) kullanalım.
+        // Eğer cetveli aşağı/yukarı kaydırmak istersek, 'config.js'deki LAYOUT.rulerYOffset'i
+        // 0'dan farklı bir değer yapıp (örn: 50) aşağıdaki satırı değiştirebiliriz.
+        const baselineY = this.centerY + (window.ENV.LAYOUT.rulerYOffset || 0);
         
         // Clear canvas
         ctx.fillStyle = window.ENV.COLORS.background;
@@ -164,13 +167,11 @@ class Timeline {
         // Mavi hover çizgisini çiz
         this.renderHoverMarker(ctx, baselineY);
 
-        // Üstteki bilgi kutusunu çiz
-        this.renderInfoBox(ctx);
+        // KALDIRILDI: renderInfoBox artık burada çağrılmıyor.
     }
     
-    // --- YENİ: GÜN HASSASİYETİNDE ÇİZİM FONKSİYONLARI ---
+    // --- GÜN HASSASİYETİNDE ÇİZİM FONKSİYONLARI ---
 
-    // X koordinatını 'today'e göre gün farkına çeviren yardımcı
     daysFromToday(date) {
         const diffMs = date.getTime() - this.today.getTime();
         return diffMs / (1000 * 60 * 60 * 24);
@@ -179,26 +180,18 @@ class Timeline {
     // Render Years View (Level 1)
     renderYearsView(ctx, level, baselineY) {
         const pixelsPerDay = level.pixelsPerYear / 365;
-        
-        // Ekranda görünen piksel aralığına göre tarih aralığını bul
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
         const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
-        
         const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
         const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
-        
         const startYear = startDate.getFullYear();
         const endYear = endDate.getFullYear();
         
         for (let year = startYear; year <= endYear; year++) {
-            // Yılın başlangıç tarihini (1 Ocak) al
             const yearStartDate = new Date(year, 0, 1);
-            // 'today'e göre gün farkını bul
             const diffDays = this.daysFromToday(yearStartDate);
-            // X koordinatını hesapla
             const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX;
             
-            // Yıl çizgisi
             ctx.strokeStyle = window.ENV.COLORS.yearLine;
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -206,7 +199,6 @@ class Timeline {
             ctx.lineTo(x, baselineY + 15);
             ctx.stroke();
             
-            // Yıl etiketi
             ctx.fillStyle = window.ENV.COLORS.text;
             ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
@@ -218,20 +210,15 @@ class Timeline {
     renderMonthsView(ctx, level, baselineY) {
         const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
-        
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
         const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
-        
         const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
         const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
-
         const startYear = startDate.getFullYear();
         const endYear = endDate.getFullYear();
-        
         const renderedMonthLabels = [];
 
         for (let year = startYear; year <= endYear; year++) {
-            // Yılın 1 Ocak çizgisini çiz
             const yearStartDate = new Date(year, 0, 1);
             const yearDiffDays = this.daysFromToday(yearStartDate);
             const yearX = this.centerX + (yearDiffDays * pixelsPerDay) + this.offsetX;
@@ -248,16 +235,11 @@ class Timeline {
             ctx.textAlign = 'center';
             ctx.fillText(year.toString(), yearX, baselineY + 40);
             
-            // Ay çizgileri ve etiketleri
             for (let month = 0; month < 12; month++) {
-                // Her ayın 1. gününün tam tarihini al
                 const monthStartDate = new Date(year, month, 1);
-                // 'today'e göre gün farkını bul
                 const monthDiffDays = this.daysFromToday(monthStartDate);
-                // X koordinatını hesapla
                 const monthX = this.centerX + (monthDiffDays * pixelsPerDay) + this.offsetX;
                 
-                // Ay çizgisi (1 Ocak'ı tekrar çizmemek için atla)
                 if (month > 0) {
                     ctx.strokeStyle = window.ENV.COLORS.monthLine;
                     ctx.lineWidth = 1;
@@ -267,19 +249,12 @@ class Timeline {
                     ctx.stroke();
                 }
                 
-                // --- Ay Etiketi Çizimi (Okunaklılık) ---
                 const monthText = window.i18n.t('months.full')[month];
                 ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
                 const textMetrics = ctx.measureText(monthText);
                 const textWidth = textMetrics.width;
                 const textHeight = 10; 
-
-                const labelRect = {
-                    x: monthX - textHeight, 
-                    y: baselineY - monthLabelOffset - textWidth,
-                    width: textHeight,
-                    height: textWidth
-                };
+                const labelRect = { x: monthX - textHeight, y: baselineY - monthLabelOffset - textWidth, width: textHeight, height: textWidth };
 
                 let canRender = true;
                 for (const existingLabel of renderedMonthLabels) {
@@ -308,29 +283,21 @@ class Timeline {
     renderDaysView(ctx, level, baselineY) {
         const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
-        
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
         const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
-        
         const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
         const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
-
         const startYear = startDate.getFullYear();
         const endYear = endDate.getFullYear();
-        
         const renderedMonthLabels = [];
 
         for (let year = startYear; year <= endYear; year++) {
-            // Aylar
             for (let month = 0; month < 12; month++) {
                 const monthStart = new Date(year, month, 1);
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                
-                // Ay başlangıç çizgisini çiz
                 const monthDiffDays = this.daysFromToday(monthStart);
                 const monthX = this.centerX + (monthDiffDays * pixelsPerDay) + this.offsetX;
 
-                // Ekran dışında kalanları çizmeyi atla
                 if (monthX < -this.width / 2 || monthX > this.width * 1.5) {
                     continue;
                 }
@@ -342,7 +309,6 @@ class Timeline {
                 ctx.lineTo(monthX, baselineY + 18);
                 ctx.stroke();
                 
-                // ***** DÜZELTME: Yıl etiketini Ocak ayının altına çiz *****
                 if (month === 0) {
                     ctx.fillStyle = window.ENV.COLORS.text;
                     ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -350,19 +316,12 @@ class Timeline {
                     ctx.fillText(year.toString(), monthX, baselineY + 40);
                 }
                 
-                // --- Ay Etiketi Çizimi ---
                 const monthText = window.i18n.t('months.full')[month];
                 ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
                 const textMetrics = ctx.measureText(monthText);
                 const textWidth = textMetrics.width;
                 const textHeight = 11; 
-
-                const labelRect = {
-                    x: monthX - textHeight,
-                    y: baselineY - monthLabelOffset - textWidth,
-                    width: textHeight,
-                    height: textWidth
-                };
+                const labelRect = { x: monthX - textHeight, y: baselineY - monthLabelOffset - textWidth, width: textHeight, height: textWidth };
 
                 let canRender = true;
                 for (const existingLabel of renderedMonthLabels) {
@@ -387,15 +346,11 @@ class Timeline {
                 // Günler
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = new Date(year, month, day);
-                    // Her günün tam X koordinatını hesapla
                     const dayDiffDays = this.daysFromToday(date);
                     const dayX = this.centerX + (dayDiffDays * pixelsPerDay) + this.offsetX;
                     
-                    // 1 Ocak çizgisini tekrar çizmeyi atla (zaten ay çizgisi olarak çizildi)
                     if (day > 1) {
-                        // Performans için ekran dışı çizimleri atla
                         if (dayX < 0 || dayX > this.width) continue; 
-
                         ctx.strokeStyle = window.ENV.COLORS.dayLine;
                         ctx.lineWidth = 1;
                         ctx.beginPath();
@@ -404,10 +359,8 @@ class Timeline {
                         ctx.stroke();
                     }
                     
-                    // Performans için ekran dışı çizimleri atla
                     if (dayX < 0 || dayX > this.width) continue; 
                     
-                    // Gün numarası
                     ctx.fillStyle = window.ENV.COLORS.textVeryLight;
                     ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx.textAlign = 'center';
@@ -422,7 +375,6 @@ class Timeline {
         const x = this.centerX + this.offsetX; 
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2;
 
-        // Red line
         ctx.strokeStyle = window.ENV.COLORS.todayMarker;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -430,11 +382,13 @@ class Timeline {
         ctx.lineTo(x, baselineY + markerLength);
         ctx.stroke();
         
-        // "Şimdi" label
+        // "Şimdi" etiketi için 'infoBoxY'yi index.html'den almamız lazım
+        // Şimdilik 'baselineY'nin üstüne koyalım.
+        // DÜZELTME: 'infoBoxY' config.js'de tanımlı
         ctx.fillStyle = window.ENV.COLORS.todayMarker;
         ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(window.t('now').toUpperCase(), x, window.ENV.LAYOUT.infoBoxY + 40);
+        ctx.fillText(window.t('now').toUpperCase(), x, baselineY - window.ENV.LAYOUT.monthLabelOffset - 10);
     }
     
     // Render events
@@ -469,9 +423,7 @@ class Timeline {
     // Mavi hover çizgisini çiz
     renderHoverMarker(ctx, baselineY) {
         if (this.hoverX === -1 || this.isDragging) return; 
-
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2; 
-
         ctx.strokeStyle = window.ENV.COLORS.hoverMarker;
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -479,32 +431,16 @@ class Timeline {
         ctx.lineTo(this.hoverX, baselineY + markerLength);
         ctx.stroke();
     }
-
-    // Üstteki bilgi kutusunu çiz
-    renderInfoBox(ctx) {
-        if (!this.hoveredEvent) return;
-
-        const event = this.hoveredEvent;
-        const infoY = window.ENV.LAYOUT.infoBoxY;
-
-        ctx.fillStyle = window.ENV.COLORS.text;
-        ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(event.title, this.centerX, infoY);
-
-        const dateString = window.formatDate(event.date, 'full');
-        ctx.fillStyle = window.ENV.COLORS.textLight;
-        ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
-        ctx.fillText(dateString, this.centerX, infoY + 22);
-    }
     
+    // KALDIRILDI: renderInfoBox()
+
     // Event listeners setup
     setupEventListeners() {
         window.addEventListener('resize', () => this.resize());
         this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
         this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
-        this.canvas.addEventListener('mouseleave', () => this.onMouseLeave());
+        this.canvas.addEventListener('mouseleave', (e) => this.onMouseLeave());
         this.canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
         this.canvas.addEventListener('click', (e) => this.onClick(e));
         this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
@@ -549,15 +485,12 @@ class Timeline {
     }
     
     onWheel(e) {
-        // Shift tuşu basılıysa yatay kaydırma yap
         if (e.shiftKey) {
-            e.preventDefault(); // Sayfanın kaymasını engelle
+            e.preventDefault(); 
             this.targetOffsetX -= e.deltaY;
         } 
-        // Değilse, odaklı zoom yap
         else {
-            e.preventDefault(); // Zoom yaparken sayfanın kaymasını engelle
-            
+            e.preventDefault(); 
             const rect = this.canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             
@@ -578,7 +511,10 @@ class Timeline {
         
         const clickedEvent = this.getEventAtPosition(x, y);
         if (clickedEvent) {
-            this.showEventModal(clickedEvent);
+            // YENİ: index.html'deki global fonksiyonu çağır
+            if (window.selectEvent) {
+                window.selectEvent(clickedEvent);
+            }
         }
     }
     
@@ -648,10 +584,12 @@ class Timeline {
     }
     
     getEventAtPosition(x, y) {
+        // YENİ: 'baselineY'yi tekrar hesapla
+        const baselineY = this.centerY + (window.ENV.LAYOUT.rulerYOffset || 0);
+
         for (const event of this.events) {
             if (!event._renderX) continue;
             
-            const baselineY = this.centerY + window.ENV.LAYOUT.rulerYOffset;
             const barHeight = window.ENV.EVENT_BAR_HEIGHT;
             const barSpacing = window.ENV.EVENT_BAR_SPACING;
             const yOffset = (event.stackLevel || 0) * (barHeight + barSpacing);
@@ -670,19 +608,10 @@ class Timeline {
         return null;
     }
 
-    hideTooltip() {
-        document.getElementById('tooltip').classList.remove('active');
-    }
-    
-    showEventModal(event) {
-        document.getElementById('modalDate').textContent = window.formatDate(event.date, 'full');
-        document.getElementById('modalTitle').textContent = event.title;
-        document.getElementById('modalDescription').textContent = event.description;
-        document.getElementById('modalCategory').textContent = window.t(`categories.${event.category}`);
-        document.getElementById('modalOverlay').classList.add('active');
-    }
+    // KALDIRILDI: hideTooltip()
+    // KALDIRILDI: showEventModal()
 
-    // --- ODAKLI ZOOM YARDIMCI FONKSİYONLARI ---
+    // --- ODAKLI ZOOM FONKSİYONLARI ---
 
     xToDays(x, zoomLevel) {
         const level = window.ENV.ZOOM_LEVELS[zoomLevel];
@@ -700,44 +629,33 @@ class Timeline {
         return newOffsetX;
     }
 
-    // --- ODAKLI ZOOM FONKSİYONLARI ---
-
     zoomIn(mouseX = this.centerX) {
         if (this.zoomLevel >= window.ENV.ZOOM_LEVELS.length - 1) return;
-
         const currentDays = this.xToDays(mouseX, this.zoomLevel);
         const newZoomLevel = this.zoomLevel + 1;
         const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
-
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
         this.offsetX = newOffsetX; 
-        
         this.showZoomIndicator();
     }
     
     zoomOut(mouseX = this.centerX) {
         if (this.zoomLevel <= 0) return;
-
         const currentDays = this.xToDays(mouseX, this.zoomLevel);
         const newZoomLevel = this.zoomLevel - 1;
         const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
-        
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
         this.offsetX = newOffsetX; 
-
         this.showZoomIndicator();
     }
     
     showZoomIndicator() {
         const indicator = document.getElementById('zoomIndicator');
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-        
         indicator.textContent = `×${level.id} - ${window.t('zoomLevel' + level.id)}`;
-        
         indicator.classList.add('active');
-        
         setTimeout(() => {
             indicator.classList.remove('active');
         }, 1500);
@@ -752,15 +670,10 @@ class Timeline {
     }
     
     goToDate(selectedDate) {
-        // 'selectedDate'in de saatini sıfırla
         selectedDate.setHours(0,0,0,0);
-        
-        // 'today'e göre gün farkını hesapla
         const diffDays = this.daysFromToday(selectedDate);
-        
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
-        
         this.targetOffsetX = -(diffDays * pixelsPerDay);
     }
 }
