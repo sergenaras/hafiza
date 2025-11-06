@@ -116,7 +116,6 @@
         .event-list-item:hover {
             background-color: #f9f9f9;
         }
-        /* YENİ: Seçilen olayı listede göstermek için */
         .event-list-item.selected {
             background-color: #e3f2fd; /* Açık mavi */
         }
@@ -205,16 +204,6 @@
             background: #357abd;
         }
         
-        /* KALDIRILDI: .btn-dark sınıfı */
-        /* .btn-dark {
-            background: #333;
-            color: white;
-            border: none;
-        }
-        .btn-dark:hover {
-            background: #000;
-        } */
-
         /* Gizli Elemanlar (Canvas'ın ihtiyacı olan) */
         .hidden-elements {
             display: none;
@@ -231,10 +220,6 @@
                 Tarihe Git
             </button>
             
-            <button class="btn" onclick="goToToday()" data-i18n="goToToday">
-                Bugüne Dön
-            </button>
-            
             <button class="btn btn-primary" onclick="openNewEventDialog()" data-i18n="addEvent">
                 + Olay Ekle
             </button>
@@ -249,7 +234,7 @@
                 <p class="placeholder">
                     Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
                 </p>
-                </div>
+            </div>
         </section>
 
         <section class="panel panel-list">
@@ -281,35 +266,46 @@
     <script src="timeline.js"></script>
     
     <script>
-        let allEvents = []; 
-        let currentSelectedEvent = null; 
+        // Global değişkenler
+        let allEvents = []; // 'timeline.js'den gelen tüm olayların kopyası
+        let currentSelectedEvent = null; // Şu an seçili olan olayı takip et
 
+        // --- 1. Başlatma Fonksiyonları ---
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
+            // Timeline'ı başlat (Bu, 'loadEvents'i tetikleyecek)
             initTimeline();
             
+            // Tarih girişini bugüne ayarla
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
         });
 
+        // Bu fonksiyon 'timeline.js' yüklendiğinde tetiklenecek
         function initializeUI(events) {
-            allEvents = events; 
+            allEvents = events; // Verinin kopyasını al
             populateCategoryFilter(allEvents);
-            populateEventList(allEvents); 
+            populateEventList(allEvents); // Başlangıçta "tümü"nü göster
         }
+
+        // --- 2. Panel Doldurma Fonksiyonları ---
 
         function populateCategoryFilter(events) {
             const filterSelect = document.getElementById('categoryFilter');
+            
+            // Kategorileri dinamik olarak bul
             const categories = new Set(events.map(event => event.category || 'diğer'));
             
-            filterSelect.innerHTML = ''; 
+            filterSelect.innerHTML = ''; // "Yükleniyor..."u temizle
             
+            // "Tümü" seçeneği
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
             allOption.textContent = 'Tümü';
             filterSelect.appendChild(allOption);
             
+            // Diğer kategoriler
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -320,7 +316,7 @@
 
         function populateEventList(eventsToShow) {
             const listContainer = document.getElementById('eventListContainer');
-            listContainer.innerHTML = ''; 
+            listContainer.innerHTML = ''; // Listeyi temizle
 
             if (eventsToShow.length === 0) {
                 listContainer.innerHTML = '<li style="padding: 12px 8px; color: #888;">Bu kategoride olay bulunamadı.</li>';
@@ -370,6 +366,8 @@
             `;
         }
 
+        // --- 3. Olay (Event) Yöneticileri ---
+
         function filterCategory() {
             const filterSelect = document.getElementById('categoryFilter');
             const selectedCategory = filterSelect.value;
@@ -385,6 +383,7 @@
             populateEventList(filteredEvents);
         }
 
+        // Hem listeden hem de cetvelden gelen ortak fonksiyon
         function selectEvent(event) {
             currentSelectedEvent = event;
             updateDetailsPanel(event);
@@ -396,6 +395,10 @@
             filterCategory(); 
         }
 
+        // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
+
+        // "goToToday" FONKSİYONU KALDIRILDI
+        /*
         function goToToday() {
             if (window.timeline) {
                 window.timeline.goToToday();
@@ -404,6 +407,7 @@
             updateDetailsPanel(null);
             filterCategory();
         }
+        */
 
         function goToDate() {
             const dateInput = document.getElementById('dateInput');
