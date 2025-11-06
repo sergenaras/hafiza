@@ -1,7 +1,12 @@
-name: Generate Events JSON
+name: 12 - Olay JSON dosyasını oluştur ve güncelle
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main # veya varsayılan dalınızın adı
+    paths:
+      - 'events/data/**.md' # Sadece data klasöründe değişiklik olunca çalış
+  workflow_dispatch: # Manuel çalıştırma seçeneğini de koruyalım
 
 jobs:
   generate:

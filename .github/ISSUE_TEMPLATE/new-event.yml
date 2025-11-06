@@ -1,4 +1,4 @@
-name: 🎯 Yeni Olay Ekle
+name: Yeni Olay Ekle
 description: Zaman çizelgesine yeni bir olay ekleyin
 title: "Yeni Olay: "
 labels: ["new-event"]
@@ -9,17 +9,8 @@ body:
     attributes:
       value: |
         ## Zaman Çizelgesine Yeni Olay Ekleyin
-        Bu formu doldurarak zaman çizelgesine yeni bir olay ekleyebilirsiniz.
+        Lütfen tüm alanları dikkatlice doldurun. Girilen verilerin kalitesi, zaman çizelgesinin doğruluğu için kritiktir.
         
-  - type: input
-    id: year
-    attributes:
-      label: Yıl
-      description: Olayın gerçekleştiği veya gerçekleşeceği yıl
-      placeholder: "Örnek: 2024"
-    validations:
-      required: true
-
   - type: input
     id: title
     attributes:
@@ -29,12 +20,13 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: description
+  - type: input
+    id: date
     attributes:
-      label: Açıklama
-      description: Olay hakkında detaylı açıklama
-      placeholder: "Olayın detaylı açıklamasını buraya yazın..."
+      label: Tam Tarih (YYYY-AA-GG)
+      description: |
+        Olayın gerçekleştiği tam tarih. Eğer gün ve ay bilinmiyorsa, lütfen yılın ilk gününü girin (Örn: 2024-01-01).
+      placeholder: "Örnek: 2024-10-24"
     validations:
       required: true
 
@@ -42,7 +34,7 @@ body:
     id: category
     attributes:
       label: Kategori
-      description: Olayın kategorisi
+      description: Olayın ana kategorisi.
       options:
         - teknoloji
         - bilim
@@ -52,22 +44,38 @@ body:
         - politika
         - diğer
     validations:
-      required: false
+      required: true
 
-  - type: input
-    id: date
+  - type: textarea
+    id: description
     attributes:
-      label: Tam Tarih (Opsiyonel)
-      description: Gün/Ay bilgisi varsa ekleyin
-      placeholder: "Örnek: 2024-03-15"
+      label: Açıklama
+      description: Olay hakkında 1-2 cümlelik detaylı açıklama. Bu, "Olay Detayları" panelinde görünecektir.
+      placeholder: "Olayın detaylı açıklamasını buraya yazın..."
     validations:
-      required: false
+      required: true
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Kaynaklar
+      description: |
+        Lütfen olayı doğrulayan kaynak(lar) için URL ekleyin.
+        - **Resmi Kaynak:** (Örn: Resmi Gazete, TÜİK, NASA.gov) 1 adet kaynak yeterlidir.
+        - **Resmi Olmayan Kaynak:** (Örn: Haber siteleri, Wikipedia) Lütfen en az 2 farklı kaynaktan doğrulama ekleyin.
+      placeholder: |
+        - https://www.resmikaynak.gov/....
+        - https://www.habersitesi.com/....
+    validations:
+      required: true
 
   - type: checkboxes
     id: terms
     attributes:
-      label: Onay
-      description: Lütfen aşağıdaki kutuyu işaretleyin
+      label: Doğrulama Kontrol Listesi
+      description: Göndermeden önce lütfen onaylayın.
       options:
-        - label: Bu bilgilerin doğru olduğunu onaylıyorum
+        - label: Tarih formatının (YYYY-AA-GG) doğru olduğundan eminim.
+          required: true
+        - label: Güvenilir kaynaklar ekledim.
           required: true

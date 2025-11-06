@@ -1,0 +1,116 @@
+name: 11 - Issue üzerinden olay oluştur.
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  create-pr:
+    if: contains(github.event.issue.labels.*.name, 'new-event')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse issue body
+        id: parse
+        run: |
+          # Get issue body
+          ISSUE_BODY=$(cat << 'EOF'
+          ${{ github.event.issue.body }}
+          EOF
+          )
+          
+          # Yeni şablona göre parse et (Artık 'year' yok, 'date' ve 'sources' var)
+          TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          CATEGORY=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | sed '/^[[:space:]]*$/d' | tr -d '\r')
+          SOURCES=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | sed '/^[[:space:]]*$/d' | tr -d '\r')
+
+          # Yılı, 'date' alanından al (YYYY-AA-GG)
+          YEAR=$(echo "$DATE" | cut -d'-' -f1)
+          
+          # Dosya adı için başlığı temizle
+          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9çğıöşü]/-/g' | sed 's/--\+/-/g' | sed 's/^-//' -e 's/-$//')
+          FILENAME="${YEAR}-${SLUG}.md"
+          
+          # Çıktıları ayarla
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "category=$CATEGORY" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+          echo "sources<<EOF" >> $GITHUB_OUTPUT
+          echo "$SOURCES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "year=$YEAR" >> $GITHUB_OUTPUT
+          
+          echo "📋 Parsed:"
+          echo "  Year: $YEAR"
+          echo "  Title: $TITLE"
+          echo "  Category: $CATEGORY"
+          echo "  Date: $DATE"
+          echo "  Filename: $FILENAME"
+
+      - name: Create markdown file
+        run: |
+          mkdir -p events/data
+          
+          # Yeni şablona göre .md dosyasını oluştur
+          cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
+          ---
+          title: "${{ steps.parse.outputs.title }}"
+          date: ${{ steps.parse.outputs.date }}
+          category: ${{ steps.parse.outputs.category }}
+          ---
+          
+          ${{ steps.parse.outputs.description }}
+
+          ## Kaynaklar
+          ${{ steps.parse.outputs.sources }}
+          MDEOF
+          
+          echo "✅ Created: events/data/${{ steps.parse.outputs.filename }}"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "Yeni olay ekle: ${{ steps.parse.outputs.title }} (${{ steps.parse.outputs.year }})"
+          branch: event/${{ github.event.issue.number }}
+          delete-branch: true
+          title: "✨ Yeni Olay: ${{ steps.parse.outputs.title }}"
+          body: |
+            ## 📅 Yeni Olay Eklendi
+            
+            **Issue:** #${{ github.event.issue.number }}
+            **Tarih:** ${{ steps.parse.outputs.date }}
+            **Kategori:** ${{ steps.parse.outputs.category }}
+            
+            ### 📖 Açıklama
+            ${{ steps.parse.outputs.description }}
+            
+            ---
+            Bu PR, issue #${{ github.event.issue.number }} tarafından otomatik olarak oluşturuldu.
+            
+            **Lütfen "Merge pull request" butonuna basarak onaylayın.**
+          labels: |
+            event
+            automated
+        id: create-pr
+
+      - name: Comment on issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🎉 Olayınız için bir Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}\n\nLütfen PR'ı inceleyip onaylayın (Merge edin).`
+            })

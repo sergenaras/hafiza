@@ -16,7 +16,7 @@ def parse_markdown_file(file_path):
         content = f.read()
     
     # YAML front matter'ı parse et
-    yaml_pattern = r'^---\s*\n(.*?)\n---\s*\n(.*)$'
+    yaml_pattern = r'^---\s*\n(.*?)\n---\s*\n(.*?)$'
     match = re.match(yaml_pattern, content, re.DOTALL)
     
     if not match:
@@ -24,7 +24,16 @@ def parse_markdown_file(file_path):
         return None
     
     yaml_content = match.group(1)
-    description = match.group(2).strip()
+    
+    # Açıklama ve Kaynakları ayır
+    description_content = match.group(2).strip()
+    sources = ""
+    if "## Kaynaklar" in description_content:
+        parts = description_content.split("## Kaynaklar", 1)
+        description = parts[0].strip()
+        sources = parts[1].strip()
+    else:
+        description = description_content
     
     # YAML alanlarını parse et
     event = {}
@@ -35,19 +44,21 @@ def parse_markdown_file(file_path):
             value = value.strip().strip('"').strip("'")
             event[key] = value
     
-    # Açıklamayı ekle
+    # Açıklama ve Kaynakları ekle
     event['description'] = description
+    event['sources'] = sources
     
-    # Gerekli alanları kontrol et
-    if 'year' not in event or 'title' not in event:
-        print(f"⚠️  Uyarı: {file_path} dosyasında 'year' veya 'title' eksik")
+    # Gerekli alanları kontrol et (artık 'date' ve 'title' zorunlu)
+    if 'date' not in event or 'title' not in event:
+        print(f"⚠️  Uyarı: {file_path} dosyasında 'date' veya 'title' eksik")
         return None
     
-    # Year'ı integer'a çevir
+    # 'date' alanından 'year'ı çıkar
     try:
-        event['year'] = int(event['year'])
+        event_date = datetime.strptime(event['date'], '%Y-%m-%d')
+        event['year'] = event_date.year
     except ValueError:
-        print(f"⚠️  Uyarı: {file_path} dosyasında geçersiz yıl değeri: {event['year']}")
+        print(f"⚠️  Uyarı: {file_path} dosyasında geçersiz tarih formatı: {event['date']} (YYYY-AA-GG bekleniyordu)")
         return None
     
     return event
@@ -55,7 +66,6 @@ def parse_markdown_file(file_path):
 def generate_events_json():
     """Tüm markdown dosyalarını oku ve events.json oluştur"""
     
-    # Dosya yollarını belirle
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     events_dir = repo_root / 'events' / 'data'
@@ -64,12 +74,10 @@ def generate_events_json():
     print(f"📂 Events klasörü: {events_dir}")
     print(f"📝 Çıktı dosyası: {output_file}")
     
-    # Events klasörünü kontrol et
     if not events_dir.exists():
         print(f"❌ Events klasörü bulunamadı: {events_dir}")
         return False
     
-    # Tüm markdown dosyalarını oku
     events = []
     md_files = list(events_dir.glob('*.md'))
     
@@ -84,20 +92,18 @@ def generate_events_json():
         else:
             print(f"   ❌ Dosya parse edilemedi")
     
-    # Olayları yıla göre sırala
-    events.sort(key=lambda x: x['year'])
+    # Olayları tam tarihe göre sırala
+    events.sort(key=lambda x: x['date'])
     
-    # JSON oluştur
     output_data = {
         "events": events,
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v1.0"
+            "generator": "Zaman Yolculuğu Event Generator v2.0"
         }
     }
     
-    # JSON dosyasını yaz
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
