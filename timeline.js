@@ -568,11 +568,6 @@ class Timeline {
         
         if (hoveredEvent !== this.hoveredEvent) {
             this.hoveredEvent = hoveredEvent;
-            
-            // YENİ: Tooltip yerine InfoBox'ı tetiklemek için 'hoveredEvent'i ayarladık.
-            // 'render()' fonksiyonu bu değişikliği yakalayıp InfoBox'ı çizecek.
-            
-            // Tooltip kodları kaldırıldı.
         }
     }
     
@@ -580,11 +575,21 @@ class Timeline {
         for (const event of this.events) {
             if (!event._renderX) continue;
             
-            const hitMargin = 10;
-            if (x >= event._renderX - hitMargin &&
-                x <= event._renderX + hitMargin &&
-                y >= event._renderY - event._renderHeight - hitMargin &&
-                y <= event._renderY + hitMargin) {
+            // Olay çubuklarının dikey konumunu config'den al
+            const baselineY = this.centerY + window.ENV.LAYOUT.rulerYOffset;
+            const barHeight = window.ENV.EVENT_BAR_HEIGHT;
+            const barSpacing = window.ENV.EVENT_BAR_SPACING;
+            const yOffset = (event.stackLevel || 0) * (barHeight + barSpacing);
+            const eventBaseY = baselineY + window.ENV.LAYOUT.eventBarBaseY - yOffset;
+
+            // Hit detection (tıklama alanı)
+            const hitMarginX = 10;
+            const hitMarginY = 10;
+            
+            if (x >= event._renderX - hitMarginX &&
+                x <= event._renderX + hitMarginX &&
+                y >= eventBaseY - barHeight - hitMarginY && // Çubuğun üstü
+                y <= eventBaseY + hitMarginY) {             // Çubuğun altı
                 return event;
             }
         }
@@ -592,15 +597,11 @@ class Timeline {
     }
     
     showTooltip(event, x, y) {
-        // Bu fonksiyon artık InfoBox tarafından değiştirildi,
-        // ancak modal için hala 'tooltip' id'li bir div kullanılıyorsa
-        // (index.html'e göre evet) bu fonksiyon kalmalı.
-        // Ah, hayır, 'tooltip' id'li div, modal değil, hover tooltip'i.
-        // Bu artık kullanılmıyor.
+        // Artık kullanılmıyor, yerini InfoBox aldı
     }
     
     hideTooltip() {
-        // Bu da artık kullanılmıyor.
+        // Artık kullanılmıyor
         document.getElementById('tooltip').classList.remove('active');
     }
     
@@ -630,7 +631,8 @@ class Timeline {
         const indicator = document.getElementById('zoomIndicator');
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         
-        indicator.textContent = `×${level.id} - ${window.t('zoomLevel'D + level.id)}`;
+        // ***** İŞTE DÜZELTME BURADA *****
+        indicator.textContent = `×${level.id} - ${window.t('zoomLevel' + level.id)}`;
         
         indicator.classList.add('active');
         
