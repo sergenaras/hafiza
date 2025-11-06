@@ -204,15 +204,11 @@ class Timeline {
                 ctx.lineTo(monthX, this.centerY + 12);
                 ctx.stroke();
                 
-                // Month label (vertical)
-                ctx.save();
-                ctx.translate(monthX, this.centerY - 20);
-                ctx.rotate(-Math.PI / 2);
+                // Month label (horizontal, above the line)
                 ctx.fillStyle = window.ENV.COLORS.textLight;
-                ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(window.i18n.t('months.full')[month], 0, 0);
-                ctx.restore();
+                ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(window.i18n.t('months.full')[month], monthX, this.centerY - 20);
             }
         }
     }
@@ -243,15 +239,11 @@ class Timeline {
                 ctx.lineTo(monthX, this.centerY + 18);
                 ctx.stroke();
                 
-                // Month label (vertical)
-                ctx.save();
-                ctx.translate(monthX, this.centerY - 25);
-                ctx.rotate(-Math.PI / 2);
+                // Month label (horizontal, above the line)
                 ctx.fillStyle = window.ENV.COLORS.text;
-                ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(window.i18n.t('months.full')[month], 0, 0);
-                ctx.restore();
+                ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(window.i18n.t('months.full')[month], monthX, this.centerY - 25);
                 
                 // Draw days
                 for (let day = 1; day <= daysInMonth; day++) {
