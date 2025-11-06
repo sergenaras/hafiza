@@ -10,6 +10,7 @@ class Timeline {
         this.zoomLevel = 0;
         this.offsetX = 0;
         this.targetOffsetX = 0;
+        this.targetDate = null; // Gidilen tarih (mavi çizgi için)
         
         // Touch/Mouse state
         this.isDragging = false;
@@ -48,7 +49,7 @@ class Timeline {
         this.width = rect.width;
         this.height = rect.height;
         this.centerX = this.width / 2;
-        this.centerY = this.height / 2;
+        this.centerY = this.height * 0.7; // Cetveli aşağı çektik (0.5'ten 0.7'ye)
         
         this.render();
     }
@@ -135,8 +136,18 @@ class Timeline {
         // Draw today marker
         this.renderTodayMarker(ctx, level);
         
+        // Draw target date marker (blue)
+        if (this.targetDate) {
+            this.renderTargetDateMarker(ctx, level);
+        }
+        
         // Draw events
         this.renderEvents(ctx, level);
+        
+        // Draw target date events above ruler
+        if (this.targetDate) {
+            this.renderTargetDateEvents(ctx, level);
+        }
     }
     
     // Render Years View (Level 1)
@@ -627,10 +638,14 @@ function initTimeline() {
 Timeline.prototype.goToToday = function() {
     this.zoomLevel = 0;
     this.offsetX = 0;
+    this.targetDate = null; // Clear blue marker
     this.render();
 };
 
 Timeline.prototype.goToDate = function(targetDate) {
+    // Save target date for blue marker
+    this.targetDate = new Date(targetDate);
+    
     const yearDiff = targetDate.getFullYear() - this.currentYear;
     const monthDiff = targetDate.getMonth() - this.currentMonth;
     const dayDiff = targetDate.getDate() - this.currentDay;
@@ -651,3 +666,107 @@ Timeline.prototype.goToDate = function(targetDate) {
     this.offsetX = -totalOffset;
     this.render();
 };
+
+// Add these methods to Timeline class
+
+renderTargetDateMarker(ctx, level) {
+    const yearWidth = level.pixelsPerYear;
+    
+    // Calculate exact position including day of year
+    let dayOffset = 0;
+    const yearDiff = this.targetDate.getFullYear() - this.currentYear;
+    
+    if (level.showDays || level.showMonths) {
+        const dayOfYear = this.getDayOfYear(this.targetDate);
+        const dayWidth = yearWidth / 365;
+        dayOffset = dayOfYear * dayWidth;
+    }
+    
+    const x = this.centerX + (yearDiff * yearWidth) + dayOffset + this.offsetX;
+    
+    // Blue line
+    ctx.strokeStyle = '#4a90e2';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]); // Dashed line
+    ctx.beginPath();
+    ctx.moveTo(x, 80);
+    ctx.lineTo(x, this.centerY + 100);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset
+    
+    // Date label
+    ctx.fillStyle = '#4a90e2';
+    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    const dateStr = window.formatDate(this.targetDate, 'short');
+    ctx.fillText(dateStr, x, 70);
+}
+
+renderTargetDateEvents(ctx, level) {
+    // Find events on target date
+    const targetDateKey = this.getDateKey(this.targetDate);
+    const eventsOnDate = this.events.filter(event => 
+        this.getDateKey(event.date) === targetDateKey
+    );
+    
+    if (eventsOnDate.length === 0) return;
+    
+    const yearWidth = level.pixelsPerYear;
+    let dayOffset = 0;
+    const yearDiff = this.targetDate.getFullYear() - this.currentYear;
+    
+    if (level.showDays || level.showMonths) {
+        const dayOfYear = this.getDayOfYear(this.targetDate);
+        const dayWidth = yearWidth / 365;
+        dayOffset = dayOfYear * dayWidth;
+    }
+    
+    const centerX = this.centerX + (yearDiff * yearWidth) + dayOffset + this.offsetX;
+    
+    // Draw events in a box above the ruler
+    const boxWidth = 300;
+    const boxHeight = 40 + (eventsOnDate.length * 30);
+    const boxX = Math.max(20, Math.min(centerX - boxWidth/2, this.width - boxWidth - 20));
+    const boxY = 100;
+    
+    // Box background
+    ctx.fillStyle = 'rgba(74, 144, 226, 0.95)';
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+    
+    // Box border
+    ctx.strokeStyle = '#357abd';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    
+    // Title
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(window.formatDate(this.targetDate, 'full'), boxX + 15, boxY + 20);
+    
+    // Events
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+    eventsOnDate.forEach((event, index) => {
+        const y = boxY + 45 + (index * 30);
+        
+        // Bullet point
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(boxX + 15, y - 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Event title (truncated)
+        let title = event.title;
+        if (title.length > 35) {
+            title = title.substring(0, 32) + '...';
+        }
+        ctx.fillText(title, boxX + 25, y);
+    });
+    
+    // Click hint
+    ctx.font = 'italic 10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText('Detaylar için olaya tıklayın', boxX + boxWidth/2, boxY + boxHeight - 10);
+}
+

@@ -406,7 +406,8 @@
             
             // Set date input to today
             const today = new Date();
-            document.getElementById('dateInput').valueAsDate = today;
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('dateInput').value = dateStr;
         });
 
         function goToToday() {
@@ -417,10 +418,13 @@
 
         function goToDate() {
             const dateInput = document.getElementById('dateInput');
-            const selectedDate = dateInput.valueAsDate;
+            const dateValue = dateInput.value; // Get value as string
             
-            if (selectedDate && window.timeline) {
+            if (dateValue && window.timeline) {
+                const selectedDate = new Date(dateValue + 'T12:00:00'); // Add time to avoid timezone issues
                 window.timeline.goToDate(selectedDate);
+            } else {
+                alert('Lütfen bir tarih seçin');
             }
         }
 
