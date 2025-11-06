@@ -28,7 +28,7 @@ window.ENV = {
         {
             id: 2,
             name: 'months',
-            pixelsPerYear: 1800,     // Arttırdım: Her yıl 1800px = Her ay 150px
+            pixelsPerYear: 1800,     // Her yıl 1800px = Her ay 150px
             showYears: true,
             showMonths: true,
             showDays: false
@@ -36,27 +36,38 @@ window.ENV = {
         {
             id: 3,
             name: 'days',
-            pixelsPerYear: 10950,    // Arttırdım: Her yıl 10950px = Her gün ~30px
+            pixelsPerYear: 10950,    // Her yıl 10950px = Her gün ~30px
             showYears: true,
             showMonths: true,
             showDays: true
         }
     ],
     
-    // Visual Settings
+    // YENİ: Visual Settings (Beyaz arkaplana uygun renk teorisi)
     COLORS: {
-        background: '#ffffff',
-        ruler: '#dddddd',
-        todayMarker: '#ff4444',
-        yearLine: '#999999',
-        yearLineThick: '#333333',
-        monthLine: '#cccccc',
-        dayLine: '#eeeeee',
-        eventBar: '#999999',
-        eventBarHover: '#666666',
-        text: '#333333',
-        textLight: '#666666',
-        textVeryLight: '#999999'
+        background: '#FFFFFF',
+        text: '#212121',
+        textLight: '#757575',
+        textVeryLight: '#BDBDBD',
+        
+        ruler: '#E0E0E0',
+        todayMarker: '#E53935',    // Güçlü Kırmızı
+        hoverMarker: '#1E88E5',    // Güçlü Mavi (Yeni)
+        
+        yearLine: '#BDBDBD',
+        yearLineThick: '#757575',
+        monthLine: '#EEEEEE',
+        dayLine: '#F5F5F5',
+        
+        eventBar: '#757575',
+        eventBarHover: '#1E88E5'   // Mavi
+    },
+
+    // YENİ: Yerleşim Ayarları
+    LAYOUT: {
+        rulerYOffset: 150,     // Cetveli dikey merkezden 150px aşağıya kaydır
+        infoBoxY: 80,          // Olay bilgi kutusunun dikey konumu (üstte)
+        eventBarBaseY: -60     // Olay çubuklarının cetvele göre dikey konumu (cetvelin 60px üstü)
     },
     
     // Event Display Settings
