@@ -204,11 +204,11 @@ class Timeline {
                 ctx.lineTo(monthX, this.centerY + 12);
                 ctx.stroke();
                 
-                // Month label (horizontal, above the line)
+                // Month label (horizontal, ABOVE the ruler - like day numbers)
                 ctx.fillStyle = window.ENV.COLORS.textLight;
                 ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(window.i18n.t('months.full')[month], monthX, this.centerY - 20);
+                ctx.textAlign = 'left';  // Sol hizalı, çizgiden başlasın
+                ctx.fillText(window.i18n.t('months.full')[month], monthX + 3, this.centerY - 18);
             }
         }
     }
@@ -239,11 +239,11 @@ class Timeline {
                 ctx.lineTo(monthX, this.centerY + 18);
                 ctx.stroke();
                 
-                // Month label (horizontal, above the line)
+                // Month label (horizontal, ABOVE the ruler)
                 ctx.fillStyle = window.ENV.COLORS.text;
                 ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(window.i18n.t('months.full')[month], monthX, this.centerY - 25);
+                ctx.textAlign = 'left';  // Sol hizalı
+                ctx.fillText(window.i18n.t('months.full')[month], monthX + 3, this.centerY - 25);
                 
                 // Draw days
                 for (let day = 1; day <= daysInMonth; day++) {
