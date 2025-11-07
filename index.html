@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Hafıza Cetveli</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -171,8 +173,8 @@
             font-size: 15px;
             line-height: 1.6;
             
-            /* DÜZELTME BURADA */
-            white-space: pre-line; /* Bu, \n yeni satır karakterlerini korur */
+            /* 2. ADIM: white-space kuralı kaldırıldı */
+            /* white-space: pre-line; */ 
         }
 
         #details-content .description h2 {
@@ -362,6 +364,7 @@
             });
         }
 
+        // 3. ADIM: JavaScript fonksiyonları güncellendi
         function updateDetailsPanel(event) {
             const detailsContainer = document.getElementById('details-content');
             
@@ -373,6 +376,7 @@
                 return;
             }
 
+            // 'event.description'ı yeni fonksiyonumuzla formatlıyoruz
             const formattedDescription = escapeAndFormat(event.description);
 
             detailsContainer.innerHTML = `
@@ -385,28 +389,14 @@
         function escapeAndFormat(str) {
             if (!str) return '';
             
-            // 1. Önce metni güvenli hale getir (XSS önlemi)
-            let safeText = str.replace(/[&<>"']/g, function(m) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[m];
-            });
+            // 1. Markdown metnini 'Marked.js' kullanarak HTML'e dönüştür
+            // 'breaks: true' ayarı, \n (yeni satır) karakterlerini <br> etiketine dönüştürür
+            const dirtyHTML = marked.parse(str, { breaks: true });
 
-            // 2. Markdown Başlıklarını dönüştür (## Header -> <h2>Header</h2>)
-            safeText = safeText.replace(/^(##\s)(.*)$/gm, '<h2>$2</h2>');
-
-            // 3. Stanza (beyit) ayıracı olan '---' veya '----' (veya daha fazlasını)
-            // <hr> (yatay çizgi) ile değiştir.
-            safeText = safeText.replace(/^-{3,}\s*$/gm, '<hr>');
+            // 2. Oluşan HTML'i 'DOMPurify' kullanarak XSS saldırılarına karşı temizle
+            const cleanHTML = DOMPurify.sanitize(dirtyHTML);
             
-            // Not: \n karakterleri CSS'teki 'white-space: pre-line' sayesinde
-            // otomatik olarak <br> etiketine dönüşecek.
-            
-            return safeText;
+            return cleanHTML;
         }
 
         // --- 3. Olay (Event) Yöneticileri ---
@@ -439,18 +429,6 @@
         }
 
         // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
-
-        // "goToToday" FONKSİYONU KALDIRILDI
-        /*
-        function goToToday() {
-            if (window.timeline) {
-                window.timeline.goToToday();
-            }
-            currentSelectedEvent = null;
-            updateDetailsPanel(null);
-            filterCategory();
-        }
-        */
 
         function goToDate() {
             const dateInput = document.getElementById('dateInput');
