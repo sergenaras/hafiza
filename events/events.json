@@ -41,12 +41,12 @@
       "sources": ""
     },
     {
-      "year": 2024,
       "title": "Gün Batımı",
       "date": "2024-11-05",
       "category": "kültür",
-      "description": "günler de batar be",
-      "sources": ""
+      "description": "günler de batar be\n### Kategori\nkültür\n### Tam Tarih (Opsiyonel)\n2024-11-05\n### Onay\n- [x] Bu bilgilerin doğru olduğunu onaylıyorum",
+      "sources": "",
+      "year": 2024
     },
     {
       "title": "Sağlık",
@@ -65,12 +65,28 @@
       "sources": ""
     },
     {
+      "title": "Yağmur Yağacak",
+      "date": "2025-11-05",
+      "category": "kültür",
+      "description": "yağmur yapması üzerine yapılan istekler kabul olursa yağmur yağacak ancak mavi defterlinin ne yapacağı belli olmaz\n### Kategori\nkültür\n### Tam Tarih (Opsiyonel)\n2025-11-05\n### Onay\n- [x] Bu bilgilerin doğru olduğunu onaylıyorum",
+      "sources": "",
+      "year": 2025
+    },
+    {
       "year": 2025,
       "title": "Karamürsel Geçidi",
       "date": "2025-11-06",
       "category": "teknoloji",
       "description": "kayobilalllerin oradan aşağı sapınca görülebilir",
       "sources": ""
+    },
+    {
+      "title": "Nam",
+      "date": "2025-11-07",
+      "category": "kültür",
+      "description": "Nam nam nam",
+      "sources": "Güven bizim işimiz",
+      "year": 2025
     },
     {
       "title": "Yeni Olay: Kam",
@@ -97,6 +113,14 @@
       "year": 2025
     },
     {
+      "title": "Her sabah her sabah bir seher yeli",
+      "date": "2025-11-09",
+      "category": "kültür",
+      "description": "Her sabah her sabah bir seher yeli\nAğlar bülbül ağlar güle getirir\nBakman mı feleğin çürük işine\nO da her zahmeti kula getirir\nVarıp yoldaş olma sen uğursuza\nKomşu olma namussuza arsıza\nSabah selamını verme pirsize\nAdamın başına bela getirir\nMuhib yoldaş olma kalleş yar ile\nO yar da durmadı bir ikrar ile\nSakın sohbet etme münkir kör ile\nAltının adını pula getirir\nPir Sultan Abdal'ım derdim ziyade\nİçilir mi yarsız yad ile bade\nYar odur ahrette şefaat ede\nSadık yar insanı yola getirir\n---\nHer sabah her sabah seher yelleri\nSeher yelleriyle esen’ Ali’dir\nMuhammed kılavuz Mahşer yerine\nİslamın sancağın çeken Ali’dir\nDayanı gör kardaş gönül gücüne\nAzığın yok mudur ahret göçüne\nOn ik’ İmam gibi Cennet içine\nAb-ı Kevser ile akan Ali’dir\nBindiler Düldüle Şarka gittiler\nHorasan şehrine akın ettiler\nMü’minlerin feryadına yettiler\nMervan’ Yezid’i basan Ali’dir\nNerede arasam hazır bulunur\nOkur dört Kitabı iyi bilinir\nBayram ayı gibi doğar dolunur\nSeher yelleriyle esen Ali’dir\nMünkirin gıdası Haktan kesildi\nNesimî yüzüldü Mansur asıldı\nDünya yetmiş kerre doldu eksildi\nDolduran AIi’dir dolan Ali’dir\nHakkın emri ile Cebrail indi\nİndi de Ali’nin koluna kondu\nZülfikar kuşandı Düldüle bindi\nYezidin neslini kesen Ali’dir\nPir Sultan’ım eydür şâd olup güldü\nKa’be-i şeriften bir nida geldi\nHakkın emri ile dört Kitap indi\nOkuyan Muhammed yazan Ali’dir",
+      "sources": "Pir Sultan Abdal",
+      "year": 2025
+    },
+    {
       "year": 2030,
       "title": "İlk İnsanlı Mars Misyonu",
       "date": "2030-07-01",
@@ -114,8 +138,8 @@
     }
   ],
   "metadata": {
-    "total_events": 14,
-    "generated_at": "2025-11-07T14:56:18.026578Z",
+    "total_events": 17,
+    "generated_at": "2025-11-07T15:18:18.641576Z",
     "generator": "Zaman Yolculuğu Event Generator v2.0"
   }
 }
