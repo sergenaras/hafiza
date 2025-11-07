@@ -25,17 +25,8 @@ def parse_markdown_file(file_path):
     
     yaml_content = match.group(1)
     
-    # Açıklama ve Kaynakları ayır
     description_content = match.group(2).strip()
-    sources = ""
-    if "## Kaynaklar" in description_content:
-        parts = description_content.split("## Kaynaklar", 1)
-        description = parts[0].strip()
-        sources = parts[1].strip()
-    else:
-        description = description_content
     
-    # YAML alanlarını parse et
     event = {}
     for line in yaml_content.split('\n'):
         if ':' in line:
@@ -44,16 +35,12 @@ def parse_markdown_file(file_path):
             value = value.strip().strip('"').strip("'")
             event[key] = value
     
-    # Açıklama ve Kaynakları ekle
-    event['description'] = description
-    event['sources'] = sources
+    event['description'] = description_content
     
-    # Gerekli alanları kontrol et (artık 'date' ve 'title' zorunlu)
     if 'date' not in event or 'title' not in event:
         print(f"⚠️  Uyarı: {file_path} dosyasında 'date' veya 'title' eksik")
         return None
     
-    # 'date' alanından 'year'ı çıkar
     try:
         event_date = datetime.strptime(event['date'], '%Y-%m-%d')
         event['year'] = event_date.year
@@ -61,6 +48,9 @@ def parse_markdown_file(file_path):
         print(f"⚠️  Uyarı: {file_path} dosyasında geçersiz tarih formatı: {event['date']} (YYYY-AA-GG bekleniyordu)")
         return None
     
+    if 'sources' not in event:
+        event['sources'] = "" # Boş bir değer ata
+        
     return event
 
 def generate_events_json():
@@ -100,7 +90,7 @@ def generate_events_json():
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v2.0"
+            "generator": "Zaman Yolculuğu Event Generator v2.1" # Versiyon güncellendi
         }
     }
     
