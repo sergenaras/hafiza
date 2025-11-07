@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
 
   schedule:
-    - cron: '0 3 * * *' 
+    - cron: '0 3 * * *'
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write 
+  pages: write    
+  id-token: write 
 
 concurrency:
   group: ${{ github.workflow }}
@@ -44,12 +44,20 @@ jobs:
 
       - name: Commit and push if changed
         if: steps.check_changes.outputs.changed == 'true'
+        id: commit_push
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add events/events.json
           git commit -m "🤖 Auto-update events.json (Batch)"
           git push
+
+      - name: Purge jsDelivr Cache
+        if: steps.commit_push.outcome == 'success'
+        run: |
+          echo "Purging jsDelivr cache for events.json..."
+          curl -X POST "https://purge.jsdelivr.net/gh/${{ github.repository }}@${{ github.ref_name }}/events/events.json"
+          echo "Cache purge request sent."
 
       - name: No changes detected
         if: steps.check_changes.outputs.changed == 'false'
