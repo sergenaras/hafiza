@@ -31,7 +31,7 @@ jobs:
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
-          FILENAME="${YEAR}-${SLUG}.md"
+          FILENAME="${DATE}-${SLUG}.md"
           
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
