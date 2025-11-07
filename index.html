@@ -405,8 +405,13 @@
             const dirtyHTML = marked.parse(str, { breaks: true, gfm: true });
 
             // 2. Oluşan HTML'i 'DOMPurify' kullanarak XSS saldırılarına karşı temizle
-            // 'USE_PROFILES' ayarı, <h2> ve <hr> gibi etiketlere izin verir
-            const cleanHTML = DOMPurify.sanitize(dirtyHTML, {USE_PROFILES: {html: true}});
+            // DÜZELTME: 'USE_PROFILES' yerine, 'h2' ve 'hr' etiketlerine
+            // açıkça izin veren 'ALLOWED_TAGS' ayarını kullanıyoruz.
+            const cleanHTML = DOMPurify.sanitize(dirtyHTML, {
+                ALLOWED_TAGS: [
+                    'p', 'br', 'b', 'i', 'em', 'strong', 'h2', 'hr', 'ul', 'ol', 'li', 'a', 'code', 'pre'
+                ]
+            });
             
             return cleanHTML;
         }
