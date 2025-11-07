@@ -13,7 +13,7 @@ Nesimi’nin Türkçe, Arapça ve Farsça yazılmış üç divanı vardır. Muka
 
 Şiirler
 
-##Minnet Eylemem
+## Minnet Eylemem
 Har içinde biten gonca güle minnet eylemem 
 Arabi farisi bilmem, dile minnet eylemem 
 Sırat-i müstakim üzre gözetirim rahimi 
