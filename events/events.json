@@ -81,6 +81,14 @@
       "sources": ""
     },
     {
+      "title": "Kemik",
+      "date": "2025-11-08",
+      "category": "teknoloji",
+      "description": "ilikli kemik",
+      "sources": "vücud",
+      "year": 2025
+    },
+    {
       "year": 2030,
       "title": "İlk İnsanlı Mars Misyonu",
       "date": "2030-07-01",
@@ -98,8 +106,8 @@
     }
   ],
   "metadata": {
-    "total_events": 12,
-    "generated_at": "2025-11-07T11:29:40.189890Z",
+    "total_events": 13,
+    "generated_at": "2025-11-07T11:31:48.926269Z",
     "generator": "Zaman Yolculuğu Event Generator v2.0"
   }
 }
