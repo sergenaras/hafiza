@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Hafıza Cetveli</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -177,6 +179,7 @@
             /* white-space: pre-line; */ 
         }
 
+        /* Bu kurallar 'description' içine dinamik eklenen h2/hr'leri hedefler */
         #details-content .description h2 {
             font-size: 18px;
             margin-top: 20px;
@@ -186,6 +189,13 @@
             border: 0;
             border-top: 1px solid #eee;
             margin: 20px 0;
+        }
+        /* Markdown'ın oluşturacağı <p> etiketleri için boşluk */
+        #details-content .description p {
+            margin-bottom: 1em;
+        }
+        #details-content .description p:last-child {
+            margin-bottom: 0;
         }
 
         /* Standart Butonlar (Header'daki) */
@@ -391,10 +401,12 @@
             
             // 1. Markdown metnini 'Marked.js' kullanarak HTML'e dönüştür
             // 'breaks: true' ayarı, \n (yeni satır) karakterlerini <br> etiketine dönüştürür
-            const dirtyHTML = marked.parse(str, { breaks: true });
+            // 'gfm: true' ayarı, GitHub Flavored Markdown (--- için <hr>) desteğini açar
+            const dirtyHTML = marked.parse(str, { breaks: true, gfm: true });
 
             // 2. Oluşan HTML'i 'DOMPurify' kullanarak XSS saldırılarına karşı temizle
-            const cleanHTML = DOMPurify.sanitize(dirtyHTML);
+            // 'USE_PROFILES' ayarı, <h2> ve <hr> gibi etiketlere izin verir
+            const cleanHTML = DOMPurify.sanitize(dirtyHTML, {USE_PROFILES: {html: true}});
             
             return cleanHTML;
         }
