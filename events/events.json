@@ -73,6 +73,14 @@
       "sources": ""
     },
     {
+      "title": "Yeni Olay: Kam",
+      "date": "2025-11-07",
+      "category": "spor",
+      "description": "kam mı",
+      "sources": "kanturalı",
+      "year": 2025
+    },
+    {
       "year": 2025,
       "title": "Kağnı Arabası",
       "date": "2025-11-07",
@@ -106,8 +114,8 @@
     }
   ],
   "metadata": {
-    "total_events": 13,
-    "generated_at": "2025-11-07T14:52:01.439230Z",
+    "total_events": 14,
+    "generated_at": "2025-11-07T14:56:18.026578Z",
     "generator": "Zaman Yolculuğu Event Generator v2.0"
   }
 }
