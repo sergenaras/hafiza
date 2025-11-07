@@ -1,26 +1,21 @@
-name: 12 - Generate JSON and Deploy Site
+name: 12 - Generate JSON and Deploy Site (BATCH)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'events/data/**.md' # .md dosyaları değiştiğinde tetiklen
   workflow_dispatch:
 
-# Gerekli izinleri ayarla
-permissions:
-  contents: write # JSON'u commit etmek için
-  pages: write    # Pages'e deploy etmek için
-  id-token: write # Pages'e deploy etmek için
+  schedule:
+    - cron: '0 3 * * *'
 
-# Sadece 1 build'in aynı anda çalışmasını sağla
+permissions:
+  contents: write 
+  pages: write    
+  id-token: write 
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
-  # 1. ÖNCE JSON OLUŞTUR
   generate-json:
     runs-on: ubuntu-latest
     steps:
@@ -53,7 +48,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add events/events.json
-          git commit -m "🤖 Auto-update events.json"
+          git commit -m "🤖 Auto-update events.json (Batch)"
           git push
 
       - name: No changes detected
@@ -61,9 +56,7 @@ jobs:
         run: |
           echo "✅ events.json is already up to date"
 
-  # 2. SONRA SİTEYİ DEPLOY ET
   deploy-site:
-    # Bu iş, 'generate-json' işi bittikten sonra çalışır
     needs: generate-json
     runs-on: ubuntu-latest
     
@@ -71,17 +64,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Bot'un yaptığı son commit'i (events.json) aldığımızdan emin olalım
           ref: main 
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
         
       - name: Upload artifact
-        # Tüm dosyaları (yeni events.json dahil) artifact olarak yükle
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # Deponun kök dizinini yükle
+          path: '.' 
 
       - name: Deploy to GitHub Pages
         id: deployment
