@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background: #f4f4f4; /* Arka planı hafif gri yaptık */
+            background: #f4f4f4;
             color: #333;
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
@@ -32,7 +32,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
-            flex-shrink: 0; /* Küçülmesin */
+            flex-shrink: 0;
         }
 
         .logo {
@@ -48,13 +48,13 @@
 
         /* 2. Ana İçerik Alanı (CSS Grid) */
         .main-content {
-            flex: 1; /* Kalan tüm alanı kapla */
+            flex: 1;
             display: grid;
             grid-template-columns: 2fr 1fr;
-            grid-template-rows: 1fr auto; /* Üst paneller esnek, alt cetvel sabit */
+            grid-template-rows: 1fr auto; 
             gap: 16px;
             padding: 16px;
-            overflow: hidden; /* Taşmayı engelle */
+            overflow: hidden;
         }
 
         /* Paneller için ortak stil */
@@ -65,7 +65,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* İçerik taşarsa */
+            overflow: hidden;
         }
 
         .panel-header {
@@ -80,8 +80,8 @@
 
         .panel-body {
             padding: 16px;
-            overflow-y: auto; /* Gerektiğinde scroll çıksın */
-            flex: 1; /* Kalan alanı doldur */
+            overflow-y: auto;
+            flex: 1;
         }
 
         /* 2.1. Olay Detayları (Sol Üst) */
@@ -117,7 +117,7 @@
             background-color: #f9f9f9;
         }
         .event-list-item.selected {
-            background-color: #e3f2fd; /* Açık mavi */
+            background-color: #e3f2fd; 
         }
         .event-list-item-title {
             font-weight: 500;
@@ -132,9 +132,9 @@
 
         /* 2.3. Zaman Çizelgesi (Alt) */
         .panel-timeline {
-            grid-column: 1 / 3; /* İki sütunu da kapla */
+            grid-column: 1 / 3;
             grid-row: 2 / 3;
-            height: 300px; /* Sabit yükseklik, ihtiyaca göre ayarlanabilir */
+            height: 300px;
             position: relative;
         }
 
@@ -170,6 +170,9 @@
         #details-content .description {
             font-size: 15px;
             line-height: 1.6;
+            
+            /* DÜZELTME BURADA */
+            white-space: pre-line; /* Bu, \n yeni satır karakterlerini korur */
         }
 
         /* Standart Butonlar (Header'daki) */
