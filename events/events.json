@@ -5,82 +5,101 @@
       "title": "Ay'a İlk İniş",
       "date": "1969-07-20",
       "category": "bilim",
-      "description": "Neil Armstrong ve Buzz Aldrin, Apollo 11 misyonu ile Ay'a ayak basan ilk insanlar oldular. Armstrong'un \"İnsan için küçük bir adım, insanlık için dev bir sıçrama\" sözleri tarihe geçti. Bu başarı, Soğuk Savaş döneminde ABD'nin uzay yarışında önemli bir dönüm noktası oldu."
+      "description": "Neil Armstrong ve Buzz Aldrin, Apollo 11 misyonu ile Ay'a ayak basan ilk insanlar oldular. Armstrong'un \"İnsan için küçük bir adım, insanlık için dev bir sıçrama\" sözleri tarihe geçti. Bu başarı, Soğuk Savaş döneminde ABD'nin uzay yarışında önemli bir dönüm noktası oldu.",
+      "sources": ""
     },
     {
       "year": 1989,
       "title": "Berlin Duvarı'nın Yıkılışı",
       "date": "1989-11-09",
       "category": "tarih",
-      "description": "Soğuk Savaş'ın en büyük sembollerinden biri olan Berlin Duvarı, 28 yıl sonra yıkıldı. Doğu ve Batı Berlin arasındaki fiziksel ve ideolojik engel ortadan kalktı. Bu olay, Sovyetler Birliği'nin çöküşünün ve Avrupa'da yeni bir dönemin başlangıcı oldu."
+      "description": "Soğuk Savaş'ın en büyük sembollerinden biri olan Berlin Duvarı, 28 yıl sonra yıkıldı. Doğu ve Batı Berlin arasındaki fiziksel ve ideolojik engel ortadan kalktı. Bu olay, Sovyetler Birliği'nin çöküşünün ve Avrupa'da yeni bir dönemin başlangıcı oldu.",
+      "sources": ""
     },
     {
       "year": 2000,
       "title": "Yeni Milenyum",
       "date": "2000-01-01",
       "category": "kültür",
-      "description": "21. yüzyıla giriş, dünya çapında büyük kutlamalarla karşılandı. Y2K korkuları gerçekleşmedi ve insanlık yeni bir bin yıla umutla adım attı. İnternet çağının başlangıcı ve dijital devrimin hızlanacağı dönem başladı."
+      "description": "21. yüzyıla giriş, dünya çapında büyük kutlamalarla karşılandı. Y2K korkuları gerçekleşmedi ve insanlık yeni bir bin yıla umutla adım attı. İnternet çağının başlangıcı ve dijital devrimin hızlanacağı dönem başladı.",
+      "sources": ""
     },
     {
       "year": 2024,
       "title": "Yapay Zeka Çağı",
       "date": "2024-01-01",
       "category": "teknoloji",
-      "description": "Büyük dil modelleri ve üretken yapay zeka teknolojileri günlük hayatın vazgeçilmez bir parçası haline geldi. ChatGPT, Claude ve benzeri AI araçları iş dünyasından eğitime, sanattan bilime her alanda devrim yarattı. AI asistanları milyonlarca insan tarafından günlük olarak kullanılmaya başlandı."
+      "description": "Büyük dil modelleri ve üretken yapay zeka teknolojileri günlük hayatın vazgeçilmez bir parçası haline geldi. ChatGPT, Claude ve benzeri AI araçları iş dünyasından eğitime, sanattan bilime her alanda devrim yarattı. AI asistanları milyonlarca insan tarafından günlük olarak kullanılmaya başlandı.",
+      "sources": ""
     },
     {
       "year": 2024,
       "title": "Kem ",
       "date": "2024-01-01",
       "category": "None",
-      "description": "kem ve gam"
+      "description": "kem ve gam",
+      "sources": ""
     },
     {
       "year": 2024,
       "title": "Gün Batımı",
       "date": "2024-11-05",
       "category": "kültür",
-      "description": "günler de batar be"
+      "description": "günler de batar be",
+      "sources": ""
+    },
+    {
+      "title": "Sağlık",
+      "date": "2024-11-07",
+      "category": "spor",
+      "description": "afdsaf",
+      "sources": "11",
+      "year": 2024
     },
     {
       "year": 2025,
       "title": "Anılar",
       "date": "2025-11-03",
       "category": "tarih",
-      "description": "anılar, şimdi gözümde canlandılarrrr"
+      "description": "anılar, şimdi gözümde canlandılarrrr",
+      "sources": ""
     },
     {
       "year": 2025,
       "title": "Karamürsel Geçidi",
       "date": "2025-11-06",
       "category": "teknoloji",
-      "description": "kayobilalllerin oradan aşağı sapınca görülebilir"
+      "description": "kayobilalllerin oradan aşağı sapınca görülebilir",
+      "sources": ""
     },
     {
       "year": 2025,
       "title": "Kağnı Arabası",
       "date": "2025-11-07",
       "category": "diğer",
-      "description": "çok önemlidir herkes için olmasa da kağnı demek anadolu demektir"
+      "description": "çok önemlidir herkes için olmasa da kağnı demek anadolu demektir",
+      "sources": ""
     },
     {
       "year": 2030,
       "title": "İlk İnsanlı Mars Misyonu",
       "date": "2030-07-01",
       "category": "bilim",
-      "description": "NASA ve SpaceX işbirliğinde planlanan ilk insanlı Mars misyonu gerçekleştirilecek. Uzun yıllardır süren hazırlıkların ardından, insanoğlu başka bir gezegene ayak basacak. Bu misyon, uzay kolonizasyonunun ilk adımı olarak tarihe geçecek."
+      "description": "NASA ve SpaceX işbirliğinde planlanan ilk insanlı Mars misyonu gerçekleştirilecek. Uzun yıllardır süren hazırlıkların ardından, insanoğlu başka bir gezegene ayak basacak. Bu misyon, uzay kolonizasyonunun ilk adımı olarak tarihe geçecek.",
+      "sources": ""
     },
     {
       "year": 2050,
       "title": "Sürdürülebilir Dünya Hedefi",
       "date": "2050-01-01",
       "category": "bilim",
-      "description": "Birleşmiş Milletler'in belirlediği sürdürülebilir kalkınma hedeflerine ulaşılması planlanıyor. Yenilenebilir enerji kaynaklarına tam geçiş, karbon nötr ekonomi ve döngüsel üretim modelleri küresel standart haline gelecek. İklim değişikliğiyle mücadelede kritik kilometre taşı."
+      "description": "Birleşmiş Milletler'in belirlediği sürdürülebilir kalkınma hedeflerine ulaşılması planlanıyor. Yenilenebilir enerji kaynaklarına tam geçiş, karbon nötr ekonomi ve döngüsel üretim modelleri küresel standart haline gelecek. İklim değişikliğiyle mücadelede kritik kilometre taşı.",
+      "sources": ""
     }
   ],
   "metadata": {
-    "total_events": 11,
-    "generated_at": "2025-11-06T14:11:04.865424Z",
-    "generator": "Zaman Yolculuğu Event Generator v1.0"
+    "total_events": 12,
+    "generated_at": "2025-11-07T11:29:40.189890Z",
+    "generator": "Zaman Yolculuğu Event Generator v2.0"
   }
 }
