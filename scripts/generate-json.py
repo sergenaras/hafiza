@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Zaman Çizelgesi - Event JSON Generator
+Hafıza Cetveli - Event JSON Generator
 Bu script events/data/ klasöründeki tüm .md dosyalarını okur ve events.json oluşturur.
 """
 
@@ -20,11 +20,10 @@ def parse_markdown_file(file_path):
     match = re.match(yaml_pattern, content, re.DOTALL)
     
     if not match:
-        print(f"⚠️  Uyarı: {file_path} dosyasında YAML front matter bulunamadı")
+        print(f"⚠️  Uyarı: {file_path.name} dosyasında YAML front matter bulunamadı")
         return None
     
     yaml_content = match.group(1)
-    
     description_content = match.group(2).strip()
     
     event = {}
@@ -37,19 +36,24 @@ def parse_markdown_file(file_path):
     
     event['description'] = description_content
     
+    # --- YENİ DEĞİŞİKLİK ---
+    # Dosya adını da JSON'a ekle
+    event['filename'] = file_path.name
+    # -----------------------
+    
     if 'date' not in event or 'title' not in event:
-        print(f"⚠️  Uyarı: {file_path} dosyasında 'date' veya 'title' eksik")
+        print(f"⚠️  Uyarı: {file_path.name} dosyasında 'date' veya 'title' eksik")
         return None
     
     try:
         event_date = datetime.strptime(event['date'], '%Y-%m-%d')
         event['year'] = event_date.year
     except ValueError:
-        print(f"⚠️  Uyarı: {file_path} dosyasında geçersiz tarih formatı: {event['date']} (YYYY-AA-GG bekleniyordu)")
+        print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih formatı: {event['date']} (YYYY-AA-GG bekleniyordu)")
         return None
     
     if 'sources' not in event:
-        event['sources'] = "" # Boş bir değer ata
+        event['sources'] = ""
         
     return event
 
@@ -90,7 +94,7 @@ def generate_events_json():
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v2.1" # Versiyon güncellendi
+            "generator": "Zaman Yolculuğu Event Generator v2.2" # Versiyon güncellendi
         }
     }
     

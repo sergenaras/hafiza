@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
     <style>
+        /* ... (tüm mevcut CSS stiliniz buraya gelecek, değişiklik yok) ... */
         * {
             margin: 0;
             padding: 0;
@@ -27,7 +28,6 @@
             height: 100vh;
         }
 
-        /* 1. Header Alanı */
         .header {
             height: 60px;
             background: white;
@@ -50,7 +50,6 @@
             align-items: center;
         }
 
-        /* 2. Ana İçerik Alanı (CSS Grid) */
         .main-content {
             flex: 1;
             display: grid;
@@ -61,7 +60,6 @@
             overflow: hidden;
         }
 
-        /* Paneller için ortak stil */
         .panel {
             background: white;
             border: 1px solid #e0e0e0;
@@ -81,6 +79,19 @@
             justify-content: space-between;
             align-items: center;
         }
+        
+        /* YENİ: Panel başlığındaki "Düzenle" linki için stil */
+        .panel-header-link {
+            font-size: 12px;
+            font-weight: 500;
+            color: #4a90e2;
+            text-decoration: none;
+            display: none; /* Varsayılan olarak gizli */
+        }
+        .panel-header-link:hover {
+            text-decoration: underline;
+        }
+        
 
         .panel-body {
             padding: 16px;
@@ -88,13 +99,11 @@
             flex: 1;
         }
 
-        /* 2.1. Olay Detayları (Sol Üst) */
         .panel-details {
             grid-column: 1 / 2;
             grid-row: 1 / 2;
         }
 
-        /* 2.2. Olay Listesi (Sağ Üst) */
         .panel-list {
             grid-column: 2 / 3;
             grid-row: 1 / 2;
@@ -133,8 +142,6 @@
             margin-top: 4px;
         }
 
-
-        /* 2.3. Zaman Çizelgesi (Alt) */
         .panel-timeline {
             grid-column: 1 / 3;
             grid-row: 2 / 3;
@@ -155,7 +162,6 @@
             cursor: grabbing;
         }
         
-        /* Olay Detayları İçeriği */
         #details-content .placeholder {
             color: #888;
             font-style: italic;
@@ -174,12 +180,9 @@
         #details-content .description {
             font-size: 15px;
             line-height: 1.6;
-            
-            /* 2. ADIM: white-space kuralı kaldırıldı */
-            /* white-space: pre-line; */ 
+            /* white-space: pre-line; (Bu bir önceki adımda kaldırılmıştı, doğru) */
         }
 
-        /* Bu kurallar 'description' içine dinamik eklenen h2/hr'leri hedefler */
         #details-content .description h2 {
             font-size: 18px;
             margin-top: 20px;
@@ -190,7 +193,6 @@
             border-top: 1px solid #eee;
             margin: 20px 0;
         }
-        /* Markdown'ın oluşturacağı <p> etiketleri için boşluk */
         #details-content .description p {
             margin-bottom: 1em;
         }
@@ -198,7 +200,6 @@
             margin-bottom: 0;
         }
 
-        /* Standart Butonlar (Header'daki) */
         .date-input {
             padding: 8px 12px;
             border: 1px solid #ddd;
@@ -208,7 +209,7 @@
 
         .btn {
             padding: 8px 16px;
-            background: #f5f5f5;
+            background: #f5f5ff;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 13px;
@@ -230,7 +231,6 @@
             background: #357abd;
         }
         
-        /* Gizli Elemanlar (Canvas'ın ihtiyacı olan) */
         .hidden-elements {
             display: none;
         }
@@ -255,7 +255,12 @@
     <main class="main-content">
         
         <section class="panel panel-details">
-            <div class="panel-header">Olay Detayları</div>
+            <div class="panel-header">
+                <span>Olay Detayları</span>
+                <a id="editEventLink" href="#" class="panel-header-link" target="_blank">
+                    (Bu Olayı Düzenle)
+                </a>
+            </div>
             <div class="panel-body" id="details-content">
                 <p class="placeholder">
                     Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
@@ -276,7 +281,7 @@
             </div>
         </section>
 
-        <section class="panel panel-timeline">
+        <section class="panel-timeline">
             <canvas id="timelineCanvas"></canvas>
             <div class="hidden-elements">
                 <div id="loading">Yükleniyor...</div>
@@ -293,45 +298,37 @@
     
     <script>
         // Global değişkenler
-        let allEvents = []; // 'timeline.js'den gelen tüm olayların kopyası
-        let currentSelectedEvent = null; // Şu an seçili olan olayı takip et
+        let allEvents = []; 
+        let currentSelectedEvent = null; 
+        const GITHUB_REPO_URL = `https://github.com/${window.ENV.GITHUB_USERNAME}/${window.ENV.REPO_NAME}`;
 
         // --- 1. Başlatma Fonksiyonları ---
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
-            // Timeline'ı başlat (Bu, 'loadEvents'i tetikleyecek)
             initTimeline();
             
-            // Tarih girişini bugüne ayarla
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
         });
 
-        // Bu fonksiyon 'timeline.js' yüklendiğinde tetiklenecek
         function initializeUI(events) {
-            allEvents = events; // Verinin kopyasını al
+            allEvents = events; 
             populateCategoryFilter(allEvents);
-            populateEventList(allEvents); // Başlangıçta "tümü"nü göster
+            populateEventList(allEvents); 
         }
 
         // --- 2. Panel Doldurma Fonksiyonları ---
 
         function populateCategoryFilter(events) {
+            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const filterSelect = document.getElementById('categoryFilter');
-            
-            // Kategorileri dinamik olarak bul
             const categories = new Set(events.map(event => event.category || 'diğer'));
-            
-            filterSelect.innerHTML = ''; // "Yükleniyor..."u temizle
-            
-            // "Tümü" seçeneği
+            filterSelect.innerHTML = ''; 
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
             allOption.textContent = 'Tümü';
             filterSelect.appendChild(allOption);
-            
-            // Diğer kategoriler
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -341,52 +338,48 @@
         }
 
         function populateEventList(eventsToShow) {
+            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const listContainer = document.getElementById('eventListContainer');
-            listContainer.innerHTML = ''; // Listeyi temizle
-
+            listContainer.innerHTML = ''; 
             if (eventsToShow.length === 0) {
                 listContainer.innerHTML = '<li style="padding: 12px 8px; color: #888;">Bu kategoride olay bulunamadı.</li>';
                 return;
             }
-
             eventsToShow.forEach(event => {
                 const li = document.createElement('li');
                 li.className = 'event-list-item';
-                if (currentSelectedEvent && currentSelectedEvent.title === event.title && currentSelectedEvent.date.getTime() === event.date.getTime()) {
+                if (currentSelectedEvent && currentSelectedEvent.filename === event.filename) {
                     li.classList.add('selected');
                 }
-                
                 li.onclick = () => {
                     selectEvent(event);
                 };
-
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'event-list-item-title';
                 titleDiv.textContent = event.title;
-
                 const dateDiv = document.createElement('div');
                 dateDiv.className = 'event-list-item-date';
                 dateDiv.textContent = window.formatDate(event.date, 'full');
-
                 li.appendChild(titleDiv);
                 li.appendChild(dateDiv);
                 listContainer.appendChild(li);
             });
         }
 
-        // 3. ADIM: JavaScript fonksiyonları güncellendi
         function updateDetailsPanel(event) {
             const detailsContainer = document.getElementById('details-content');
+            const editLink = document.getElementById('editEventLink');
             
             if (!event) {
+                // Olay seçilmediyse paneli temizle ve linki gizle
                 detailsContainer.innerHTML = `
                     <p class="placeholder">
                         Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
                     </p>`;
+                editLink.style.display = 'none'; // Linki gizle
                 return;
             }
 
-            // 'event.description'ı yeni fonksiyonumuzla formatlıyoruz
             const formattedDescription = escapeAndFormat(event.description);
 
             detailsContainer.innerHTML = `
@@ -394,19 +387,26 @@
                 <div class="date">${window.formatDate(event.date, 'full')}</div>
                 <div class="description">${formattedDescription}</div>
             `;
+            
+            // YENİ: "Düzenle" linkini ayarla ve göster
+            // 'event.filename' alanı 'generate-json.py' script'inden gelecek
+            if (event.filename) {
+                const editUrl = `${GITHUB_REPO_URL}/edit/${window.ENV.BRANCH}/events/data/${event.filename}`;
+                editLink.href = editUrl;
+                editLink.style.display = 'block'; // Linki göster
+            } else {
+                editLink.style.display = 'none'; // Filename yoksa gizle
+            }
         }
 
         function escapeAndFormat(str) {
             if (!str) return '';
             
-            // 1. Markdown metnini 'Marked.js' kullanarak HTML'e dönüştür
-            // 'breaks: true' ayarı, \n (yeni satır) karakterlerini <br> etiketine dönüştürür
-            // 'gfm: true' ayarı, GitHub Flavored Markdown (--- için <hr>) desteğini açar
+            // 'breaks: true', \n (yeni satır) karakterlerini <br>'ye dönüştürür
+            // 'gfm: true', GitHub Flavored Markdown (--- için <hr>, ## için h2) desteğini açar
             const dirtyHTML = marked.parse(str, { breaks: true, gfm: true });
 
-            // 2. Oluşan HTML'i 'DOMPurify' kullanarak XSS saldırılarına karşı temizle
-            // DÜZELTME: 'USE_PROFILES' yerine, 'h2' ve 'hr' etiketlerine
-            // açıkça izin veren 'ALLOWED_TAGS' ayarını kullanıyoruz.
+            // 'h2', 'hr' gibi etiketlere izin verecek şekilde temizle
             const cleanHTML = DOMPurify.sanitize(dirtyHTML, {
                 ALLOWED_TAGS: [
                     'p', 'br', 'b', 'i', 'em', 'strong', 'h2', 'hr', 'ul', 'ol', 'li', 'a', 'code', 'pre'
@@ -419,21 +419,18 @@
         // --- 3. Olay (Event) Yöneticileri ---
 
         function filterCategory() {
+            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const filterSelect = document.getElementById('categoryFilter');
             const selectedCategory = filterSelect.value;
-
             let filteredEvents;
-
             if (selectedCategory === 'tumu') {
                 filteredEvents = allEvents;
             } else {
                 filteredEvents = allEvents.filter(event => (event.category || 'diğer') === selectedCategory);
             }
-
             populateEventList(filteredEvents);
         }
 
-        // Hem listeden hem de cetvelden gelen ortak fonksiyon
         function selectEvent(event) {
             currentSelectedEvent = event;
             updateDetailsPanel(event);
@@ -448,9 +445,9 @@
         // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
         function goToDate() {
+            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const dateInput = document.getElementById('dateInput');
             const dateValue = dateInput.value;
-            
             if (dateValue && window.timeline) {
                 const selectedDate = new Date(dateValue + 'T12:00:00'); 
                 window.timeline.goToDate(selectedDate);
@@ -458,6 +455,7 @@
         }
 
         function openNewEventDialog() {
+            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 
