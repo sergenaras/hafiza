@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
     <style>
-        /* ... (tüm mevcut CSS stiliniz) ... */
+        /* ... (tüm stilleriniz değişmedi) ... */
         * {
             margin: 0;
             padding: 0;
@@ -383,7 +383,7 @@
                         <option value="tumu" data-i18n="loading">Yükleniyor...</option>
                     </select>
                 </div>
-                </div>
+            </div>
             <div class="panel-body">
                 <ul class="event-list" id="eventListContainer">
                     </ul>
@@ -416,8 +416,10 @@
         let allEvents = []; 
         let currentSelectedEvent = null; 
         const GITHUB_REPO_URL = `https://github.com/${window.ENV.GITHUB_USERNAME}/${window.ENV.REPO_NAME}`;
-        
         let currentSortOrder = 'newest'; // Varsayılan: En Yeni Üstte
+
+        // --- YENİ EKLENDİ (Kategori Mantığı için) ---
+        const standardCategories = ['teknoloji', 'bilim', 'tarih', 'kültür', 'spor', 'politika', 'diğer'];
 
         // --- 1. Başlatma Fonksiyonları ---
         window.addEventListener('DOMContentLoaded', () => {
@@ -433,15 +435,9 @@
 
         function initializeUI(events) {
             allEvents = events; 
-            
             populateSortFilter();
             populateCategoryFilter(allEvents);
-            
-            // --- DEĞİŞTİRİLEN SATIR ---
-            // Listeyi ilk yüklemede sıralamak için filterCategory() çağrılır
-            filterCategory();
-            // populateEventList(allEvents); // <-- Bu satır kaldırıldı
-            // -------------------------
+            filterCategory(); // Listeyi sıralama dahil ilk kez yükler
         }
 
         // --- 2. Panel Doldurma Fonksiyonları ---
@@ -449,19 +445,15 @@
         function populateSortFilter() {
             // ... (Bu fonksiyon değişmedi) ...
             const sortSelect = document.getElementById('sortOrderFilter');
-            sortSelect.innerHTML = ''; // Temizle
-            
+            sortSelect.innerHTML = ''; 
             const oldestOption = document.createElement('option');
             oldestOption.value = 'oldest';
             oldestOption.textContent = window.t('sort.oldest');
             sortSelect.appendChild(oldestOption);
-            
             const newestOption = document.createElement('option');
             newestOption.value = 'newest';
             newestOption.textContent = window.t('sort.newest');
             sortSelect.appendChild(newestOption);
-            
-            // Global değişkene göre ayarla
             sortSelect.value = currentSortOrder;
         }
 
@@ -470,7 +462,6 @@
             const filterSelect = document.getElementById('categoryFilter');
             const categories = new Set(events.map(event => event.category || 'diğer'));
             filterSelect.innerHTML = ''; 
-            
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
             allOption.textContent = window.t('categories.all') || 'Tümü';
@@ -565,6 +556,7 @@
             `;
             
             if (event.filename) {
+                // (Bu linki, "Düzenle" butonunun mantığıyla aynı tutuyoruz)
                 const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
                 const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
                                   `**Dosya Adı:** \`${event.filename}\``;
@@ -628,21 +620,77 @@
             filterCategory(); 
         }
 
+        // --- YENİ YARDIMCI FONKSİYON ---
+        // Date objesini 'YYYY-AA-GG' formatına çevirir
+        function formatDateToYYYYMMDD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        
+        // --- GÜNCELLENMİŞ FONKSİYON ---
         function handleEditClick(e, event) {
-            // ... (Bu fonksiyon değişmedi) ...
             e.stopPropagation(); 
             
-            const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
-            const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
-                              `**Dosya Adı:** \`${event.filename}\`\n\n` +
-                              `--- (YENİ İÇERİK AŞAĞIYA) ---\n\n` +
-                              `**Başlık:** ${event.title}\n` +
-                              `**Tarih (YYYY-AA-GG):** ${event.date.toISOString().split('T')[0]}\n` +
-                              `**Kategori:** ${event.category}\n\n` +
-                              `**Açıklama (Markdown):**\n${event.description}\n\n` +
-                              `--- (BİTİŞ) ---`;
-                              
+            // 1. Kategoriyi ve "Diğer Kategori" alanını belirle
+            let categoryField = event.category;
+            let otherCategoryField = "";
+            
+            if (!standardCategories.includes(event.category)) {
+                // Eğer kategori standart listede yoksa (örn: "Arkeoloji")
+                categoryField = "diğer";
+                otherCategoryField = event.category;
+            }
+
+            // 2. Tarih ve Saat'i YAML'dan geldiği gibi formatla
+            const eventDate = new Date(event.date); // ISO string'den Date objesi
+            const dateField = formatDateToYYYYMMDD(eventDate);
+            // event.original_time, generate-json.py'den geliyor
+            const timeField = event.original_time || ""; 
+
+            // 3. Issue şablonuyla %100 uyumlu metni oluştur
+            // (Boş satırlar, awk ayrıştırıcısı için kritiktir)
+            // Gizli FILENAME etiketi eklendi
+            const issueBody = `
+### Başlık
+
+${event.title}
+
+### Tam Tarih (YYYY-AA-GG)
+
+${dateField}
+
+### Saat (SS:DD) - İsteğe bağlı
+
+${timeField}
+
+### Kategori
+
+${categoryField}
+
+### Özel Kategori (Eğer 'Diğer' Seçtiyseniz)
+
+${otherCategoryField}
+
+### Açıklama
+
+${event.description}
+
+### Kaynaklar
+
+${event.sources || ''}
+
+### Doğrulama Kontrol Listesi
+
+- [x] Tarih formatının (YYYY-AA-GG) doğru olduğundan eminim.
+- [x] Güvenilir kaynaklar ekledim.
+`;
+            
+            // 4. URL'i oluştur ve yeni sekmede aç
+            const issueTitle = `Olay Düzenle: ${event.title}`;
             const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=edit-request`;
+            
             window.open(editIssueUrl, '_blank');
         }
 

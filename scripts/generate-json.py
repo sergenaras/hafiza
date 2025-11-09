@@ -6,7 +6,7 @@ Bu script events/data/ klasöründeki tüm .md dosyalarını okur ve events.json
 
 import os
 import json
-import re # <- YENİ EKLENDİ (Regex için)
+import re # Regex modülü eklendi
 from pathlib import Path
 from datetime import datetime
 
@@ -24,7 +24,7 @@ def parse_markdown_file(file_path):
         return None
     
     yaml_content = match.group(1)
-    description_content = match.group(2).strip()
+    full_content = match.group(2).strip() # Burası artık "full_content"
     
     event = {}
     for line in yaml_content.split('\n'):
@@ -34,7 +34,16 @@ def parse_markdown_file(file_path):
             value = value.strip().strip('"').strip("'")
             event[key] = value
     
-    event['description'] = description_content
+    # --- YENİ EKLENDİ (Açıklama ve Kaynakları Ayır) ---
+    sources_header = "## Kaynaklar"
+    if sources_header in full_content:
+        parts = full_content.split(sources_header, 1)
+        event['description'] = parts[0].strip()
+        event['sources'] = parts[1].strip()
+    else:
+        event['description'] = full_content
+        event['sources'] = "" # Kaynak yoksa boş string
+    # -----------------------------------------------
     
     # Dosya adını da JSON'a ekle
     event['filename'] = file_path.name
@@ -47,7 +56,11 @@ def parse_markdown_file(file_path):
     try:
         event_date_str = event['date'] # YYYY-MM-DD
         event_time_str = event.get('time', None) 
-        
+
+        # --- YENİ EKLENDİ (Düzenleme formu için orijinal saati sakla) ---
+        event['original_time'] = event_time_str.strip() if event_time_str else ""
+        # -----------------------------------------------------------
+
         clean_time = None
         if event_time_str:
             clean_time = event_time_str.strip()
@@ -62,30 +75,26 @@ def parse_markdown_file(file_path):
             # Saat yoksa, boşsa, "_No response_" ise veya formatı bozuksa: 12:00 kullan
             full_iso_str = f"{event_date_str}T12:00:00"
             
-            # Eğer saat alanı dolu ama geçersizse (örn: _No response_) kullanıcıyı bilgilendir
             if clean_time and clean_time != '_No response_':
                 print(f"   ℹ️  Bilgi: {file_path.name} dosyasında geçersiz saat formatı ('{clean_time}'). 12:00 varsayılan olarak kullanıldı.")
         
-        # String'i tarih nesnesine çevir (Bu, 2025-02-31 gibi geçersiz tarihleri de yakalar)
         event_date = datetime.fromisoformat(full_iso_str)
         
-        # event['date']'i JS'nin okuyacağı son ISO string haliyle güncelle
         event['date'] = full_iso_str 
         event['year'] = event_date.year
+        
+        # Orijinal 'time' anahtarını temizle, sadece 'original_time' kalsın
+        event.pop('time', None)
 
     except ValueError as e:
-        # Hata genellikle geçersiz 'date' alanından (örn: 2025-02-30) kaynaklanır
         print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih/saat formatı: {e} (Tarih: {event.get('date')}, Saat: {event.get('time')})")
         return None
     # ------------------------------------
-    
-    if 'sources' not in event:
-        event['sources'] = ""
         
     return event
 
 def generate_events_json():
-    """Tüm markdown dosyalarını oku ve events.json oluştur"""
+    # ... (Bu fonksiyonun geri kalanı değişmedi) ...
     
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -113,7 +122,6 @@ def generate_events_json():
         else:
             print(f"   ❌ Dosya parse edilemedi")
     
-    # Olayları tam tarihe göre sırala (ISO string sıralaması çalışır)
     events.sort(key=lambda x: x['date'])
     
     output_data = {
@@ -121,7 +129,7 @@ def generate_events_json():
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v2.2" # Versiyon güncellendi
+            "generator": "Zaman Yolculuğu Event Generator v2.2"
         }
     }
     

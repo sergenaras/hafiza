@@ -1,4 +1,5 @@
-name: 11 - Create Event PR from Issue
+# Adı güncellendi
+name: 11 - Olay PR Oluşturucu (Yeni/Düzenle)
 
 on:
   issues:
@@ -6,7 +7,8 @@ on:
 
 jobs:
   create-pr:
-    if: contains(github.event.issue.labels.*.name, 'new-event')
+    # --- GÜNCELLENDİ (Artık 'edit-request' etiketini de dinliyor) ---
+    if: contains(github.event.issue.labels.*.name, 'new-event') || contains(github.event.issue.labels.*.name, 'edit-request')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,17 +26,48 @@ jobs:
         run: |
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          
           TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          CATEGORY_MAIN=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
-          CATEGORY=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          # --- YENİ EKLENDİ (Özel Kategoriyi Oku) ---
+          CATEGORY_OTHER=$(echo "$ISSUE_BODY" | awk '/### Özel Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
+          if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
+            CATEGORY="$CATEGORY_OTHER"
+          else
+            CATEGORY="$CATEGORY_MAIN"
+          fi
+          # ------------------------------------------
+
+          # AWK aralıkları 'Özel Kategori' alanını atlayacak şekilde güncellendi
           DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
           SOURCES=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
-          FILENAME="${DATE}-${SLUG}.md"
+
+          # --- YENİ EKLENDİ (Düzenleme mi Yeni mi Kontrol Et) ---
+          # Issue body'deki gizli 'FILENAME' etiketini ara
+          ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME:' '/FILENAME:/{print $2}' | tr -d '\r' | xargs)
+          
+          IS_EDIT="false"
+          if [[ -n "$ORIGINAL_FILENAME" ]]; then
+            IS_EDIT="true"
+            FILENAME="$ORIGINAL_FILENAME"
+            # Eğer düzenlemede tarih veya başlık değiştiyse, dosya adını GÜNCELLE
+            # (Eski dosyayı silme adımını ekleyeceğiz)
+            NEW_FILENAME_FROM_EDIT="${DATE}-${SLUG}.md"
+            if [[ "$FILENAME" != "$NEW_FILENAME_FROM_EDIT" ]]; then
+                echo "Dosya adı değişti: $FILENAME -> $NEW_FILENAME_FROM_EDIT"
+                FILENAME="$NEW_FILENAME_FROM_EDIT"
+            fi
+            echo "İşlem: Düzenleme. Dosya: $FILENAME"
+          else
+            IS_EDIT="false"
+            FILENAME="${DATE}-${SLUG}.md"
+            echo "İşlem: Yeni Olay. Dosya: $FILENAME"
+          fi
+          # ----------------------------------------------------
           
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
@@ -42,12 +75,14 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
-          echo "time=$TIME" >> $GITHUB_OUTPUT
+          echo "time=$TIME" >> $GITHUB_OUTPUT 
           echo "sources<<EOF" >> $GITHUB_OUTPUT
           echo "$SOURCES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "year=$YEAR" >> $GITHUB_OUTPUT
+          echo "is_edit=$IS_EDIT" >> $GITHUB_OUTPUT
+          echo "original_filename=$ORIGINAL_FILENAME" >> $GITHUB_OUTPUT
 
       - name: Create markdown file
         run: |
@@ -67,21 +102,28 @@ jobs:
           ${{ steps.parse.outputs.sources }}
           MDEOF
 
+      # --- YENİ EKLENDİ (Eski Dosyayı Silme) ---
+      # Eğer bu bir düzenlemeyse VE dosya adı değiştiyse (örn: tarih değişti)
+      # eski dosyayı depodan sil.
+      - name: Remove old file if renamed
+        if: steps.parse.outputs.is_edit == 'true' && steps.parse.outputs.filename != steps.parse.outputs.original_filename
+        run: |
+          echo "Dosya adı değişti. Eski dosya siliniyor: events/data/${{ steps.parse.outputs.original_filename }}"
+          rm -f "events/data/${{ steps.parse.outputs.original_filename }}"
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: "Yeni olay ekle: ${{ steps.parse.outputs.title }} (${{ steps.parse.outputs.year }})"
+          # --- GÜNCELLENDİ (Dinamik Başlıklar) ---
+          commit-message: "${{ steps.parse.outputs.is_edit == 'true' && 'Olayı güncelle' || 'Yeni olay ekle' }}: ${{ steps.parse.outputs.title }}"
           branch: event/${{ github.event.issue.number }}
           delete-branch: true
-          title: "✨ Yeni Olay: ${{ steps.parse.outputs.title }}"
+          title: "${{ steps.parse.outputs.is_edit == 'true' && '🔄 Olay Güncelleme' || '✨ Yeni Olay' }}: ${{ steps.parse.outputs.title }}"
           body: |
-            ## 📅 Yeni Olay Eklendi
+            ## 📅 Olay ${{ steps.parse.outputs.is_edit == 'true' && 'Güncellendi' || 'Eklendi' }}
             
             **Issue:** #${{ github.event.issue.number }}
             **Tarih:** ${{ steps.parse.outputs.date }}
-            
-            **Saat:** ${{ steps.parse.outputs.time || '(Belirtilmedi)' }}
-            
             **Kategori:** ${{ steps.parse.outputs.category }}
             
             ---
@@ -91,6 +133,7 @@ jobs:
           labels: |
             event
             automated
+            ${{ steps.parse.outputs.is_edit == 'true' && 'update' || 'new' }}
         id: create-pr
 
       - name: Comment on issue
