@@ -14,7 +14,6 @@ window.i18n = {
             zoomLevel1: 'Yıllar',
             zoomLevel2: 'Aylar',
             zoomLevel3: 'Günler',
-            // --- YENİ EKLENDİ (x4 için) ---
             zoomLevel4: 'Saatler',
             
             // Months
@@ -76,12 +75,11 @@ window.i18n = {
                 delete: 'Sil'
             },
 
-            // --- YENİ EKLENDİ (Sıralama) ---
+            // Sort
             sort: {
                 newest: 'En Yeni Üstte',
                 oldest: 'En Eski Üstte'
             }
-            // -------------------------------
         },
         
         en: {
@@ -95,7 +93,6 @@ window.i18n = {
             zoomLevel1: 'Years',
             zoomLevel2: 'Months',
             zoomLevel3: 'Days',
-            // --- YENİ EKLENDİ (x4 için) ---
             zoomLevel4: 'Hours',
             
             // Months
@@ -157,12 +154,11 @@ window.i18n = {
                 delete: 'Delete'
             },
 
-            // --- YENİ EKLENDİ (Sıralama) ---
+            // Sort
             sort: {
                 newest: 'Newest First',
                 oldest: 'Oldest First'
             }
-            // -------------------------------
         }
     },
     
@@ -190,12 +186,16 @@ window.i18n = {
         }
     },
     
+    // --- DÜZELTİLMİŞ FONKSİYON ---
     // Update DOM elements with i18n attributes
     updateDOM() {
         document.querySelectorAll('[data-i18n]').forEach(element => {
+            // Bu satır eksikti:
+            const key = element.getAttribute('data-i18n');
             element.textContent = this.t(key);
         });
     },
+    // ----------------------------
     
     // Format date
     formatDate(date, format = 'full') {
