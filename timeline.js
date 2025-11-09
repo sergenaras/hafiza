@@ -7,7 +7,7 @@ class Timeline {
         
         // State
         this.events = [];
-        this.zoomLevel = 2; // Varsayılan x3
+        this.zoomLevel = 0; // Varsayılan Zoom Seviyesi x3
         this.offsetX = 0;
         this.targetOffsetX = 0; 
         this.zoomMode = 'pinch';
