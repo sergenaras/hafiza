@@ -42,7 +42,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
-          echo "time=$TIME" >> $GITHUB_OUTPUT # YENİ
+          echo "time=$TIME" >> $GITHUB_OUTPUT
           echo "sources<<EOF" >> $GITHUB_OUTPUT
           echo "$SOURCES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -79,7 +79,9 @@ jobs:
             
             **Issue:** #${{ github.event.issue.number }}
             **Tarih:** ${{ steps.parse.outputs.date }}
-            **Saat:** ${{ steps.parse.outputs.time | | '(Belirtilmedi)' }}
+            
+            **Saat:** ${{ steps.parse.outputs.time || '(Belirtilmedi)' }}
+            
             **Kategori:** ${{ steps.parse.outputs.category }}
             
             ---
