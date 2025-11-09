@@ -10,18 +10,12 @@ window.i18n = {
             addEvent: '+ Olay Ekle',
             goToDate: 'Tarihe Git', 
             
-            // Zoom modes
-            zoomPinch: 'Pinch Zoom',
-            zoomDoubleClick: 'Çift Tıklama',
-            
-            // Instructions
-            instructionsPinch: '🤏 Pinch: Zoom | 👆 Sürükle: Hareket',
-            instructionsDoubleClick: '🖱️ Çift Tık: Zoom | 🔽 Basılı Tut & Sürükle: Hareket',
-            
             // Zoom levels
             zoomLevel1: 'Yıllar',
             zoomLevel2: 'Aylar',
             zoomLevel3: 'Günler',
+            // --- YENİ EKLENDİ (x4 için) ---
+            zoomLevel4: 'Saatler',
             
             // Months
             months: {
@@ -45,9 +39,7 @@ window.i18n = {
             
             // Categories
             categories: {
-                // ---- YENİ EKLENDİ ----
                 all: 'Tümü', 
-                // ---------------------
                 teknoloji: 'Teknoloji',
                 bilim: 'Bilim',
                 tarih: 'Tarih',
@@ -69,7 +61,7 @@ window.i18n = {
             // Modal
             closeModal: 'Kapat',
 
-            // ---- YENİ EKLENEN BÖLÜMLER ----
+            // Panel
             panel: {
                 detailsTitle: 'Olay Detayları',
                 listTitle: 'Olay Listesi',
@@ -78,9 +70,16 @@ window.i18n = {
                 noEventsFound: 'Bu kategoride olay bulunamadı.'
             },
             
+            // Buttons
             buttons: {
                 edit: 'Düzenle',
                 delete: 'Sil'
+            },
+
+            // --- YENİ EKLENDİ (Sıralama) ---
+            sort: {
+                newest: 'En Yeni Üstte',
+                oldest: 'En Eski Üstte'
             }
             // -------------------------------
         },
@@ -92,18 +91,12 @@ window.i18n = {
             addEvent: '+ Add Event',
             goToDate: 'Go to Date',
             
-            // Zoom modes
-            zoomPinch: 'Pinch Zoom',
-            zoomDoubleClick: 'Double Click',
-            
-            // Instructions
-            instructionsPinch: '🤏 Pinch: Zoom | 👆 Drag: Move',
-            instructionsDoubleClick: '🖱️ Double Click: Zoom | 🔽 Hold & Drag: Move',
-            
             // Zoom levels
             zoomLevel1: 'Years',
             zoomLevel2: 'Months',
             zoomLevel3: 'Days',
+            // --- YENİ EKLENDİ (x4 için) ---
+            zoomLevel4: 'Hours',
             
             // Months
             months: {
@@ -127,9 +120,7 @@ window.i18n = {
             
             // Categories
             categories: {
-                // ---- YENİ EKLENDİ ----
                 all: 'All',
-                // ---------------------
                 teknoloji: 'Technology',
                 bilim: 'Science',
                 tarih: 'History',
@@ -151,7 +142,7 @@ window.i18n = {
             // Modal
             closeModal: 'Close',
 
-            // ---- YENİ EKLENEN BÖLÜMLER ----
+            // Panel
             panel: {
                 detailsTitle: 'Event Details',
                 listTitle: 'Event List',
@@ -160,9 +151,16 @@ window.i18n = {
                 noEventsFound: 'No events found in this category.'
             },
             
+            // Buttons
             buttons: {
                 edit: 'Edit',
                 delete: 'Delete'
+            },
+
+            // --- YENİ EKLENDİ (Sıralama) ---
+            sort: {
+                newest: 'Newest First',
+                oldest: 'Oldest First'
             }
             // -------------------------------
         }
@@ -195,9 +193,6 @@ window.i18n = {
     // Update DOM elements with i18n attributes
     updateDOM() {
         document.querySelectorAll('[data-i18n]').forEach(element => {
-            const key = element.getAttribute('data-i18n');
-            // Düz metin (textContent) yerine innerHTML kullanmak
-            // bazen <br> gibi etiketler için gerekebilir, ama şimdilik textContent güvenli
             element.textContent = this.t(key);
         });
     },
