@@ -1,4 +1,3 @@
-# Adı güncellendi
 name: 11 - Olay PR Oluşturucu (Yeni/Düzenle)
 
 on:
@@ -22,14 +21,15 @@ jobs:
       - name: Parse issue body
         id: parse
         env:
+          # --- GÜNCELLENDİ: 'event_title' (ID) veya 'Başlık' (Markdown) arar ---
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Not: Bu awk komutları hem 'new-event' hem de 'edit-event' şablonlarıyla uyumludur
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY_MAIN=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
+          # --- YENİ EKLENDİ (Özel Kategoriyi Oku) ---
           CATEGORY_OTHER=$(echo "$ISSUE_BODY" | awk '/### Özel Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
           if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
@@ -37,6 +37,7 @@ jobs:
           else
             CATEGORY="$CATEGORY_MAIN"
           fi
+          # ------------------------------------------
 
           DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
           SOURCES=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
@@ -44,8 +45,9 @@ jobs:
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
 
-          # Issue body'deki gizli 'FILENAME' etiketini ara
-          # Format: ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
+          # --- YENİ EKLENDİ (Düzenleme mi Yeni mi Kontrol Et) ---
+          # Gizli 'FILENAME' etiketini ara
+          ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
           
           IS_EDIT="false"
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
@@ -62,6 +64,7 @@ jobs:
             FILENAME="${DATE}-${SLUG}.md"
             echo "İşlem: Yeni Olay. Dosya: $FILENAME"
           fi
+          # ----------------------------------------------------
           
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
@@ -82,12 +85,14 @@ jobs:
         run: |
           mkdir -p events/data
           
+          # --- GÜNCELLENDİ (other_category eklendi) ---
           cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
           ---
           title: "${{ steps.parse.outputs.title }}"
           date: ${{ steps.parse.outputs.date }}
           time: ${{ steps.parse.outputs.time }}
-          category: ${{ steps.parse.outputs.category }}
+          category: ${{ steps.parse.outputs.category_main }}
+          other_category: ${{ steps.parse.outputs.category_other }}
           ---
           
           ${{ steps.parse.outputs.description }}

@@ -133,7 +133,7 @@
         .event-list-item-content {
             padding: 12px 8px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
             border-radius: 4px;
         }
         
@@ -531,8 +531,8 @@
             });
         }
 
+        // --- GÜNCELLENMİŞ FONKSİYON (updateDetailsPanel) ---
         function updateDetailsPanel(event) {
-            // ... (Bu fonksiyon değişmedi) ...
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
             
@@ -545,6 +545,8 @@
                 return;
             }
 
+            // DİKKAT: Artık event.description 'generate-json.py' sayesinde TEMİZ
+            // Sadece açıklamayı içeriyor.
             const formattedDescription = escapeAndFormat(event.description);
 
             detailsContainer.innerHTML = `
@@ -615,8 +617,8 @@
             filterCategory(); 
         }
 
-        // YENİ YARDIMCI FONKSİYON
         function formatDateToYYYYMMDD(date) {
+            // ... (Bu fonksiyon değişmedi) ...
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
             const d = String(date.getDate()).padStart(2, '0');
@@ -637,29 +639,32 @@
 
             const eventDate = new Date(event.date); 
             const dateField = formatDateToYYYYMMDD(eventDate);
+            // 'original_time' generate-json.py'den geliyor
             const timeField = event.original_time || ""; 
 
+            // Gizli FILENAME etiketi
+            // Artık 'event.description' ve 'event.sources' DOĞRU verileri içeriyor
             const hiddenFilenameTag = `\n\n`;
-            // DİKKAT: event.description burada Markdown'dan HTML'e dönüştürülmemiş ham haldedir.
-            // (Eğer generate-json.py'de 'description'ı ayırdıysak bu doğrudur)
             const descriptionField = (event.description || "") + hiddenFilenameTag;
+            const sourcesField = event.sources || ""; // 'event.sources' artık ayrı
             
             const issueTitle = `Olay Düzenle: ${event.title}`;
             
-            // --- DÜZELTİLEN SATIR ---
-            // İkinci '&title=' parametresi '&event_title=' olarak düzeltildi
-            // (Bu, 'new-event.yml' dosyasındaki 'Başlık' alanının ID'sidir)
+            // --- DÜZELTİLMİŞ URL OLUŞTURMA ---
+            // 'new-event.yml' şablonunu kullan ve 'upgrade-event' etiketini ekle
             const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=new-event.yml` +
                 `&labels=upgrade-event` +
+                // Ana sayfa başlığı
                 `&title=${encodeURIComponent(issueTitle)}` +
-                `&event_title=${encodeURIComponent(event.title)}` + // <-- HATA BURADAYDI
+                // Form Alanları (new-event.yml'deki ID'lere göre)
+                `&event_title=${encodeURIComponent(event.title)}` + // Düzeltildi
                 `&date=${encodeURIComponent(dateField)}` +
                 `&time=${encodeURIComponent(timeField)}` +
                 `&category=${encodeURIComponent(categoryField)}` +
                 `&other_category=${encodeURIComponent(otherCategoryField)}` +
                 `&description=${encodeURIComponent(descriptionField)}` +
-                `&sources=${encodeURIComponent(event.sources || '')}`;
-            // -------------------------
+                `&sources=${encodeURIComponent(sourcesField)}`; // Düzeltildi
+            // ------------------------------------
             
             window.open(editIssueUrl, '_blank');
         }
