@@ -1,10 +1,10 @@
 ---
-title: "Yunan ordusu birliklerininGermencik'i işgali"
+title: "Yunan ordusu birliklerinin Germencik'i işgali"
 date: 1919-05-26
 category: tarih
 ---
 
-Yunan ordusu birliklerininGermencik'i işgali.
+Yunan ordusu birliklerinin Germencik'i işgali.
 
 ## Kaynaklar
 
