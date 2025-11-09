@@ -107,11 +107,14 @@ class Timeline {
     animate() {
         const dx = this.targetOffsetX - this.offsetX;
         
+        // --- DEĞİŞİKLİK (Geçiş Yavaşlatıldı) ---
+        // Katsayı 0.03'ten 0.02'ye düşürüldü (Daha yavaş, pürüzsüz kaydırma)
         if (Math.abs(dx) > 0.1) {
-            this.offsetX += dx * 0.03; 
+            this.offsetX += dx * 0.02; 
         } else {
             this.offsetX = this.targetOffsetX;
         }
+        // ----------------------------------------
         
         this.render();
         requestAnimationFrame(this.animate.bind(this));
@@ -155,6 +158,7 @@ class Timeline {
 
     // Render Years View (Level 1)
     renderYearsView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
         const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
@@ -184,6 +188,7 @@ class Timeline {
     
     // Render Months View (Level 2)
     renderMonthsView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
@@ -257,6 +262,7 @@ class Timeline {
     
     // Render Days View (Level 3)
     renderDaysView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
@@ -347,6 +353,7 @@ class Timeline {
 
     // Render Hours View (Level 4)
     renderHoursView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const pixelsPerHour = pixelsPerDay / 24;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
@@ -424,6 +431,7 @@ class Timeline {
     
     // Render today marker
     renderTodayMarker(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const diffDays = this.daysFromToday(this.today);
         const pixelsPerDay = level.pixelsPerYear / 365;
         const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX; 
@@ -445,6 +453,7 @@ class Timeline {
     
     // Render events
     renderEvents(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
 
         this.events.forEach(event => {
@@ -465,6 +474,7 @@ class Timeline {
             
             ctx.fillRect(x - barWidth/2, y - barHeight, barWidth, barHeight);
             
+            // _renderX'i burada sakla (Fokal Zoom Senaryo 3 için kritik)
             event._renderX = x;
             event._renderY = y;
             event._renderWidth = barWidth;
@@ -474,6 +484,7 @@ class Timeline {
 
     // Mavi hover çizgisini çiz
     renderHoverMarker(ctx, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         if (this.hoverX === -1 || this.isDragging) return; 
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2; 
         ctx.strokeStyle = window.ENV.COLORS.hoverMarker;
@@ -491,7 +502,11 @@ class Timeline {
         this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         this.canvas.addEventListener('mouseleave', (e) => this.onMouseLeave());
+        
+        // --- DEĞİŞİKLİK (onWheel) ---
+        // Artık mouseX yerine tüm 'event' nesnesini yolluyor
         this.canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
+        
         this.canvas.addEventListener('click', (e) => this.onClick(e));
         this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
         this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
@@ -534,6 +549,7 @@ class Timeline {
         this.hoveredEvent = null;
     }
     
+    // --- GÜNCELLENMİŞ FONKSİYON (onWheel) ---
     onWheel(e) {
         if (e.shiftKey) {
             e.preventDefault(); 
@@ -541,13 +557,12 @@ class Timeline {
         } 
         else {
             e.preventDefault(); 
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
             
+            // Artık mouseX hesaplamıyor, tüm 'e' nesnesini yolluyor
             if (e.deltaY < 0) {
-                this.zoomIn(mouseX);
+                this.zoomIn(e); // 'e' yollanıyor
             } else if (e.deltaY > 0) {
-                this.zoomOut(mouseX);
+                this.zoomOut(e); // 'e' yollanıyor
             }
         }
     }
@@ -571,7 +586,8 @@ class Timeline {
         if (this.zoomMode === 'doubleclick') {
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
-            this.zoomIn(x);
+            // Çift tıklama her zaman imlece yakınlaşır
+            this.zoomIn(e); 
         }
     }
     
@@ -605,14 +621,19 @@ class Timeline {
             const distance = Math.sqrt(dx*dx + dy*dy);
             
             if (Math.abs(distance - this.lastTouchDistance) > window.ENV.MIN_PINCH_DISTANCE) {
+                
+                // Pinch zoom'da fokal nokta iki parmağın ortasıdır
                 const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 const rect = this.canvas.getBoundingClientRect();
                 const mouseX = midX - rect.left;
 
+                // Pinch zoom için 'e' nesnesi oluşturuluyor (mouseX'i iletmek için)
+                const pseudoEvent = { clientX: midX }; 
+
                 if (distance > this.lastTouchDistance) {
-                    this.zoomIn(mouseX);
+                    this.zoomIn(pseudoEvent);
                 } else {
-                    this.zoomOut(mouseX);
+                    this.zoomOut(pseudoEvent);
                 }
                 this.lastTouchDistance = distance;
             }
@@ -636,7 +657,8 @@ class Timeline {
         const baselineY = this.centerY + (window.ENV.LAYOUT.rulerYOffset || 0);
 
         for (const event of this.events) {
-            if (!event._renderX) continue;
+            // _renderX'in varlığını kontrol et
+            if (event._renderX === undefined) continue;
             
             const barHeight = window.ENV.EVENT_BAR_HEIGHT;
             const barSpacing = window.ENV.EVENT_BAR_SPACING;
@@ -656,7 +678,7 @@ class Timeline {
         return null;
     }
 
-    // --- ODAKLI ZOOM FONKSİYONLARI ---
+    // --- ODAKLI ZOOM FONKSİYONLARI (TAMAMEN GÜNCELLENDİ) ---
 
     xToDays(x, zoomLevel) {
         const level = window.ENV.ZOOM_LEVELS[zoomLevel];
@@ -674,33 +696,81 @@ class Timeline {
         return newOffsetX;
     }
 
-    zoomIn(mouseX = this.centerX) {
+    // 'e' (event) parametresi alıyor (wheel, click, veya touch)
+    // 'e' yoksa (+/- butonlar) null olur
+    zoomIn(e = null) {
         if (this.zoomLevel >= window.ENV.ZOOM_LEVELS.length - 1) return;
-        const currentDays = this.xToDays(mouseX, this.zoomLevel);
+        
+        let focalX = this.centerX; // Varsayılan: Merkez (Senaryo 1, +/- Butonlar)
+
+        // Senaryo 3: Olay seçili ve ekranda mı?
+        // (window.currentSelectedEvent, index.html'de tanımlı global değişkendir)
+        if (window.currentSelectedEvent && 
+            window.currentSelectedEvent._renderX !== undefined &&
+            window.currentSelectedEvent._renderX >= 0 && 
+            window.currentSelectedEvent._renderX <= this.width) 
+        {
+            focalX = window.currentSelectedEvent._renderX;
+        }
+        // Senaryo 2: Olay seçili değil, mouse tekerleği mi kullanıldı?
+        else if (e && e.clientX) { 
+            const rect = this.canvas.getBoundingClientRect();
+            focalX = e.clientX - rect.left;
+        }
+        // (Else: +/- butonu veya ekran dışı olay -> focalX merkezde kalır)
+
+        const currentDays = this.xToDays(focalX, this.zoomLevel);
         const newZoomLevel = this.zoomLevel + 1;
-        const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
+        const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, focalX);
+        
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
+        
+        // --- DEĞİŞİKLİK ("Dönme" sorununu çözer) ---
+        // Animasyonu bekleme, anında geçiş yap
+        this.offsetX = newOffsetX; 
+        
         this.showZoomIndicator();
     }
     
-    zoomOut(mouseX = this.centerX) {
+    // 'e' (event) parametresi alıyor (wheel, click, veya touch)
+    zoomOut(e = null) {
         if (this.zoomLevel <= 0) return;
-        const currentDays = this.xToDays(mouseX, this.zoomLevel);
+
+        let focalX = this.centerX; // Varsayılan: Merkez (Senaryo 1, +/- Butonlar)
+
+        // Senaryo 3: Olay seçili ve ekranda mı?
+        if (window.currentSelectedEvent && 
+            window.currentSelectedEvent._renderX !== undefined &&
+            window.currentSelectedEvent._renderX >= 0 && 
+            window.currentSelectedEvent._renderX <= this.width) 
+        {
+            focalX = window.currentSelectedEvent._renderX;
+        }
+        // Senaryo 2: Olay seçili değil, mouse tekerleği mi kullanıldı?
+        else if (e && e.clientX) { 
+            const rect = this.canvas.getBoundingClientRect();
+            focalX = e.clientX - rect.left;
+        }
+        
+        const currentDays = this.xToDays(focalX, this.zoomLevel);
         const newZoomLevel = this.zoomLevel - 1;
-        const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
+        const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, focalX);
+        
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
+
+        // --- DEĞİŞİKLİK ("Dönme" sorununu çözer) ---
+        // Animasyonu bekleme, anında geçiş yap
+        this.offsetX = newOffsetX;
+        
         this.showZoomIndicator();
     }
     
     showZoomIndicator() {
         const indicator = document.getElementById('zoomIndicator');
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-        
-        // --- DÜZELTİLEN SATIR (735. SATIR) ---
-        indicator.textContent = `×${level.id} - ${window.t('zoomLevel' + level.id)}`;
-        
+        indicator.textContent = `×${level.id} - ${window.t('zoomLevel'D + level.id)}`;
         indicator.classList.add('active');
         setTimeout(() => {
             indicator.classList.remove('active');
@@ -712,10 +782,12 @@ class Timeline {
     }
     
     goToToday() {
+        // Bu fonksiyon artık yavaş ve pürüzsüz çalışacak (animate() sayesinde)
         this.targetOffsetX = 0;
     }
     
     goToDate(selectedDate) {
+        // Bu fonksiyon artık yavaş ve pürüzsüz çalışacak (animate() sayesinde)
         const diffDays = this.daysFromToday(selectedDate);
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
