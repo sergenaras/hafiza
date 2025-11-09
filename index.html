@@ -416,9 +416,7 @@
         let allEvents = []; 
         let currentSelectedEvent = null; 
         const GITHUB_REPO_URL = `https://github.com/${window.ENV.GITHUB_USERNAME}/${window.ENV.REPO_NAME}`;
-        let currentSortOrder = 'newest'; // Varsayılan: En Yeni Üstte
-
-        // --- YENİ EKLENDİ (Kategori Mantığı için) ---
+        let currentSortOrder = 'newest';
         const standardCategories = ['teknoloji', 'bilim', 'tarih', 'kültür', 'spor', 'politika', 'diğer'];
 
         // --- 1. Başlatma Fonksiyonları ---
@@ -437,7 +435,7 @@
             allEvents = events; 
             populateSortFilter();
             populateCategoryFilter(allEvents);
-            filterCategory(); // Listeyi sıralama dahil ilk kez yükler
+            filterCategory();
         }
 
         // --- 2. Panel Doldurma Fonksiyonları ---
@@ -533,8 +531,9 @@
             });
         }
 
+        // --- GÜNCELLENMİŞ FONKSİYON (updateDetailsPanel) ---
+        // Artık "Düzenle" linki için 'click' olayı ekliyor
         function updateDetailsPanel(event) {
-            // ... (Bu fonksiyon değişmedi) ...
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
             
@@ -556,13 +555,12 @@
             `;
             
             if (event.filename) {
-                // (Bu linki, "Düzenle" butonunun mantığıyla aynı tutuyoruz)
-                const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
-                const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
-                                  `**Dosya Adı:** \`${event.filename}\``;
-                const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=edit-request`;
-
-                editLink.href = editIssueUrl;
+                // Linkin 'href'ini dinamik olarak ayarlamak yerine 'onclick' olayını ayarlıyoruz
+                // Bu, 'event' nesnesinin tamamını 'handleEditClick'e göndermemizi sağlar
+                editLink.onclick = (e) => {
+                    e.preventDefault(); // Sayfanın # (hash) linkine gitmesini engelle
+                    handleEditClick(e, event); // Olay listesindeki butonla aynı fonksiyonu çağır
+                };
                 editLink.style.display = 'block'; 
             } else {
                 editLink.style.display = 'none';
@@ -620,8 +618,7 @@
             filterCategory(); 
         }
 
-        // --- YENİ YARDIMCI FONKSİYON ---
-        // Date objesini 'YYYY-AA-GG' formatına çevirir
+        // YENİ YARDIMCI FONKSİYON
         function formatDateToYYYYMMDD(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -629,16 +626,17 @@
             return `${y}-${m}-${d}`;
         }
         
-        // --- GÜNCELLENMİŞ FONKSİYON ---
+        // --- GÜNCELLENMİŞ FONKSİYON (handleEditClick) ---
+        // Artık yeni 'edit-event.yml' şablonunu hedefliyor
         function handleEditClick(e, event) {
-            e.stopPropagation(); 
+            if (e) e.stopPropagation(); 
             
             // 1. Kategoriyi ve "Diğer Kategori" alanını belirle
             let categoryField = event.category;
             let otherCategoryField = "";
             
+            // Eğer kategori standart listede yoksa (örn: "Arkeoloji")
             if (!standardCategories.includes(event.category)) {
-                // Eğer kategori standart listede yoksa (örn: "Arkeoloji")
                 categoryField = "diğer";
                 otherCategoryField = event.category;
             }
@@ -650,8 +648,7 @@
             const timeField = event.original_time || ""; 
 
             // 3. Issue şablonuyla %100 uyumlu metni oluştur
-            // (Boş satırlar, awk ayrıştırıcısı için kritiktir)
-            // Gizli FILENAME etiketi eklendi
+            // Not: 'event_data' yeni şablondaki textarea'nın ID'sidir
             const issueBody = `
 ### Başlık
 
@@ -689,7 +686,8 @@ ${event.sources || ''}
             
             // 4. URL'i oluştur ve yeni sekmede aç
             const issueTitle = `Olay Düzenle: ${event.title}`;
-            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=edit-request`;
+            // template=... & labels=... & body=... (textarea ID'sine göre)
+            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=edit-event.yml&labels=upgrade-event&title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
             
             window.open(editIssueUrl, '_blank');
         }
@@ -724,6 +722,7 @@ ${event.sources || ''}
 
         function openNewEventDialog() {
             // ... (Bu fonksiyon değişmedi) ...
+            // Bu link hala 'new-event.yml' şablonunu açar
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 

@@ -7,8 +7,8 @@ on:
 
 jobs:
   create-pr:
-    # --- GÜNCELLENDİ (Artık 'edit-request' etiketini de dinliyor) ---
-    if: contains(github.event.issue.labels.*.name, 'new-event') || contains(github.event.issue.labels.*.name, 'edit-request')
+    # --- GÜNCELLENDİ (Artık 'upgrade-event' etiketini de dinliyor) ---
+    if: contains(github.event.issue.labels.*.name, 'new-event') || contains(github.event.issue.labels.*.name, 'upgrade-event')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,12 +24,12 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
+          # Not: Bu awk komutları hem 'new-event' hem de 'edit-event' şablonlarıyla uyumludur
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY_MAIN=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
-          # --- YENİ EKLENDİ (Özel Kategoriyi Oku) ---
           CATEGORY_OTHER=$(echo "$ISSUE_BODY" | awk '/### Özel Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
           if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
@@ -37,25 +37,20 @@ jobs:
           else
             CATEGORY="$CATEGORY_MAIN"
           fi
-          # ------------------------------------------
 
-          # AWK aralıkları 'Özel Kategori' alanını atlayacak şekilde güncellendi
           DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
           SOURCES=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
 
-          # --- YENİ EKLENDİ (Düzenleme mi Yeni mi Kontrol Et) ---
           # Issue body'deki gizli 'FILENAME' etiketini ara
-          ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME:' '/FILENAME:/{print $2}' | tr -d '\r' | xargs)
+          # Format: ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
           
           IS_EDIT="false"
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
             IS_EDIT="true"
             FILENAME="$ORIGINAL_FILENAME"
-            # Eğer düzenlemede tarih veya başlık değiştiyse, dosya adını GÜNCELLE
-            # (Eski dosyayı silme adımını ekleyeceğiz)
             NEW_FILENAME_FROM_EDIT="${DATE}-${SLUG}.md"
             if [[ "$FILENAME" != "$NEW_FILENAME_FROM_EDIT" ]]; then
                 echo "Dosya adı değişti: $FILENAME -> $NEW_FILENAME_FROM_EDIT"
@@ -67,7 +62,6 @@ jobs:
             FILENAME="${DATE}-${SLUG}.md"
             echo "İşlem: Yeni Olay. Dosya: $FILENAME"
           fi
-          # ----------------------------------------------------
           
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
@@ -102,9 +96,6 @@ jobs:
           ${{ steps.parse.outputs.sources }}
           MDEOF
 
-      # --- YENİ EKLENDİ (Eski Dosyayı Silme) ---
-      # Eğer bu bir düzenlemeyse VE dosya adı değiştiyse (örn: tarih değişti)
-      # eski dosyayı depodan sil.
       - name: Remove old file if renamed
         if: steps.parse.outputs.is_edit == 'true' && steps.parse.outputs.filename != steps.parse.outputs.original_filename
         run: |
@@ -114,7 +105,6 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          # --- GÜNCELLENDİ (Dinamik Başlıklar) ---
           commit-message: "${{ steps.parse.outputs.is_edit == 'true' && 'Olayı güncelle' || 'Yeni olay ekle' }}: ${{ steps.parse.outputs.title }}"
           branch: event/${{ github.event.issue.number }}
           delete-branch: true
