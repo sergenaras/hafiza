@@ -109,13 +109,11 @@
             grid-row: 1 / 2;
         }
 
-        /* --- YENİ EKLENDİ (Filtre Konteyneri) --- */
         .filter-controls {
             display: flex;
             gap: 8px;
         }
         
-        /* --- YENİ EKLENDİ (Sıralama Filtresi) --- */
         #sortOrderFilter,
         #categoryFilter {
             font-size: 13px;
@@ -419,8 +417,7 @@
         let currentSelectedEvent = null; 
         const GITHUB_REPO_URL = `https://github.com/${window.ENV.GITHUB_USERNAME}/${window.ENV.REPO_NAME}`;
         
-        // YENİ EKLENDİ (Varsayılan sıralama)
-        let currentSortOrder = 'newest'; // 'oldest' veya 'newest'
+        let currentSortOrder = 'newest'; // Varsayılan: En Yeni Üstte
 
         // --- 1. Başlatma Fonksiyonları ---
         window.addEventListener('DOMContentLoaded', () => {
@@ -437,17 +434,20 @@
         function initializeUI(events) {
             allEvents = events; 
             
-            // YENİ EKLENDİ (Sıralama filtresini doldur)
             populateSortFilter();
-            
             populateCategoryFilter(allEvents);
-            populateEventList(allEvents); 
+            
+            // --- DEĞİŞTİRİLEN SATIR ---
+            // Listeyi ilk yüklemede sıralamak için filterCategory() çağrılır
+            filterCategory();
+            // populateEventList(allEvents); // <-- Bu satır kaldırıldı
+            // -------------------------
         }
 
         // --- 2. Panel Doldurma Fonksiyonları ---
 
-        // YENİ FONKSİYON (Sıralama Filtresini Doldurma)
         function populateSortFilter() {
+            // ... (Bu fonksiyon değişmedi) ...
             const sortSelect = document.getElementById('sortOrderFilter');
             sortSelect.innerHTML = ''; // Temizle
             
@@ -591,32 +591,26 @@
 
         // --- 3. Olay (Event) Yöneticileri ---
 
-        // YENİ FONKSİYON (Sıralama Değişikliği)
         function sortList() {
+            // ... (Bu fonksiyon değişmedi) ...
             const sortSelect = document.getElementById('sortOrderFilter');
             currentSortOrder = sortSelect.value;
-            // Listeyi yeniden oluşturmak için kategori filtresini (ve sıralamayı) yeniden uygula
             filterCategory();
         }
 
-        // GÜNCELLENMİŞ FONKSİYON (filterCategory)
         function filterCategory() {
+            // ... (Bu fonksiyon değişmedi) ...
             const filterSelect = document.getElementById('categoryFilter');
             const selectedCategory = filterSelect.value;
             let filteredEvents;
             
             if (selectedCategory === 'tumu') {
-                // allEvents varsayılan olarak 'oldest' (eskiden yeniye) sıralıdır
-                // Kopyasını oluştur
                 filteredEvents = [...allEvents]; 
             } else {
                 filteredEvents = allEvents.filter(event => (event.category || 'diğer') === selectedCategory);
             }
 
-            // YENİ EKLENDİ (Sıralama Mantığı)
-            // allEvents/filteredEvents varsayılan olarak (oldest) eskiden yeniye sıralıdır
             if (currentSortOrder === 'newest') {
-                // Sadece 'newest' (yeniden eskiye) seçiliyse diziyi ters çevir
                 filteredEvents.reverse();
             }
 
@@ -685,15 +679,12 @@
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 
-        // GÜNCELLENMİŞ FONKSİYON (switchLanguage)
         function switchLanguage(lang) {
+            // ... (Bu fonksiyon değişmedi) ...
             if (!window.i18n || !window.i18n.translations[lang]) return;
             
             window.i18n.setLanguage(lang);
-            
-            // YENİ EKLENDİ (Sıralama filtresini de çevir)
             populateSortFilter();
-            
             populateCategoryFilter(allEvents);
             filterCategory();
             
