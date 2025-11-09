@@ -80,7 +80,7 @@
             align-items: center;
         }
         
-        /* YENİ: Panel başlığındaki "Düzenle" linki için stil */
+        /* Panel başlığındaki "Düzenle" linki için stil */
         .panel-header-link {
             font-size: 12px;
             font-weight: 500;
@@ -119,19 +119,71 @@
         .event-list {
             list-style: none;
         }
+        
+        /* ---- YENİ/GÜNCELLENMİŞ CSS ---- */
+        
         .event-list-item {
+            position: relative; /* Butonları konumlandırmak için gerekli */
+            /* padding-right: 80px; Butonlar için yer açar, ancak hover ile daha iyi */
+        }
+
+        .event-list-item-content {
+            /* Başlık ve tarihi saran yeni bir sarmalayıcı */
             padding: 12px 8px;
-            border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
             transition: background-color 0.2s;
             border-radius: 4px;
         }
-        .event-list-item:hover {
-            background-color: #f9f9f9;
+        
+        /* Seçili olmayan öğelerin hover stili */
+        .event-list-item:not(.selected) .event-list-item-content:hover {
+             background-color: #f9f9f9;
         }
-        .event-list-item.selected {
+        
+        /* Seçili öğenin stili (mevcuttan taşındı) */
+        .event-list-item.selected .event-list-item-content {
             background-color: #e3f2fd; 
         }
+
+        .event-list-item-actions {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none; /* Varsayılan olarak gizli */
+            gap: 5px;
+        }
+
+        .event-list-item:hover .event-list-item-actions {
+            display: flex; /* Ana öğe üzerine gelince göster */
+        }
+
+        .event-action-btn {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-edit {
+            background-color: #4a90e2; /* Mavi - Düzenle */
+        }
+        .btn-edit:hover {
+            background-color: #357abd;
+        }
+
+        .btn-delete {
+            background-color: #d9534f; /* Kırmızı - Sil */
+        }
+        .btn-delete:hover {
+            background-color: #c9302c;
+        }
+        
+        /* ---- ESKİ CSS DEVAM EDİYOR ---- */
+        
         .event-list-item-title {
             font-weight: 500;
             font-size: 14px;
@@ -337,31 +389,68 @@
             });
         }
 
+        // GÜNCELLENMİŞ FONKSİYON
         function populateEventList(eventsToShow) {
-            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const listContainer = document.getElementById('eventListContainer');
             listContainer.innerHTML = ''; 
+            
             if (eventsToShow.length === 0) {
                 listContainer.innerHTML = '<li style="padding: 12px 8px; color: #888;">Bu kategoride olay bulunamadı.</li>';
                 return;
             }
+            
             eventsToShow.forEach(event => {
                 const li = document.createElement('li');
                 li.className = 'event-list-item';
+                
+                // Seçili olayı vurgulamak için
                 if (currentSelectedEvent && currentSelectedEvent.filename === event.filename) {
                     li.classList.add('selected');
                 }
-                li.onclick = () => {
+
+                // 1. İçerik Konteyneri (Başlık ve Tarih)
+                // Tıklanabilir alan bu olacak
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'event-list-item-content';
+                contentDiv.onclick = () => {
                     selectEvent(event);
                 };
+
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'event-list-item-title';
                 titleDiv.textContent = event.title;
+
                 const dateDiv = document.createElement('div');
                 dateDiv.className = 'event-list-item-date';
                 dateDiv.textContent = window.formatDate(event.date, 'full');
-                li.appendChild(titleDiv);
-                li.appendChild(dateDiv);
+                
+                contentDiv.appendChild(titleDiv);
+                contentDiv.appendChild(dateDiv);
+
+                // 2. Aksiyon Butonları Konteyneri (Düzenle ve Sil)
+                // Gizli/görünür olacak alan bu
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'event-list-item-actions';
+
+                // Düzenle Butonu
+                const editBtn = document.createElement('button');
+                editBtn.className = 'event-action-btn btn-edit';
+                editBtn.textContent = 'Düzenle';
+                editBtn.onclick = (e) => handleEditClick(e, event);
+                
+                // Sil Butonu
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'event-action-btn btn-delete';
+                deleteBtn.textContent = 'Sil';
+                deleteBtn.onclick = (e) => handleDeleteClick(e, event);
+
+                actionsDiv.appendChild(editBtn);
+                actionsDiv.appendChild(deleteBtn);
+
+                // 3. Hepsini Ana Liste Öğesine Ekle
+                li.appendChild(contentDiv);
+                li.appendChild(actionsDiv);
+                
                 listContainer.appendChild(li);
             });
         }
@@ -441,6 +530,35 @@
 
             filterCategory(); 
         }
+
+        // YENİ FONKSİYONLAR
+        function handleEditClick(e, event) {
+            // Olayın seçilmesini engelle
+            e.stopPropagation(); 
+            
+            if (!event.filename) return; // Güvenlik kontrolü
+            
+            // Mevcut "Düzenle" linkiyle aynı mantığı kullan
+            const editUrl = `${GITHUB_REPO_URL}/edit/${window.ENV.BRANCH}/events/data/${event.filename}`;
+            window.open(editUrl, '_blank');
+        }
+
+        function handleDeleteClick(e, event) {
+            // Olayın seçilmesini engelle
+            e.stopPropagation();
+            
+            // Çiziminizdeki gibi, silmek için yeni bir issue aç
+            const issueTitle = `Olay Silme İsteği: ${event.title}`;
+            const issueBody = `Lütfen aşağıdaki olayın silinmesini değerlendirin:\n\n` +
+                              `**Dosya Adı:** \`${event.filename}\`\n` +
+                              `**Tarih:** ${event.date.toISOString().split('T')[0]}\n` +
+                              `**Başlık:** ${event.title}\n\n` +
+                              `**Sebep (isteğe bağlı):**\n...`;
+                              
+            const deleteIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=delete-request`;
+            window.open(deleteIssueUrl, '_blank');
+        }
+
 
         // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
