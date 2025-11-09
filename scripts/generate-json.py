@@ -1,4 +1,4 @@
-#!/usr_bin/env python3
+#!/usr/bin/env python3
 """
 Hafıza Cetveli - Event JSON Generator
 Bu script events/data/ klasöründeki tüm .md dosyalarını okur ve events.json oluşturur.
@@ -15,6 +15,7 @@ def parse_markdown_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
+    # YAML front matter'ı parse et
     yaml_pattern = r'^---\s*\n(.*?)\n---\s*\n(.*?)$'
     match = re.match(yaml_pattern, content, re.DOTALL)
     
@@ -35,27 +36,38 @@ def parse_markdown_file(file_path):
     
     event['description'] = description_content
     
+    # Dosya adını da JSON'a ekle
     event['filename'] = file_path.name
     
     if 'date' not in event or 'title' not in event:
         print(f"⚠️  Uyarı: {file_path.name} dosyasında 'date' veya 'title' eksik")
         return None
     
+    # --- GÜNCELLENMİŞ SAAT İŞLEME MANTIĞI ---
     try:
-        event_time = event.get('time', None)
-        
-        if event_time:
-            full_date_str = f"{event['date']} {event_time}"
-            event_date = datetime.strptime(full_date_str, '%Y-%m-%d %H:%M')
-            event['date'] = event_date.isoformat() 
+        event_date_str = event['date'] # YYYY-MM-DD
+        # .get() ile 'time' anahtarı olmasa bile hata vermez
+        event_time_str = event.get('time', None) 
+
+        # strip() ile boş stringleri de None gibi ele al
+        if event_time_str and event_time_str.strip():
+            # Saat varsa, T ve saniye :00 ile birleştir (örn: 1918-11-02T14:30:00)
+            full_iso_str = f"{event_date_str}T{event_time_str.strip()}:00"
         else:
-            event_date = datetime.strptime(event['date'], '%Y-%m-%d')
+            # Saat yoksa, 12:00 (öğlen) olarak ayarla
+            full_iso_str = f"{event_date_str}T12:00:00"
         
+        # String'i tarih nesnesine çevir
+        event_date = datetime.fromisoformat(full_iso_str)
+        
+        # event['date']'i JS'nin okuyacağı son ISO string haliyle güncelle
+        event['date'] = full_iso_str 
         event['year'] = event_date.year
-        
+
     except ValueError as e:
-        print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih/saat formatı: {e}")
+        print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih/saat formatı: {e} (Tarih: {event.get('date')}, Saat: {event.get('time')})")
         return None
+    # ------------------------------------
     
     if 'sources' not in event:
         event['sources'] = ""
@@ -91,6 +103,7 @@ def generate_events_json():
         else:
             print(f"   ❌ Dosya parse edilemedi")
     
+    # Olayları tam tarihe göre sırala (ISO string sıralaması çalışır)
     events.sort(key=lambda x: x['date'])
     
     output_data = {
@@ -98,7 +111,7 @@ def generate_events_json():
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v2.2"
+            "generator": "Zaman Yolculuğu Event Generator v2.2" # Versiyon güncellendi
         }
     }
     
