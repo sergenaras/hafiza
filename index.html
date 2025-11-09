@@ -80,13 +80,12 @@
             align-items: center;
         }
         
-        /* Panel başlığındaki "Düzenle" linki için stil */
         .panel-header-link {
             font-size: 12px;
             font-weight: 500;
             color: #4a90e2;
             text-decoration: none;
-            display: none; /* Varsayılan olarak gizli */
+            display: none; 
         }
         .panel-header-link:hover {
             text-decoration: underline;
@@ -119,8 +118,6 @@
         .event-list {
             list-style: none;
         }
-        
-        /* ---- ÖNCEKİ DEĞİŞİKLİK (Düzenle/Sil Butonları) ---- */
         
         .event-list-item {
             position: relative; 
@@ -187,15 +184,42 @@
             color: #777;
             margin-top: 4px;
         }
-        
-        /* ---- ESKİ CSS DEVAM EDİYOR ---- */
 
         .panel-timeline {
             grid-column: 1 / 3;
             grid-row: 2 / 3;
             height: 300px;
-            position: relative;
+            position: relative; /* Butonları konumlandırmak için önemli */
         }
+
+        /* ---- YENİ EKLENDİ (Zoom Butonları) ---- */
+        .timeline-zoom-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+        }
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            /* Dokunmatik cihazlarda çift tıklama zoom'unu engelle */
+            touch-action: manipulation;
+        }
+        .zoom-btn:hover {
+            background: white;
+        }
+        /* ------------------------------------ */
 
         #timelineCanvas {
             position: absolute;
@@ -282,7 +306,6 @@
             display: none;
         }
         
-        /* ---- YENİ CSS (Dil Değiştirici) ---- */
         .lang-switcher-wrapper {
             position: relative;
         }
@@ -360,6 +383,12 @@
 
         <section class="panel-timeline">
             <canvas id="timelineCanvas"></canvas>
+            
+            <div class="timeline-zoom-controls">
+                <button id="zoomInBtn" class="zoom-btn" onclick="window.timeline.zoomIn()">+</button>
+                <button id="zoomOutBtn" class="zoom-btn" onclick="window.timeline.zoomOut()">-</button>
+            </div>
+            
             <div class="hidden-elements">
                 <div id="loading" data-i18n="loading">Yükleniyor...</div>
                 <div class="tooltip" id="tooltip"></div>
@@ -388,7 +417,6 @@
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
             
-            // YENİ EKLENDİ: Dil değiştiriciyi mevcut dile ayarla
             document.getElementById('langSwitcher').value = window.i18n.currentLanguage;
         });
 
@@ -401,31 +429,30 @@
         // --- 2. Panel Doldurma Fonksiyonları ---
 
         function populateCategoryFilter(events) {
+            // ... (Bu fonksiyon değişmedi) ...
             const filterSelect = document.getElementById('categoryFilter');
             const categories = new Set(events.map(event => event.category || 'diğer'));
             filterSelect.innerHTML = ''; 
             
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
-            // Dil desteği
             allOption.textContent = window.t('categories.all') || 'Tümü';
             filterSelect.appendChild(allOption);
             
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
-                // Dil desteği
                 option.textContent = window.t(`categories.${category}`) || category;
                 filterSelect.appendChild(option);
             });
         }
 
         function populateEventList(eventsToShow) {
+            // ... (Bu fonksiyon değişmedi) ...
             const listContainer = document.getElementById('eventListContainer');
             listContainer.innerHTML = ''; 
             
             if (eventsToShow.length === 0) {
-                // Dil desteği
                 listContainer.innerHTML = `<li style="padding: 12px 8px; color: #888;">${window.t('panel.noEventsFound')}</li>`;
                 return;
             }
@@ -450,7 +477,6 @@
 
                 const dateDiv = document.createElement('div');
                 dateDiv.className = 'event-list-item-date';
-                // Dil desteği (formatDate)
                 dateDiv.textContent = window.formatDate(event.date, 'full');
                 
                 contentDiv.appendChild(titleDiv);
@@ -461,13 +487,11 @@
 
                 const editBtn = document.createElement('button');
                 editBtn.className = 'event-action-btn btn-edit';
-                // Dil desteği
                 editBtn.textContent = window.t('buttons.edit');
                 editBtn.onclick = (e) => handleEditClick(e, event);
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'event-action-btn btn-delete';
-                // Dil desteği
                 deleteBtn.textContent = window.t('buttons.delete');
                 deleteBtn.onclick = (e) => handleDeleteClick(e, event);
 
@@ -482,6 +506,7 @@
         }
 
         function updateDetailsPanel(event) {
+            // ... (Bu fonksiyon değişmedi) ...
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
             
@@ -503,9 +528,6 @@
             `;
             
             if (event.filename) {
-                // Not: Bu link artık kullanılmıyor (handleEditClick'e taşındı)
-                // ancak detay panelinde kalması faydalı olabilir.
-                // Yine de Issue açması için URL'i GÜNCELLEYELİM.
                 const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
                 const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
                                   `**Dosya Adı:** \`${event.filename}\``;
@@ -519,6 +541,7 @@
         }
 
         function escapeAndFormat(str) {
+            // ... (Bu fonksiyon değişmedi) ...
             if (!str) return '';
             const dirtyHTML = marked.parse(str, { breaks: true, gfm: true });
             const cleanHTML = DOMPurify.sanitize(dirtyHTML, {
@@ -532,6 +555,7 @@
         // --- 3. Olay (Event) Yöneticileri ---
 
         function filterCategory() {
+            // ... (Bu fonksiyon değişmedi) ...
             const filterSelect = document.getElementById('categoryFilter');
             const selectedCategory = filterSelect.value;
             let filteredEvents;
@@ -544,24 +568,21 @@
         }
 
         function selectEvent(event) {
+            // ... (Bu fonksiyon değişmedi) ...
             currentSelectedEvent = event;
             updateDetailsPanel(event);
             
             if (window.timeline) {
                 window.timeline.goToDate(event.date);
             }
-
-            // Listeyi yeniden oluştur (seçili öğeyi vurgulamak için)
             filterCategory(); 
         }
 
-        // GÜNCELLENMİŞ FONKSİYON (handleEditClick)
         function handleEditClick(e, event) {
-            // Olayın seçilmesini engelle
+            // ... (Bu fonksiyon değişmedi) ...
             e.stopPropagation(); 
             
             const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
-            // Markdown'da düzenlemeyi kolaylaştırmak için YAML ve içeriği ayrı ayrı ön-doldur
             const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
                               `**Dosya Adı:** \`${event.filename}\`\n\n` +
                               `--- (YENİ İÇERİK AŞAĞIYA) ---\n\n` +
@@ -576,7 +597,7 @@
         }
 
         function handleDeleteClick(e, event) {
-            // Olayın seçilmesini engelle
+            // ... (Bu fonksiyon değişmedi) ...
             e.stopPropagation();
             
             const issueTitle = `Olay Silme İsteği: ${event.title}`;
@@ -594,6 +615,7 @@
         // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
         function goToDate() {
+            // ... (Bu fonksiyon değişmedi) ...
             const dateInput = document.getElementById('dateInput');
             const dateValue = dateInput.value;
             if (dateValue && window.timeline) {
@@ -603,25 +625,18 @@
         }
 
         function openNewEventDialog() {
+            // ... (Bu fonksiyon değişmedi) ...
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 
-        // YENİ FONKSİYON (Dil Değiştirme)
         function switchLanguage(lang) {
+            // ... (Bu fonksiyon değişmedi) ...
             if (!window.i18n || !window.i18n.translations[lang]) return;
             
-            // 1. Dili ayarla (Bu, [data-i18n] etiketli statik DOM'u günceller)
             window.i18n.setLanguage(lang);
-            
-            // 2. Dinamik olarak oluşturulan içeriği yeniden oluştur
-            // Kategori filtresini çevir
             populateCategoryFilter(allEvents);
-            
-            // Olay listesini ve tarihlerini çevir
-            // filterCategory() zaten populateEventList()'i çağırır
             filterCategory();
             
-            // Seçili olan detay panelini çevir (eğer varsa)
             if (currentSelectedEvent) {
                 updateDetailsPanel(currentSelectedEvent);
             }
