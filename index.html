@@ -531,8 +531,8 @@
             });
         }
 
-        // --- GÜNCELLENMİŞ FONKSİYON (updateDetailsPanel) ---
         function updateDetailsPanel(event) {
+            // ... (Bu fonksiyon değişmedi) ...
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
             
@@ -554,7 +554,6 @@
             `;
             
             if (event.filename) {
-                // Artık "Düzenle" linki de "Düzenle" butonuyla aynı fonksiyonu çağırıyor
                 editLink.onclick = (e) => {
                     e.preventDefault(); 
                     handleEditClick(e, event); 
@@ -625,11 +624,9 @@
         }
         
         // --- GÜNCELLENMİŞ FONKSİYON (handleEditClick) ---
-        // Artık 'new-event.yml' şablonunu hedefliyor ve tüm alanları dolduruyor
         function handleEditClick(e, event) {
             if (e) e.stopPropagation(); 
             
-            // 1. Kategoriyi ve "Diğer Kategori" alanını belirle
             let categoryField = event.category;
             let otherCategoryField = "";
             
@@ -638,31 +635,31 @@
                 otherCategoryField = event.category;
             }
 
-            // 2. Tarih ve Saat'i YAML'dan geldiği gibi formatla
             const eventDate = new Date(event.date); 
             const dateField = formatDateToYYYYMMDD(eventDate);
             const timeField = event.original_time || ""; 
 
-            // 3. Gizli FILENAME etiketini Açıklama'ya ekle
             const hiddenFilenameTag = `\n\n`;
+            // DİKKAT: event.description burada Markdown'dan HTML'e dönüştürülmemiş ham haldedir.
+            // (Eğer generate-json.py'de 'description'ı ayırdıysak bu doğrudur)
             const descriptionField = (event.description || "") + hiddenFilenameTag;
             
-            // 4. URL'i oluştur ve yeni sekmede aç
             const issueTitle = `Olay Düzenle: ${event.title}`;
             
-            // 'new-event.yml' şablonunu kullan ve 'upgrade-event' etiketini ekle
+            // --- DÜZELTİLEN SATIR ---
+            // İkinci '&title=' parametresi '&event_title=' olarak düzeltildi
+            // (Bu, 'new-event.yml' dosyasındaki 'Başlık' alanının ID'sidir)
             const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=new-event.yml` +
                 `&labels=upgrade-event` +
-                // Ana başlık
                 `&title=${encodeURIComponent(issueTitle)}` +
-                // Form Alanları (new-event.yml'deki ID'lere göre)
-                `&event_title=${encodeURIComponent(event.title)}` + // <-- DÜZELTİLDİ
+                `&event_title=${encodeURIComponent(event.title)}` + // <-- HATA BURADAYDI
                 `&date=${encodeURIComponent(dateField)}` +
                 `&time=${encodeURIComponent(timeField)}` +
                 `&category=${encodeURIComponent(categoryField)}` +
                 `&other_category=${encodeURIComponent(otherCategoryField)}` +
                 `&description=${encodeURIComponent(descriptionField)}` +
                 `&sources=${encodeURIComponent(event.sources || '')}`;
+            // -------------------------
             
             window.open(editIssueUrl, '_blank');
         }
@@ -673,7 +670,7 @@
             
             const issueTitle = `Olay Silme İsteği: ${event.title}`;
             const issueBody = `Lütfen aşağıdaki olayın silinmesini değerlendirin:\n\n` +
-                              `**Dosya Adı:** \`${event.filename}\`n` +
+                              `**Dosya Adı:** \`${event.filename}\`\n` +
                               `**Tarih:** ${event.date.toISOString().split('T')[0]}\n` +
                               `**Başlık:** ${event.title}\n\n` +
                               `**Sebep (isteğe bağlı):**\n...`;
