@@ -15,32 +15,11 @@ window.ENV = {
         return `https://github.com/${this.GITHUB_USERNAME}/${this.REPO_NAME}/issues/new?template=new-event.yml&title=Yeni+Olay:+`;
     },
     
-    // Timeline Settings
     ZOOM_LEVELS: [
-        {
-            id: 1,
-            name: 'years',
-            pixelsPerYear: 150,      // Her yıl 150px
-            showYears: true,
-            showMonths: false,
-            showDays: false
-        },
-        {
-            id: 2,
-            name: 'months',
-            pixelsPerYear: 1800,     // Her yıl 1800px = Her ay 150px
-            showYears: true,
-            showMonths: true,
-            showDays: false
-        },
-        {
-            id: 3,
-            name: 'days',
-            pixelsPerYear: 10950,    // Her yıl 10950px = Her gün ~30px
-            showYears: true,
-            showMonths: true,
-            showDays: true
-        }
+        { id: 1, pixelsPerYear: 100, showDays: false, showMonths: false }, // x1 Yıl
+        { id: 2, pixelsPerYear: 1200, showDays: false, showMonths: true }, // x2 Ay
+        { id: 3, pixelsPerYear: 365 * 50, showDays: true, showMonths: true }, // x3 Gün
+        { id: 4, pixelsPerYear: 365 * 24 * 60, showDays: true, showMonths: true, showHours: true } // x4 Saat
     ],
     
     // Visual Settings (Yeni Renk Paleti)

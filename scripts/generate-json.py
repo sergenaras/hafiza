@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr_bin/env python3
 """
 Hafıza Cetveli - Event JSON Generator
 Bu script events/data/ klasöründeki tüm .md dosyalarını okur ve events.json oluşturur.
@@ -15,7 +15,6 @@ def parse_markdown_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # YAML front matter'ı parse et
     yaml_pattern = r'^---\s*\n(.*?)\n---\s*\n(.*?)$'
     match = re.match(yaml_pattern, content, re.DOTALL)
     
@@ -36,20 +35,26 @@ def parse_markdown_file(file_path):
     
     event['description'] = description_content
     
-    # --- YENİ DEĞİŞİKLİK ---
-    # Dosya adını da JSON'a ekle
     event['filename'] = file_path.name
-    # -----------------------
     
     if 'date' not in event or 'title' not in event:
         print(f"⚠️  Uyarı: {file_path.name} dosyasında 'date' veya 'title' eksik")
         return None
     
     try:
-        event_date = datetime.strptime(event['date'], '%Y-%m-%d')
+        event_time = event.get('time', None)
+        
+        if event_time:
+            full_date_str = f"{event['date']} {event_time}"
+            event_date = datetime.strptime(full_date_str, '%Y-%m-%d %H:%M')
+            event['date'] = event_date.isoformat() 
+        else:
+            event_date = datetime.strptime(event['date'], '%Y-%m-%d')
+        
         event['year'] = event_date.year
-    except ValueError:
-        print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih formatı: {event['date']} (YYYY-AA-GG bekleniyordu)")
+        
+    except ValueError as e:
+        print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih/saat formatı: {e}")
         return None
     
     if 'sources' not in event:
@@ -86,7 +91,6 @@ def generate_events_json():
         else:
             print(f"   ❌ Dosya parse edilemedi")
     
-    # Olayları tam tarihe göre sırala
     events.sort(key=lambda x: x['date'])
     
     output_data = {
@@ -94,7 +98,7 @@ def generate_events_json():
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v2.2" # Versiyon güncellendi
+            "generator": "Zaman Yolculuğu Event Generator v2.2"
         }
     }
     

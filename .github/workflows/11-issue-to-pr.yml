@@ -24,6 +24,9 @@ jobs:
         run: |
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          
+          TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
+          
           CATEGORY=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
           DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
@@ -39,6 +42,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
+          echo "time=$TIME" >> $GITHUB_OUTPUT # YENİ
           echo "sources<<EOF" >> $GITHUB_OUTPUT
           echo "$SOURCES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -53,6 +57,7 @@ jobs:
           ---
           title: "${{ steps.parse.outputs.title }}"
           date: ${{ steps.parse.outputs.date }}
+          time: ${{ steps.parse.outputs.time }}
           category: ${{ steps.parse.outputs.category }}
           ---
           
@@ -74,6 +79,7 @@ jobs:
             
             **Issue:** #${{ github.event.issue.number }}
             **Tarih:** ${{ steps.parse.outputs.date }}
+            **Saat:** ${{ steps.parse.outputs.time | | '(Belirtilmedi)' }}
             **Kategori:** ${{ steps.parse.outputs.category }}
             
             ---

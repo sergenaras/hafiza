@@ -7,7 +7,11 @@ class Timeline {
         
         // State
         this.events = [];
-        this.zoomLevel = 0; // 0, 1, 2 (years, months, days)
+        
+        // --- DEĞİŞİKLİK 1 ---
+        // Varsayılan zoom x3 (index 2) olarak ayarlandı
+        this.zoomLevel = 2; 
+        
         this.offsetX = 0;
         this.targetOffsetX = 0; // Animasyon hedefi için
         this.zoomMode = 'pinch'; // 'pinch' or 'doubleclick'
@@ -24,9 +28,9 @@ class Timeline {
         this.selectedEvent = null;
         this.hoverX = -1; // Mavi hover çizgisi için mouse X konumu
         
-        // Today reference
+        // --- DEĞİŞİKLİK 2 ---
+        // 'Today' referansı artık tam saati içeriyor
         this.today = new Date();
-        this.today.setHours(0, 0, 0, 0); 
         
         // Initialize
         this.resize();
@@ -39,7 +43,7 @@ class Timeline {
     
     // Setup canvas size
     resize() {
-        // YENİ: Canvas artık panel-timeline içinde, boyutunu ondan almalı
+        // ... (Bu fonksiyon değişmedi) ...
         const rect = this.container.getBoundingClientRect();
         this.canvas.width = rect.width * window.devicePixelRatio;
         this.canvas.height = rect.height * window.devicePixelRatio;
@@ -50,7 +54,6 @@ class Timeline {
         this.width = rect.width;
         this.height = rect.height;
         this.centerX = this.width / 2;
-        // YENİ: centerY artık canvas'ın dikey merkezi, baselineY değil
         this.centerY = this.height / 2; 
     }
     
@@ -63,6 +66,7 @@ class Timeline {
             const data = await response.json();
             this.events = (data.events || []).map(event => ({
                 ...event,
+                // event.date artık 'YYYY-MM-DD' veya 'YYYY-MM-DDTHH:MM:00' olabilir
                 date: event.date ? new Date(event.date) : new Date(event.year, 0, 1),
                 year: event.year,
                 title: event.title,
@@ -70,15 +74,16 @@ class Timeline {
                 category: event.category || 'diğer'
             }));
             
-            this.events.forEach(event => event.date.setHours(0,0,0,0));
+            // --- DEĞİŞİKLİK 3 ---
+            // Saat bilgisini korumak için bu satır KALDIRILDI
+            // this.events.forEach(event => event.date.setHours(0,0,0,0));
+            
             this.events.sort((a, b) => a.date - b.date);
             
             this.calculateEventStacks();
             
-            // YENİ: 'loading' yazısını gizli div'den gizle
             document.getElementById('loading').style.display = 'none';
 
-            // YENİ: VERİYİ index.html'e GÖNDER!
             if (window.initializeUI) {
                 window.initializeUI(this.events);
             }
@@ -91,6 +96,7 @@ class Timeline {
     
     // Calculate vertical stacking for events on same day
     calculateEventStacks() {
+        // ... (Bu fonksiyon değişmedi, getDateKey hala çalışır) ...
         const dayGroups = {};
         
         this.events.forEach(event => {
@@ -109,14 +115,18 @@ class Timeline {
     }
     
     getDateKey(date) {
+        // Gün bazlı gruplama için saat/dk/sn göz ardı edilir
         return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
     }
     
     // Ana animasyon döngüsü (pürüzsüz kaydırma için)
     animate() {
         const dx = this.targetOffsetX - this.offsetX;
+        
+        // --- DEĞİŞİKLİK 4 ---
+        // Animasyon yavaşlatıldı (0.1 -> 0.05)
         if (Math.abs(dx) > 0.1) {
-            this.offsetX += dx * 0.1; 
+            this.offsetX += dx * 0.05; 
         } else {
             this.offsetX = this.targetOffsetX;
         }
@@ -129,12 +139,6 @@ class Timeline {
     render() {
         const ctx = this.ctx;
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
-        
-        // DİKKAT: Artık 'rulerYOffset' canvas'ın *tam ortasına* göre hesaplanmalı
-        // 'config.js'deki ayar (150px) çok aşağıda kalabilir.
-        // Şimdilik, canvas'ın dikey merkezini (this.centerY) kullanalım.
-        // Eğer cetveli aşağı/yukarı kaydırmak istersek, 'config.js'deki LAYOUT.rulerYOffset'i
-        // 0'dan farklı bir değer yapıp (örn: 50) aşağıdaki satırı değiştirebiliriz.
         const baselineY = this.centerY + (window.ENV.LAYOUT.rulerYOffset || 0);
         
         // Clear canvas
@@ -149,8 +153,11 @@ class Timeline {
         ctx.lineTo(this.width, baselineY);
         ctx.stroke();
         
-        // Draw time markers
-        if (level.showDays) {
+        // --- DEĞİŞİKLİK 5 ---
+        // Saat (showHours) görünümü için render sırası güncellendi
+        if (level.showHours) {
+            this.renderHoursView(ctx, level, baselineY);
+        } else if (level.showDays) {
             this.renderDaysView(ctx, level, baselineY);
         } else if (level.showMonths) {
             this.renderMonthsView(ctx, level, baselineY);
@@ -166,12 +173,12 @@ class Timeline {
 
         // Mavi hover çizgisini çiz
         this.renderHoverMarker(ctx, baselineY);
-
-        // KALDIRILDI: renderInfoBox artık burada çağrılmıyor.
     }
     
     // --- GÜN HASSASİYETİNDE ÇİZİM FONKSİYONLARI ---
 
+    // Artık tam saati de içeren 'today' referansına göre
+    // float (kesirli) bir gün sayısı döndürür
     daysFromToday(date) {
         const diffMs = date.getTime() - this.today.getTime();
         return diffMs / (1000 * 60 * 60 * 24);
@@ -179,6 +186,7 @@ class Timeline {
 
     // Render Years View (Level 1)
     renderYearsView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
         const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
@@ -208,6 +216,7 @@ class Timeline {
     
     // Render Months View (Level 2)
     renderMonthsView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
@@ -281,6 +290,7 @@ class Timeline {
     
     // Render Days View (Level 3)
     renderDaysView(ctx, level, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         const pixelsPerDay = level.pixelsPerYear / 365;
         const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
         const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
@@ -369,10 +379,104 @@ class Timeline {
             }
         }
     }
+
+    // --- YENİ FONKSİYON ---
+    // Render Hours View (Level 4)
+    renderHoursView(ctx, level, baselineY) {
+        const pixelsPerDay = level.pixelsPerYear / 365;
+        const pixelsPerHour = pixelsPerDay / 24;
+        const monthLabelOffset = window.ENV.LAYOUT.monthLabelOffset;
+        
+        const startDays = this.xToDays(-this.width / 2, this.zoomLevel);
+        const endDays = this.xToDays(this.width * 1.5, this.zoomLevel);
+        
+        // Bu seviyede, 'start/end date' milisaniye hassasiyetindedir
+        const startDate = new Date(this.today.getTime() + startDays * 1000 * 60 * 60 * 24);
+        const endDate = new Date(this.today.getTime() + endDays * 1000 * 60 * 60 * 24);
+        
+        // Ekranda ne kadar 'gün' göründüğünü hesapla
+        const visibleDays = endDays - startDays;
+        
+        // Eğer ekranda 3 günden fazla görünüyorsa, 'Gün' görünümünü (x3) kullan
+        // Bu, x4'e zoom yaparken x3'ten geçerkenki hali taklit eder
+        if (visibleDays > 3) {
+             this.renderDaysView(ctx, level, baselineY);
+             return;
+        }
+
+        // --- SAAT GÖRÜNÜMÜ (3 günden az görünüyorsa) ---
+        
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth();
+        const startDay = startDate.getDate();
+        
+        const endYear = endDate.getFullYear();
+        const endMonth = endDate.getMonth();
+        const endDay = endDate.getDate();
+
+        // Başlangıç gününden bitiş gününe kadar döngü
+        let currentDay = new Date(startYear, startMonth, startDay);
+
+        while (currentDay <= endDate) {
+            const dayDiffDays = this.daysFromToday(currentDay);
+            const dayX = this.centerX + (dayDiffDays * pixelsPerDay) + this.offsetX;
+
+            if (dayX < -this.width / 2 || dayX > this.width * 1.5) {
+                currentDay.setDate(currentDay.getDate() + 1); // Sonraki güne geç
+                continue;
+            }
+
+            // GÜN AYIRACI (Kalın çizgi)
+            ctx.strokeStyle = window.ENV.COLORS.yearLineThick;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(dayX, baselineY - 20);
+            ctx.lineTo(dayX, baselineY + 20);
+            ctx.stroke();
+
+            // GÜN ETİKETİ (örn: 1 Aralık 2025)
+            const dayText = `${currentDay.getDate()} ${window.i18n.t('months.full')[currentDay.getMonth()]} ${currentDay.getFullYear()}`;
+            ctx.fillStyle = window.ENV.COLORS.text;
+            ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(dayText, dayX, baselineY + 40);
+
+            // SAATLERİ ÇİZ
+            for (let hour = 0; hour < 24; hour++) {
+                const hourDate = new Date(currentDay.getFullYear(), currentDay.getMonth(), currentDay.getDate(), hour);
+                const hourDiffDays = this.daysFromToday(hourDate);
+                const hourX = this.centerX + (hourDiffDays * pixelsPerDay) + this.offsetX;
+
+                if (hourX < 0 || hourX > this.width) continue; 
+                
+                if (hour > 0) {
+                    ctx.strokeStyle = window.ENV.COLORS.dayLine; // Normal 'gün' çizgisi gibi
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(hourX, baselineY - 12);
+                    ctx.lineTo(hourX, baselineY + 12);
+                    ctx.stroke();
+                    
+                    // SAAT ETİKETİ (örn: 14:00)
+                    ctx.fillStyle = window.ENV.COLORS.textLight;
+                    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${hour.toString().padStart(2, '0')}:00`, hourX, baselineY - 18);
+                }
+            }
+            
+            currentDay.setDate(currentDay.getDate() + 1); // Sonraki güne geç
+        }
+    }
     
     // Render today marker
     renderTodayMarker(ctx, level, baselineY) {
-        const x = this.centerX + this.offsetX; 
+        // 'today' artık tam saati içerdiği için, 'diffDays' 0 olacak
+        // ve 'x' bugünün tam anlık konumunu gösterecek
+        const diffDays = this.daysFromToday(this.today);
+        const pixelsPerDay = level.pixelsPerYear / 365;
+        const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX; 
+        
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2;
 
         ctx.strokeStyle = window.ENV.COLORS.todayMarker;
@@ -382,9 +486,6 @@ class Timeline {
         ctx.lineTo(x, baselineY + markerLength);
         ctx.stroke();
         
-        // "Şimdi" etiketi için 'infoBoxY'yi index.html'den almamız lazım
-        // Şimdilik 'baselineY'nin üstüne koyalım.
-        // DÜZELTME: 'infoBoxY' config.js'de tanımlı
         ctx.fillStyle = window.ENV.COLORS.todayMarker;
         ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
         ctx.textAlign = 'center';
@@ -397,6 +498,7 @@ class Timeline {
 
         this.events.forEach(event => {
             const eventDate = event.date;
+            // 'diffDays' artık float (kesirli) olabilir (örn: 10.5)
             const diffDays = this.daysFromToday(eventDate);
             const x = this.centerX + (diffDays * pixelsPerDay) + this.offsetX;
             
@@ -422,6 +524,7 @@ class Timeline {
 
     // Mavi hover çizgisini çiz
     renderHoverMarker(ctx, baselineY) {
+        // ... (Bu fonksiyon değişmedi) ...
         if (this.hoverX === -1 || this.isDragging) return; 
         const markerLength = window.ENV.LAYOUT.markerLineLength / 2; 
         ctx.strokeStyle = window.ENV.COLORS.hoverMarker;
@@ -432,10 +535,9 @@ class Timeline {
         ctx.stroke();
     }
     
-    // KALDIRILDI: renderInfoBox()
-
     // Event listeners setup
     setupEventListeners() {
+        // ... (Bu fonksiyon değişmedi) ...
         window.addEventListener('resize', () => this.resize());
         this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
         this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
@@ -450,6 +552,7 @@ class Timeline {
     }
     
     onMouseDown(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         this.isDragging = true;
         this.lastX = e.clientX;
         this.canvas.classList.add('grabbing');
@@ -457,6 +560,7 @@ class Timeline {
     }
     
     onMouseMove(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -473,11 +577,13 @@ class Timeline {
     }
     
     onMouseUp(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         this.isDragging = false;
         this.canvas.classList.remove('grabbing');
     }
     
     onMouseLeave() {
+        // ... (Bu fonksiyon değişmedi) ...
         this.isDragging = false;
         this.canvas.classList.remove('grabbing');
         this.hoverX = -1;
@@ -485,6 +591,7 @@ class Timeline {
     }
     
     onWheel(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         if (e.shiftKey) {
             e.preventDefault(); 
             this.targetOffsetX -= e.deltaY;
@@ -503,6 +610,7 @@ class Timeline {
     }
     
     onClick(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         if (Math.abs(this.targetOffsetX - this.offsetX) > 2) return; 
 
         const rect = this.canvas.getBoundingClientRect();
@@ -511,7 +619,6 @@ class Timeline {
         
         const clickedEvent = this.getEventAtPosition(x, y);
         if (clickedEvent) {
-            // YENİ: index.html'deki global fonksiyonu çağır
             if (window.selectEvent) {
                 window.selectEvent(clickedEvent);
             }
@@ -519,6 +626,7 @@ class Timeline {
     }
     
     onDoubleClick(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         if (this.zoomMode === 'doubleclick') {
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -527,6 +635,7 @@ class Timeline {
     }
     
     onTouchStart(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         e.preventDefault();
         
         if (e.touches.length === 1) {
@@ -544,6 +653,7 @@ class Timeline {
     }
     
     onTouchMove(e) {
+        // ... (Bu fonksiyon değişmedi) ...
         e.preventDefault();
         
         if (e.touches.length === 1 && this.isDragging) {
@@ -571,11 +681,13 @@ class Timeline {
     }
     
     onMouseEnd(e) { // touchend
+        // ... (Bu fonksiyon değişmedi) ...
         this.isDragging = false;
         this.touchStartDistance = 0;
     }
     
     checkHover(x, y) {
+        // ... (Bu fonksiyon değişmedi) ...
         const hoveredEvent = this.getEventAtPosition(x, y);
         
         if (hoveredEvent !== this.hoveredEvent) {
@@ -584,7 +696,7 @@ class Timeline {
     }
     
     getEventAtPosition(x, y) {
-        // YENİ: 'baselineY'yi tekrar hesapla
+        // ... (Bu fonksiyon değişmedi) ...
         const baselineY = this.centerY + (window.ENV.LAYOUT.rulerYOffset || 0);
 
         for (const event of this.events) {
@@ -608,12 +720,10 @@ class Timeline {
         return null;
     }
 
-    // KALDIRILDI: hideTooltip()
-    // KALDIRILDI: showEventModal()
-
     // --- ODAKLI ZOOM FONKSİYONLARI ---
 
     xToDays(x, zoomLevel) {
+        // ... (Bu fonksiyon değişmedi) ...
         const level = window.ENV.ZOOM_LEVELS[zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
         const screenOffset = x - this.centerX - this.offsetX;
@@ -622,6 +732,7 @@ class Timeline {
     }
 
     daysToOffsetX(diffDays, zoomLevel, targetX) {
+        // ... (Bu fonksiyon değişmedi) ...
         const level = window.ENV.ZOOM_LEVELS[zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;
         const screenOffset = diffDays * pixelsPerDay;
@@ -636,7 +747,10 @@ class Timeline {
         const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
-        this.offsetX = newOffsetX; 
+        
+        // --- DEĞİŞİKLİK (Yavaş Zoom) ---
+        // this.offsetX = newOffsetX; // Bu satır kaldırıldı
+        
         this.showZoomIndicator();
     }
     
@@ -647,11 +761,15 @@ class Timeline {
         const newOffsetX = this.daysToOffsetX(currentDays, newZoomLevel, mouseX);
         this.zoomLevel = newZoomLevel;
         this.targetOffsetX = newOffsetX;
-        this.offsetX = newOffsetX; 
+
+        // --- DEĞİŞİKLİK (Yavaş Zoom) ---
+        // this.offsetX = newOffsetX; // Bu satır kaldırıldı
+        
         this.showZoomIndicator();
     }
     
     showZoomIndicator() {
+        // ... (Bu fonksiyon değişmedi) ...
         const indicator = document.getElementById('zoomIndicator');
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         indicator.textContent = `×${level.id} - ${window.t('zoomLevel' + level.id)}`;
@@ -662,15 +780,18 @@ class Timeline {
     }
     
     setZoomMode(mode) {
+        // ... (Bu fonksiyon değişmedi) ...
         this.zoomMode = mode;
     }
     
     goToToday() {
+        // ... (Bu fonksiyon değişmedi) ...
         this.targetOffsetX = 0;
     }
     
     goToDate(selectedDate) {
-        selectedDate.setHours(0,0,0,0);
+        // 'selectedDate' artık saat bilgisi içerebilir
+        // 'daysFromToday' bunu zaten destekliyor
         const diffDays = this.daysFromToday(selectedDate);
         const level = window.ENV.ZOOM_LEVELS[this.zoomLevel];
         const pixelsPerDay = level.pixelsPerYear / 365;

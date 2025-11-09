@@ -30,6 +30,17 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: time
+    attributes:
+      label: Saat (SS:DD) - İsteğe bağlı
+      description: |
+        Olayın gerçekleştiği tam saat (24 saat formatında). 
+        Bu alanı doldurmak, olayın zaman çizelgesinde (x4) saat hassasiyetinde görünmesini sağlar.
+      placeholder: "Örnek: 14:30"
+    validations:
+      required: false
+
   - type: dropdown
     id: category
     attributes:
