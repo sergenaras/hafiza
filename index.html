@@ -120,27 +120,23 @@
             list-style: none;
         }
         
-        /* ---- YENİ/GÜNCELLENMİŞ CSS ---- */
+        /* ---- ÖNCEKİ DEĞİŞİKLİK (Düzenle/Sil Butonları) ---- */
         
         .event-list-item {
-            position: relative; /* Butonları konumlandırmak için gerekli */
-            /* padding-right: 80px; Butonlar için yer açar, ancak hover ile daha iyi */
+            position: relative; 
         }
 
         .event-list-item-content {
-            /* Başlık ve tarihi saran yeni bir sarmalayıcı */
             padding: 12px 8px;
             cursor: pointer;
             transition: background-color 0.2s;
             border-radius: 4px;
         }
         
-        /* Seçili olmayan öğelerin hover stili */
         .event-list-item:not(.selected) .event-list-item-content:hover {
              background-color: #f9f9f9;
         }
         
-        /* Seçili öğenin stili (mevcuttan taşındı) */
         .event-list-item.selected .event-list-item-content {
             background-color: #e3f2fd; 
         }
@@ -150,12 +146,12 @@
             right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            display: none; /* Varsayılan olarak gizli */
+            display: none; 
             gap: 5px;
         }
 
         .event-list-item:hover .event-list-item-actions {
-            display: flex; /* Ana öğe üzerine gelince göster */
+            display: flex; 
         }
 
         .event-action-btn {
@@ -169,20 +165,18 @@
         }
         
         .btn-edit {
-            background-color: #4a90e2; /* Mavi - Düzenle */
+            background-color: #4a90e2; 
         }
         .btn-edit:hover {
             background-color: #357abd;
         }
 
         .btn-delete {
-            background-color: #d9534f; /* Kırmızı - Sil */
+            background-color: #d9534f; 
         }
         .btn-delete:hover {
             background-color: #c9302c;
         }
-        
-        /* ---- ESKİ CSS DEVAM EDİYOR ---- */
         
         .event-list-item-title {
             font-weight: 500;
@@ -193,6 +187,8 @@
             color: #777;
             margin-top: 4px;
         }
+        
+        /* ---- ESKİ CSS DEVAM EDİYOR ---- */
 
         .panel-timeline {
             grid-column: 1 / 3;
@@ -232,7 +228,6 @@
         #details-content .description {
             font-size: 15px;
             line-height: 1.6;
-            /* white-space: pre-line; (Bu bir önceki adımda kaldırılmıştı, doğru) */
         }
 
         #details-content .description h2 {
@@ -286,12 +281,42 @@
         .hidden-elements {
             display: none;
         }
+        
+        /* ---- YENİ CSS (Dil Değiştirici) ---- */
+        .lang-switcher-wrapper {
+            position: relative;
+        }
+        #langSwitcher {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: transparent;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            background-color: #f5f5ff;
+            color: #333;
+        }
+        #langSwitcher:hover {
+            background-color: #e5e5e5;
+        }
+        
     </style>
 </head>
 <body>
     <header class="header">
         <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
         <div class="header-controls">
+            
+            <div class="lang-switcher-wrapper">
+                <select id="langSwitcher" onchange="switchLanguage(this.value)">
+                    <option value="tr">🇹🇷 TR</option>
+                    <option value="en">🇬🇧 EN</option>
+                </select>
+            </div>
+            
             <input type="date" id="dateInput" class="date-input" />
             
             <button class="btn btn-primary" onclick="goToDate()" data-i18n="goToDate">
@@ -308,13 +333,13 @@
         
         <section class="panel panel-details">
             <div class="panel-header">
-                <span>Olay Detayları</span>
-                <a id="editEventLink" href="#" class="panel-header-link" target="_blank">
+                <span data-i18n="panel.detailsTitle">Olay Detayları</span>
+                <a id="editEventLink" href="#" class="panel-header-link" target="_blank" data-i18n="panel.editLink">
                     (Bu Olayı Düzenle)
                 </a>
             </div>
             <div class="panel-body" id="details-content">
-                <p class="placeholder">
+                <p class="placeholder" data-i18n="panel.detailsPlaceholder">
                     Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
                 </p>
             </div>
@@ -322,9 +347,9 @@
 
         <section class="panel panel-list">
             <div class="panel-header">
-                <span>Olay Listesi</span>
+                <span data-i18n="panel.listTitle">Olay Listesi</span>
                 <select id="categoryFilter" onchange="filterCategory()">
-                    <option value="tumu">Yükleniyor...</option>
+                    <option value="tumu" data-i18n="loading">Yükleniyor...</option>
                 </select>
             </div>
             <div class="panel-body">
@@ -336,7 +361,7 @@
         <section class="panel-timeline">
             <canvas id="timelineCanvas"></canvas>
             <div class="hidden-elements">
-                <div id="loading">Yükleniyor...</div>
+                <div id="loading" data-i18n="loading">Yükleniyor...</div>
                 <div class="tooltip" id="tooltip"></div>
                 <div class="zoom-indicator" id="zoomIndicator">x1</div>
             </div>
@@ -362,6 +387,9 @@
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
+            
+            // YENİ EKLENDİ: Dil değiştiriciyi mevcut dile ayarla
+            document.getElementById('langSwitcher').value = window.i18n.currentLanguage;
         });
 
         function initializeUI(events) {
@@ -373,29 +401,32 @@
         // --- 2. Panel Doldurma Fonksiyonları ---
 
         function populateCategoryFilter(events) {
-            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const filterSelect = document.getElementById('categoryFilter');
             const categories = new Set(events.map(event => event.category || 'diğer'));
             filterSelect.innerHTML = ''; 
+            
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
-            allOption.textContent = 'Tümü';
+            // Dil desteği
+            allOption.textContent = window.t('categories.all') || 'Tümü';
             filterSelect.appendChild(allOption);
+            
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
+                // Dil desteği
                 option.textContent = window.t(`categories.${category}`) || category;
                 filterSelect.appendChild(option);
             });
         }
 
-        // GÜNCELLENMİŞ FONKSİYON
         function populateEventList(eventsToShow) {
             const listContainer = document.getElementById('eventListContainer');
             listContainer.innerHTML = ''; 
             
             if (eventsToShow.length === 0) {
-                listContainer.innerHTML = '<li style="padding: 12px 8px; color: #888;">Bu kategoride olay bulunamadı.</li>';
+                // Dil desteği
+                listContainer.innerHTML = `<li style="padding: 12px 8px; color: #888;">${window.t('panel.noEventsFound')}</li>`;
                 return;
             }
             
@@ -403,13 +434,10 @@
                 const li = document.createElement('li');
                 li.className = 'event-list-item';
                 
-                // Seçili olayı vurgulamak için
                 if (currentSelectedEvent && currentSelectedEvent.filename === event.filename) {
                     li.classList.add('selected');
                 }
 
-                // 1. İçerik Konteyneri (Başlık ve Tarih)
-                // Tıklanabilir alan bu olacak
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'event-list-item-content';
                 contentDiv.onclick = () => {
@@ -422,32 +450,30 @@
 
                 const dateDiv = document.createElement('div');
                 dateDiv.className = 'event-list-item-date';
+                // Dil desteği (formatDate)
                 dateDiv.textContent = window.formatDate(event.date, 'full');
                 
                 contentDiv.appendChild(titleDiv);
                 contentDiv.appendChild(dateDiv);
 
-                // 2. Aksiyon Butonları Konteyneri (Düzenle ve Sil)
-                // Gizli/görünür olacak alan bu
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'event-list-item-actions';
 
-                // Düzenle Butonu
                 const editBtn = document.createElement('button');
                 editBtn.className = 'event-action-btn btn-edit';
-                editBtn.textContent = 'Düzenle';
+                // Dil desteği
+                editBtn.textContent = window.t('buttons.edit');
                 editBtn.onclick = (e) => handleEditClick(e, event);
                 
-                // Sil Butonu
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'event-action-btn btn-delete';
-                deleteBtn.textContent = 'Sil';
+                // Dil desteği
+                deleteBtn.textContent = window.t('buttons.delete');
                 deleteBtn.onclick = (e) => handleDeleteClick(e, event);
 
                 actionsDiv.appendChild(editBtn);
                 actionsDiv.appendChild(deleteBtn);
 
-                // 3. Hepsini Ana Liste Öğesine Ekle
                 li.appendChild(contentDiv);
                 li.appendChild(actionsDiv);
                 
@@ -460,12 +486,11 @@
             const editLink = document.getElementById('editEventLink');
             
             if (!event) {
-                // Olay seçilmediyse paneli temizle ve linki gizle
                 detailsContainer.innerHTML = `
                     <p class="placeholder">
-                        Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.
+                        ${window.t('panel.detailsPlaceholder')}
                     </p>`;
-                editLink.style.display = 'none'; // Linki gizle
+                editLink.style.display = 'none';
                 return;
             }
 
@@ -477,38 +502,36 @@
                 <div class="description">${formattedDescription}</div>
             `;
             
-            // YENİ: "Düzenle" linkini ayarla ve göster
-            // 'event.filename' alanı 'generate-json.py' script'inden gelecek
             if (event.filename) {
-                const editUrl = `${GITHUB_REPO_URL}/edit/${window.ENV.BRANCH}/events/data/${event.filename}`;
-                editLink.href = editUrl;
-                editLink.style.display = 'block'; // Linki göster
+                // Not: Bu link artık kullanılmıyor (handleEditClick'e taşındı)
+                // ancak detay panelinde kalması faydalı olabilir.
+                // Yine de Issue açması için URL'i GÜNCELLEYELİM.
+                const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
+                const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
+                                  `**Dosya Adı:** \`${event.filename}\``;
+                const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=edit-request`;
+
+                editLink.href = editIssueUrl;
+                editLink.style.display = 'block'; 
             } else {
-                editLink.style.display = 'none'; // Filename yoksa gizle
+                editLink.style.display = 'none';
             }
         }
 
         function escapeAndFormat(str) {
             if (!str) return '';
-            
-            // 'breaks: true', \n (yeni satır) karakterlerini <br>'ye dönüştürür
-            // 'gfm: true', GitHub Flavored Markdown (--- için <hr>, ## için h2) desteğini açar
             const dirtyHTML = marked.parse(str, { breaks: true, gfm: true });
-
-            // 'h2', 'hr' gibi etiketlere izin verecek şekilde temizle
             const cleanHTML = DOMPurify.sanitize(dirtyHTML, {
                 ALLOWED_TAGS: [
                     'p', 'br', 'b', 'i', 'em', 'strong', 'h2', 'hr', 'ul', 'ol', 'li', 'a', 'code', 'pre'
                 ]
             });
-            
             return cleanHTML;
         }
 
         // --- 3. Olay (Event) Yöneticileri ---
 
         function filterCategory() {
-            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const filterSelect = document.getElementById('categoryFilter');
             const selectedCategory = filterSelect.value;
             let filteredEvents;
@@ -528,26 +551,34 @@
                 window.timeline.goToDate(event.date);
             }
 
+            // Listeyi yeniden oluştur (seçili öğeyi vurgulamak için)
             filterCategory(); 
         }
 
-        // YENİ FONKSİYONLAR
+        // GÜNCELLENMİŞ FONKSİYON (handleEditClick)
         function handleEditClick(e, event) {
             // Olayın seçilmesini engelle
             e.stopPropagation(); 
             
-            if (!event.filename) return; // Güvenlik kontrolü
-            
-            // Mevcut "Düzenle" linkiyle aynı mantığı kullan
-            const editUrl = `${GITHUB_REPO_URL}/edit/${window.ENV.BRANCH}/events/data/${event.filename}`;
-            window.open(editUrl, '_blank');
+            const issueTitle = `Olay Düzenleme İsteği: ${event.title}`;
+            // Markdown'da düzenlemeyi kolaylaştırmak için YAML ve içeriği ayrı ayrı ön-doldur
+            const issueBody = `Lütfen aşağıdaki olayın düzenlenmesini değerlendirin:\n\n` +
+                              `**Dosya Adı:** \`${event.filename}\`\n\n` +
+                              `--- (YENİ İÇERİK AŞAĞIYA) ---\n\n` +
+                              `**Başlık:** ${event.title}\n` +
+                              `**Tarih (YYYY-AA-GG):** ${event.date.toISOString().split('T')[0]}\n` +
+                              `**Kategori:** ${event.category}\n\n` +
+                              `**Açıklama (Markdown):**\n${event.description}\n\n` +
+                              `--- (BİTİŞ) ---`;
+                              
+            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=edit-request`;
+            window.open(editIssueUrl, '_blank');
         }
 
         function handleDeleteClick(e, event) {
             // Olayın seçilmesini engelle
             e.stopPropagation();
             
-            // Çiziminizdeki gibi, silmek için yeni bir issue aç
             const issueTitle = `Olay Silme İsteği: ${event.title}`;
             const issueBody = `Lütfen aşağıdaki olayın silinmesini değerlendirin:\n\n` +
                               `**Dosya Adı:** \`${event.filename}\`\n` +
@@ -563,7 +594,6 @@
         // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
         function goToDate() {
-            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             const dateInput = document.getElementById('dateInput');
             const dateValue = dateInput.value;
             if (dateValue && window.timeline) {
@@ -573,8 +603,28 @@
         }
 
         function openNewEventDialog() {
-            // ... (bu fonksiyon aynı kaldı, değişiklik yok)
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
+        }
+
+        // YENİ FONKSİYON (Dil Değiştirme)
+        function switchLanguage(lang) {
+            if (!window.i18n || !window.i18n.translations[lang]) return;
+            
+            // 1. Dili ayarla (Bu, [data-i18n] etiketli statik DOM'u günceller)
+            window.i18n.setLanguage(lang);
+            
+            // 2. Dinamik olarak oluşturulan içeriği yeniden oluştur
+            // Kategori filtresini çevir
+            populateCategoryFilter(allEvents);
+            
+            // Olay listesini ve tarihlerini çevir
+            // filterCategory() zaten populateEventList()'i çağırır
+            filterCategory();
+            
+            // Seçili olan detay panelini çevir (eğer varsa)
+            if (currentSelectedEvent) {
+                updateDetailsPanel(currentSelectedEvent);
+            }
         }
 
     </script>
