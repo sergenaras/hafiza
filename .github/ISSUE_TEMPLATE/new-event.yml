@@ -45,7 +45,7 @@ body:
     id: category
     attributes:
       label: Kategori
-      description: Olayın ana kategorisi.
+      description: Olayın ana kategorisi. "Diğer" seçerseniz, lütfen aşağıdaki "Özel Kategori" alanını doldurun.
       options:
         - teknoloji
         - bilim
@@ -56,6 +56,15 @@ body:
         - diğer
     validations:
       required: true
+
+  - type: input
+    id: other_category
+    attributes:
+      label: Özel Kategori (Eğer 'Diğer' Seçtiyseniz)
+      description: Kategori listesinden "Diğer"i seçtiyseniz, lütfen özel kategorinizi buraya girin.
+      placeholder: "Örn: Arkeoloji"
+    validations:
+      required: false
 
   - type: textarea
     id: description

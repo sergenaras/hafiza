@@ -1,7 +1,7 @@
 ---
 title: "İmamoğlu'nun Tutuklanması"
 date: 2025-03-19
-time: _No response_
+time: 00:00
 category: diğer
 ---
 
