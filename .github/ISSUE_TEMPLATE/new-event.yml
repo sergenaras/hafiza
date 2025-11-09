@@ -11,14 +11,16 @@ body:
         ## Zaman Çizelgesine Yeni Olay Ekleyin
         Lütfen tüm alanları dikkatlice doldurun. Girilen verilerin kalitesi, zaman çizelgesinin doğruluğu için kritiktir.
         
+  # --- DEĞİŞTİRİLEN SATIR ---
   - type: input
-    id: title
+    id: event_title # <-- 'title' idi, 'event_title' olarak değiştirildi
     attributes:
       label: Başlık
       description: Olay başlığı (kısa ve öz)
       placeholder: "Örnek: Yapay Zeka Devrimi"
     validations:
       required: true
+  # -------------------------
 
   - type: input
     id: date

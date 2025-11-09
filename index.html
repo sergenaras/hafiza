@@ -532,7 +532,6 @@
         }
 
         // --- GÜNCELLENMİŞ FONKSİYON (updateDetailsPanel) ---
-        // Artık "Düzenle" linki için 'click' olayı ekliyor
         function updateDetailsPanel(event) {
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
@@ -555,8 +554,7 @@
             `;
             
             if (event.filename) {
-                // HATA DÜZELTME: Artık her iki "Düzenle" butonu da aynı fonksiyonu
-                // (handleEditClick) aynı 'event' nesnesiyle çağırıyor.
+                // Artık "Düzenle" linki de "Düzenle" butonuyla aynı fonksiyonu çağırıyor
                 editLink.onclick = (e) => {
                     e.preventDefault(); 
                     handleEditClick(e, event); 
@@ -641,24 +639,24 @@
             }
 
             // 2. Tarih ve Saat'i YAML'dan geldiği gibi formatla
-            const eventDate = new Date(event.date); // ISO string'den Date objesi
+            const eventDate = new Date(event.date); 
             const dateField = formatDateToYYYYMMDD(eventDate);
             const timeField = event.original_time || ""; 
 
             // 3. Gizli FILENAME etiketini Açıklama'ya ekle
-            // Bu, otomasyonun DÜZENLEME olduğunu anlaması için KRİTİKTİR
             const hiddenFilenameTag = `\n\n`;
             const descriptionField = (event.description || "") + hiddenFilenameTag;
             
             // 4. URL'i oluştur ve yeni sekmede aç
             const issueTitle = `Olay Düzenle: ${event.title}`;
             
-            // 'new-event.yml' şablonunu kullan, 'upgrade-event' etiketini ekle
-            // ve şablondaki HER ALANIN ID'sini doldur
+            // 'new-event.yml' şablonunu kullan ve 'upgrade-event' etiketini ekle
             const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=new-event.yml` +
                 `&labels=upgrade-event` +
+                // Ana başlık
                 `&title=${encodeURIComponent(issueTitle)}` +
-                `&title=${encodeURIComponent(issueTitle)}` +
+                // Form Alanları (new-event.yml'deki ID'lere göre)
+                `&event_title=${encodeURIComponent(event.title)}` + // <-- DÜZELTİLDİ
                 `&date=${encodeURIComponent(dateField)}` +
                 `&time=${encodeURIComponent(timeField)}` +
                 `&category=${encodeURIComponent(categoryField)}` +
@@ -675,7 +673,7 @@
             
             const issueTitle = `Olay Silme İsteği: ${event.title}`;
             const issueBody = `Lütfen aşağıdaki olayın silinmesini değerlendirin:\n\n` +
-                              `**Dosya Adı:** \`${event.filename}\`\n` +
+                              `**Dosya Adı:** \`${event.filename}\`n` +
                               `**Tarih:** ${event.date.toISOString().split('T')[0]}\n` +
                               `**Başlık:** ${event.title}\n\n` +
                               `**Sebep (isteğe bağlı):**\n...`;
