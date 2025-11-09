@@ -6,7 +6,7 @@ Bu script events/data/ klasöründeki tüm .md dosyalarını okur ve events.json
 
 import os
 import json
-import re
+import re # <- YENİ EKLENDİ (Regex için)
 from pathlib import Path
 from datetime import datetime
 
@@ -46,18 +46,27 @@ def parse_markdown_file(file_path):
     # --- GÜNCELLENMİŞ SAAT İŞLEME MANTIĞI ---
     try:
         event_date_str = event['date'] # YYYY-MM-DD
-        # .get() ile 'time' anahtarı olmasa bile hata vermez
         event_time_str = event.get('time', None) 
-
-        # strip() ile boş stringleri de None gibi ele al
-        if event_time_str and event_time_str.strip():
-            # Saat varsa, T ve saniye :00 ile birleştir (örn: 1918-11-02T14:30:00)
-            full_iso_str = f"{event_date_str}T{event_time_str.strip()}:00"
-        else:
-            # Saat yoksa, 12:00 (öğlen) olarak ayarla
-            full_iso_str = f"{event_date_str}T12:00:00"
         
-        # String'i tarih nesnesine çevir
+        clean_time = None
+        if event_time_str:
+            clean_time = event_time_str.strip()
+
+        # Regex: Saat formatını (SS:DD) kontrol et (örn: 14:30, 09:05)
+        time_pattern = re.compile(r'^([01]\d|2[0-3]):([0-5]\d)$')
+
+        if clean_time and time_pattern.match(clean_time):
+            # Saat geçerli ve format doğruysa: T ve saniye :00 ile birleştir
+            full_iso_str = f"{event_date_str}T{clean_time}:00"
+        else:
+            # Saat yoksa, boşsa, "_No response_" ise veya formatı bozuksa: 12:00 kullan
+            full_iso_str = f"{event_date_str}T12:00:00"
+            
+            # Eğer saat alanı dolu ama geçersizse (örn: _No response_) kullanıcıyı bilgilendir
+            if clean_time and clean_time != '_No response_':
+                print(f"   ℹ️  Bilgi: {file_path.name} dosyasında geçersiz saat formatı ('{clean_time}'). 12:00 varsayılan olarak kullanıldı.")
+        
+        # String'i tarih nesnesine çevir (Bu, 2025-02-31 gibi geçersiz tarihleri de yakalar)
         event_date = datetime.fromisoformat(full_iso_str)
         
         # event['date']'i JS'nin okuyacağı son ISO string haliyle güncelle
@@ -65,6 +74,7 @@ def parse_markdown_file(file_path):
         event['year'] = event_date.year
 
     except ValueError as e:
+        # Hata genellikle geçersiz 'date' alanından (örn: 2025-02-30) kaynaklanır
         print(f"⚠️  Uyarı: {file_path.name} dosyasında geçersiz tarih/saat formatı: {e} (Tarih: {event.get('date')}, Saat: {event.get('time')})")
         return None
     # ------------------------------------
