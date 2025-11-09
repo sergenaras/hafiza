@@ -8,8 +8,6 @@ window.i18n = {
             appName: 'Hafıza Cetveli',
             loading: 'Yükleniyor...',
             addEvent: '+ Olay Ekle',
-            
-            // YENİ EKLENDİ
             goToDate: 'Tarihe Git', 
             
             // Zoom modes
@@ -47,6 +45,9 @@ window.i18n = {
             
             // Categories
             categories: {
+                // ---- YENİ EKLENDİ ----
+                all: 'Tümü', 
+                // ---------------------
                 teknoloji: 'Teknoloji',
                 bilim: 'Bilim',
                 tarih: 'Tarih',
@@ -59,21 +60,29 @@ window.i18n = {
             
             // Time references
             today: 'Bugün',
-            
-            // YORUM KALDIRILDI
             now: 'Şimdi', 
-            
-            // Stats
-            totalEvents: 'Toplam',
-            pastEvents: 'Geçmiş',
-            futureEvents: 'Gelecek',
             
             // Errors
             errorLoading: 'Olaylar yüklenirken hata oluştu',
             errorNoEvents: 'Henüz olay eklenmemiş',
             
             // Modal
-            closeModal: 'Kapat'
+            closeModal: 'Kapat',
+
+            // ---- YENİ EKLENEN BÖLÜMLER ----
+            panel: {
+                detailsTitle: 'Olay Detayları',
+                listTitle: 'Olay Listesi',
+                editLink: '(Bu Olayı Düzenle)',
+                detailsPlaceholder: 'Olay Listesi üzerinden seçilen bir olayın detayları burada görünecektir.',
+                noEventsFound: 'Bu kategoride olay bulunamadı.'
+            },
+            
+            buttons: {
+                edit: 'Düzenle',
+                delete: 'Sil'
+            }
+            // -------------------------------
         },
         
         en: {
@@ -81,8 +90,6 @@ window.i18n = {
             appName: 'Memory Timeline',
             loading: 'Loading...',
             addEvent: '+ Add Event',
-
-            // YENİ EKLENDİ
             goToDate: 'Go to Date',
             
             // Zoom modes
@@ -120,6 +127,9 @@ window.i18n = {
             
             // Categories
             categories: {
+                // ---- YENİ EKLENDİ ----
+                all: 'All',
+                // ---------------------
                 teknoloji: 'Technology',
                 bilim: 'Science',
                 tarih: 'History',
@@ -134,17 +144,27 @@ window.i18n = {
             today: 'Today',
             now: 'Now',
             
-            // Stats
-            totalEvents: 'Total',
-            pastEvents: 'Past',
-            futureEvents: 'Future',
-            
             // Errors
             errorLoading: 'Error loading events',
             errorNoEvents: 'No events yet',
             
             // Modal
-            closeModal: 'Close'
+            closeModal: 'Close',
+
+            // ---- YENİ EKLENEN BÖLÜMLER ----
+            panel: {
+                detailsTitle: 'Event Details',
+                listTitle: 'Event List',
+                editLink: '(Edit This Event)',
+                detailsPlaceholder: 'Details for a selected event from the list will appear here.',
+                noEventsFound: 'No events found in this category.'
+            },
+            
+            buttons: {
+                edit: 'Edit',
+                delete: 'Delete'
+            }
+            // -------------------------------
         }
     },
     
@@ -176,6 +196,8 @@ window.i18n = {
     updateDOM() {
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
+            // Düz metin (textContent) yerine innerHTML kullanmak
+            // bazen <br> gibi etiketler için gerekebilir, ama şimdilik textContent güvenli
             element.textContent = this.t(key);
         });
     },
