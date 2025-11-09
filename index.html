@@ -555,11 +555,11 @@
             `;
             
             if (event.filename) {
-                // Linkin 'href'ini dinamik olarak ayarlamak yerine 'onclick' olayını ayarlıyoruz
-                // Bu, 'event' nesnesinin tamamını 'handleEditClick'e göndermemizi sağlar
+                // HATA DÜZELTME: Artık her iki "Düzenle" butonu da aynı fonksiyonu
+                // (handleEditClick) aynı 'event' nesnesiyle çağırıyor.
                 editLink.onclick = (e) => {
-                    e.preventDefault(); // Sayfanın # (hash) linkine gitmesini engelle
-                    handleEditClick(e, event); // Olay listesindeki butonla aynı fonksiyonu çağır
+                    e.preventDefault(); 
+                    handleEditClick(e, event); 
                 };
                 editLink.style.display = 'block'; 
             } else {
@@ -627,7 +627,7 @@
         }
         
         // --- GÜNCELLENMİŞ FONKSİYON (handleEditClick) ---
-        // Artık yeni 'edit-event.yml' şablonunu hedefliyor
+        // Artık 'new-event.yml' şablonunu hedefliyor ve tüm alanları dolduruyor
         function handleEditClick(e, event) {
             if (e) e.stopPropagation(); 
             
@@ -635,7 +635,6 @@
             let categoryField = event.category;
             let otherCategoryField = "";
             
-            // Eğer kategori standart listede yoksa (örn: "Arkeoloji")
             if (!standardCategories.includes(event.category)) {
                 categoryField = "diğer";
                 otherCategoryField = event.category;
@@ -644,50 +643,28 @@
             // 2. Tarih ve Saat'i YAML'dan geldiği gibi formatla
             const eventDate = new Date(event.date); // ISO string'den Date objesi
             const dateField = formatDateToYYYYMMDD(eventDate);
-            // event.original_time, generate-json.py'den geliyor
             const timeField = event.original_time || ""; 
 
-            // 3. Issue şablonuyla %100 uyumlu metni oluştur
-            // Not: 'event_data' yeni şablondaki textarea'nın ID'sidir
-            const issueBody = `
-### Başlık
-
-${event.title}
-
-### Tam Tarih (YYYY-AA-GG)
-
-${dateField}
-
-### Saat (SS:DD) - İsteğe bağlı
-
-${timeField}
-
-### Kategori
-
-${categoryField}
-
-### Özel Kategori (Eğer 'Diğer' Seçtiyseniz)
-
-${otherCategoryField}
-
-### Açıklama
-
-${event.description}
-
-### Kaynaklar
-
-${event.sources || ''}
-
-### Doğrulama Kontrol Listesi
-
-- [x] Tarih formatının (YYYY-AA-GG) doğru olduğundan eminim.
-- [x] Güvenilir kaynaklar ekledim.
-`;
+            // 3. Gizli FILENAME etiketini Açıklama'ya ekle
+            // Bu, otomasyonun DÜZENLEME olduğunu anlaması için KRİTİKTİR
+            const hiddenFilenameTag = `\n\n`;
+            const descriptionField = (event.description || "") + hiddenFilenameTag;
             
             // 4. URL'i oluştur ve yeni sekmede aç
             const issueTitle = `Olay Düzenle: ${event.title}`;
-            // template=... & labels=... & body=... (textarea ID'sine göre)
-            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=edit-event.yml&labels=upgrade-event&title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+            
+            // 'new-event.yml' şablonunu kullan, 'upgrade-event' etiketini ekle
+            // ve şablondaki HER ALANIN ID'sini doldur
+            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=new-event.yml` +
+                `&labels=upgrade-event` +
+                `&title=${encodeURIComponent(issueTitle)}` +
+                `&title=${encodeURIComponent(issueTitle)}` +
+                `&date=${encodeURIComponent(dateField)}` +
+                `&time=${encodeURIComponent(timeField)}` +
+                `&category=${encodeURIComponent(categoryField)}` +
+                `&other_category=${encodeURIComponent(otherCategoryField)}` +
+                `&description=${encodeURIComponent(descriptionField)}` +
+                `&sources=${encodeURIComponent(event.sources || '')}`;
             
             window.open(editIssueUrl, '_blank');
         }
@@ -722,7 +699,6 @@ ${event.sources || ''}
 
         function openNewEventDialog() {
             // ... (Bu fonksiyon değişmedi) ...
-            // Bu link hala 'new-event.yml' şablonunu açar
             window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
         }
 
