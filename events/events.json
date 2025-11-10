@@ -3792,6 +3792,26 @@
       "year": 1938
     },
     {
+      "title": "Atatürk'ün hastalığının ağırlaştığını bildiren",
+      "date": "1938-11-08T12:00:00",
+      "category": "teknoloji",
+      "description": "",
+      "sources": "",
+      "filename": "1938-11-08-atatürk-ün-hastalığının-ağırlaştığını-bildiren.md",
+      "original_time": "",
+      "year": 1938
+    },
+    {
+      "title": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği",
+      "date": "1938-11-10T12:00:00",
+      "category": "teknoloji",
+      "description": "",
+      "sources": "",
+      "filename": "1938-11-10-saat-dokuzu-beş-geçe-türk-ulusu-nun-yetiştirdiği.md",
+      "original_time": "",
+      "year": 1938
+    },
+    {
       "title": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği",
       "date": "1938-11-10T12:00:00",
       "category": "tarih",
@@ -3843,8 +3863,8 @@
     }
   ],
   "metadata": {
-    "total_events": 384,
-    "generated_at": "2025-11-10T14:58:28.638837Z",
+    "total_events": 386,
+    "generated_at": "2025-11-10T16:17:03.004037Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
