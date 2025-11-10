@@ -3805,6 +3805,16 @@
       "title": "Atamızın tabutu, geçici olarak Etnografya",
       "date": "1938-11-21T12:00:00",
       "category": "tarih",
+      "description": "Atamızın tabutu, geçici olarak Etnografya Müzesi'ne kondu.",
+      "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
+      "filename": "1938-11-21-atamızın-tabutu-geçici-olarak-etnografya.md",
+      "original_time": "",
+      "year": 1938
+    },
+    {
+      "title": "Atamızın tabutu, geçici olarak Etnografya",
+      "date": "1938-11-21T12:00:00",
+      "category": "tarih",
       "description": "Atamızın tabutu, geçici olarak Etnografya\n    Müzesi'ne kondu.",
       "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
       "filename": "1938-11-21-atamizin-tabutu-gecici-olarak-etnografya-muzesine-kond.md",
@@ -3833,8 +3843,8 @@
     }
   ],
   "metadata": {
-    "total_events": 383,
-    "generated_at": "2025-11-10T14:47:09.917820Z",
+    "total_events": 384,
+    "generated_at": "2025-11-10T14:58:28.638837Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
