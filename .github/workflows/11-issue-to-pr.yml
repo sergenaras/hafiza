@@ -39,27 +39,23 @@ jobs:
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
-          # --- YENİ MANTIK: DOSYA ADI OLUŞTURMA ---
-          
           # 2. Gizli etiketten 'ORIGINAL_FILENAME'ı ara
           ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
           
           IS_EDIT="false"
           
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
-            # BU BİR DÜZENLEME: Dosya adı olarak ORİJİNAL ADI KULLAN
             IS_EDIT="true"
             FILENAME="$ORIGINAL_FILENAME"
             echo "İşlem: Düzenleme. Varolan dosyanın üzerine yazılacak: $FILENAME"
           else
-            # BU YENİ BİR OLAY: Tarih ve Başlığa göre YENİ AD OLUŞTUR
             IS_EDIT="false"
             SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
             FILENAME="${DATE}-${SLUG}.md" 
             echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
           fi
           
-          # 3. Gizli etiketi metinden temizle (Yinelenmeyi önlemek için)
+          # 3. Gizli etiketi metinden temizle
           # --- DÜZELTİLEN SATIRLAR ---
           DESCRIPTION_CLEAN=$(echo "$DESCRIPTION" | sed 's///g' | sed '/^$/N;/\n$/D')
           SOURCES_CLEAN=$(echo "$SOURCES" | sed 's///g' | sed '/^$/N;/\n$/D')
@@ -68,7 +64,7 @@ jobs:
           # 4. Çıktıları ayarla
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT # Temizlenmiş veriyi gönder
+          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT 
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "category_main=$CATEGORY_MAIN" >> $GITHUB_OUTPUT
@@ -76,7 +72,7 @@ jobs:
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "time=$TIME" >> $GITHUB_OUTPUT 
           echo "sources<<EOF" >> $GITHUB_OUTPUT
-          echo "$SOURCES_CLEAN" >> $GITHUB_OUTPUT # Temizlenmiş veriyi gönder
+          echo "$SOURCES_CLEAN" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT 
           echo "year=$YEAR" >> $GITHUB_OUTPUT
@@ -85,7 +81,6 @@ jobs:
       - name: Create markdown file
         run: |
           mkdir -p events/data
-          # Bu adım artık ya yeni dosya oluşturacak ya da eskisinin üzerine yazacak
           cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
           ---
           title: "${{ steps.parse.outputs.title }}"

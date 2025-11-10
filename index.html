@@ -623,10 +623,9 @@
             return `${y}-${m}-${d}`;
         }
         
-        // --- YENİ YARDIMCI FONKSİYON (Kesme işaretini ('') kodlamak için) ---
         function safeEncode(str) {
+            // ... (Bu fonksiyon değişmedi) ...
             if (!str) return "";
-            // encodeURIComponent kesme işaretini atlar, bu yüzden manuel ekliyoruz
             return encodeURIComponent(str).replace(/'/g, "%27");
         }
         
@@ -646,14 +645,16 @@
             const dateField = formatDateToYYYYMMDD(eventDate);
             const timeField = event.original_time || ""; 
 
+            // --- DÜZELTİLEN SATIR ---
+            // 'hiddenFilenameTag' artık 'event.description'a DOĞRU şekilde ekleniyor.
             const hiddenFilenameTag = `\n\n`;
             const descriptionField = (event.description || "") + hiddenFilenameTag;
+            // -------------------------
+
             const sourcesField = event.sources || ""; 
             
             const issueTitle = `Olay Düzenle: ${event.title}`;
             
-            // --- DÜZELTİLMİŞ URL OLUŞTURMA ---
-            // Tüm parametreler artık 'safeEncode' fonksiyonundan geçiyor
             const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=new-event.yml` +
                 `&labels=upgrade-event` +
                 `&title=${safeEncode(issueTitle)}` +
@@ -664,7 +665,6 @@
                 `&other_category=${safeEncode(otherCategoryField)}` +
                 `&description=${safeEncode(descriptionField)}` +
                 `&sources=${safeEncode(sourcesField)}`;
-            // ------------------------------------
             
             window.open(editIssueUrl, '_blank');
         }

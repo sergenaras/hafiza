@@ -34,7 +34,6 @@ def parse_markdown_file(file_path):
             event[key] = value if value.lower() != 'null' and value.lower() != '_no response_' else ''
     
     # --- DÜZELTİLEN SATIR (Gizli etiketi temizle) ---
-    # JSON'a gitmeden önce, (varsa) 'FILENAME' etiketini temizle
     full_content = re.sub(r'', '', full_content).strip()
     # -------------------------------------------
 
