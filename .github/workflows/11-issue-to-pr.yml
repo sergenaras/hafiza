@@ -22,6 +22,7 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
+          # 1. Tüm alanları şablondan ayrıştır
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
@@ -37,36 +38,37 @@ jobs:
           fi
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
-          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
           
-          # Gizli etiketi TÜM 'body' içinden ara (Açıklama veya Kaynaklar'da olabilir)
+          # --- YENİ MANTIK: DOSYA ADI OLUŞTURMA ---
+          
+          # 2. Gizli etiketten 'ORIGINAL_FILENAME'ı ara
           ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
           
           IS_EDIT="false"
-          FILENAME="${DATE}-${SLUG}.md" 
-          FILES_TO_DELETE=""          
-
+          
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
+            # BU BİR DÜZENLEME: Dosya adı olarak ORİJİNAL ADI KULLAN
             IS_EDIT="true"
-            echo "İşlem: Düzenleme."
-            if [[ "$FILENAME" != "$ORIGINAL_FILENAME" ]]; then
-                echo "Dosya adı değişti: $ORIGINAL_FILENAME -> $FILENAME"
-                FILES_TO_DELETE="events/data/${ORIGINAL_FILENAME}"
-            fi
+            FILENAME="$ORIGINAL_FILENAME"
+            echo "İşlem: Düzenleme. Varolan dosyanın üzerine yazılacak: $FILENAME"
           else
+            # BU YENİ BİR OLAY: Tarih ve Başlığa göre YENİ AD OLUŞTUR
             IS_EDIT="false"
-            echo "İşlem: Yeni Olay. Dosya: $FILENAME"
+            SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
+            FILENAME="${DATE}-${SLUG}.md" 
+            echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
           fi
           
-          # --- YENİ EKLENDİ (Açıklamayı Temizle) ---
-          # 'DESCRIPTION' ve 'SOURCES' değişkenlerinden gizli etiketi kaldır
+          # Artık 'FILES_TO_DELETE' değişkenine ihtiyacımız yok.
+          
+          # 3. Gizli etiketi metinden temizle (Yinelenmeyi önlemek için)
           DESCRIPTION_CLEAN=$(echo "$DESCRIPTION" | sed 's///g' | sed '/^$/N;/\n$/D')
           SOURCES_CLEAN=$(echo "$SOURCES" | sed 's///g' | sed '/^$/N;/\n$/D')
-          # ------------------------------------------
-
+          
+          # 4. Çıktıları ayarla
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT # Temizlenmiş veriyi gönder
+          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "category_main=$CATEGORY_MAIN" >> $GITHUB_OUTPUT
@@ -74,17 +76,16 @@ jobs:
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "time=$TIME" >> $GITHUB_OUTPUT 
           echo "sources<<EOF" >> $GITHUB_OUTPUT
-          echo "$SOURCES_CLEAN" >> $GITHUB_OUTPUT # Temizlenmiş veriyi gönder
+          echo "$SOURCES_CLEAN" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT # Bu artık her zaman doğru dosya adı
           echo "year=$YEAR" >> $GITHUB_OUTPUT
           echo "is_edit=$IS_EDIT" >> $GITHUB_OUTPUT
-          echo "files_to_delete=$FILES_TO_DELETE" >> $GITHUB_OUTPUT
 
       - name: Create markdown file
         run: |
           mkdir -p events/data
-          # Bu adım artık temizlenmiş 'description' ve 'sources' kullanacak
+          # Bu adım artık ya yeni dosya oluşturacak ya da eskisinin üzerine yazacak
           cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
           ---
           title: "${{ steps.parse.outputs.title }}"
@@ -114,14 +115,12 @@ jobs:
             **Tarih:** ${{ steps.parse.outputs.date }}
             **Kategori:** ${{ steps.parse.outputs.category }}
             
-            ${{ steps.parse.outputs.files_to_delete != '' && format('**Silinen Eski Dosya:** `{0}`', steps.parse.outputs.files_to_delete) || '' }}
-
             ---
             Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
             
             **Lütfen "Merge pull request" butonuna basarak onaylayın.**
           
-          delete-files: ${{ steps.parse.outputs.files_to_delete }}
+          # --- 'delete-files' SATIRI TAMAMEN KALDIRILDI ---
           
           labels: |
             event
