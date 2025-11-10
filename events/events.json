@@ -3794,6 +3794,16 @@
     {
       "title": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği",
       "date": "1938-11-10T12:00:00",
+      "category": "teknoloji",
+      "description": "",
+      "sources": "",
+      "filename": "1938-11-10-saat-dokuzu-beş-geçe-türk-ulusu-nun-yetiştirdiği.md",
+      "original_time": "",
+      "year": 1938
+    },
+    {
+      "title": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği",
+      "date": "1938-11-10T12:00:00",
       "category": "tarih",
       "description": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği\n    bu en büyük Türk, son nefesini vererek hayattan ayrıldı.",
       "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
@@ -3833,8 +3843,8 @@
     }
   ],
   "metadata": {
-    "total_events": 383,
-    "generated_at": "2025-11-10T19:16:42.344659Z",
+    "total_events": 384,
+    "generated_at": "2025-11-10T19:22:33.000464Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
