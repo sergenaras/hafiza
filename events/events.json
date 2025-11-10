@@ -3792,42 +3792,12 @@
       "year": 1938
     },
     {
-      "title": "Atatürk'ün hastalığının ağırlaştığını bildiren",
-      "date": "1938-11-08T12:00:00",
-      "category": "teknoloji",
-      "description": "",
-      "sources": "",
-      "filename": "1938-11-08-atatürk-ün-hastalığının-ağırlaştığını-bildiren.md",
-      "original_time": "",
-      "year": 1938
-    },
-    {
-      "title": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği",
-      "date": "1938-11-10T12:00:00",
-      "category": "teknoloji",
-      "description": "",
-      "sources": "",
-      "filename": "1938-11-10-saat-dokuzu-beş-geçe-türk-ulusu-nun-yetiştirdiği.md",
-      "original_time": "",
-      "year": 1938
-    },
-    {
       "title": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği",
       "date": "1938-11-10T12:00:00",
       "category": "tarih",
       "description": "Saat dokuzu beş geçe, Türk Ulusu'nun yetiştirdiği\n    bu en büyük Türk, son nefesini vererek hayattan ayrıldı.",
       "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
       "filename": "1938-11-10-saat-dokuzu-bes-gece-turk-ulusunun-yetistirdigi-bu-en.md",
-      "original_time": "",
-      "year": 1938
-    },
-    {
-      "title": "Atamızın tabutu, geçici olarak Etnografya",
-      "date": "1938-11-21T12:00:00",
-      "category": "tarih",
-      "description": "Atamızın tabutu, geçici olarak Etnografya Müzesi'ne kondu.",
-      "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
-      "filename": "1938-11-21-atamızın-tabutu-geçici-olarak-etnografya.md",
       "original_time": "",
       "year": 1938
     },
@@ -3850,21 +3820,11 @@
       "filename": "1953-11-10-atamizin-tabutu-yapilan-buyuk-bir-torenle-bugunku-anit.md",
       "original_time": "",
       "year": 1953
-    },
-    {
-      "title": "Atamızın tabutu, yapılan büyük bir törenle",
-      "date": "1953-11-10T12:00:00",
-      "category": "",
-      "description": "Atamızın tabutu, yapılan büyük bir törenle bugünkü Anıt-Kabre kaldırıldı.",
-      "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
-      "filename": "1953-11-10-atamızın-tabutu-yapılan-büyük-bir-törenle.md",
-      "original_time": "",
-      "year": 1953
     }
   ],
   "metadata": {
-    "total_events": 386,
-    "generated_at": "2025-11-10T16:17:03.004037Z",
+    "total_events": 382,
+    "generated_at": "2025-11-10T16:20:43.765365Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
