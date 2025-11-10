@@ -6,7 +6,6 @@ on:
 
 jobs:
   create-pr:
-    # --- GÜNCELLENDİ (Artık 'upgrade-event' etiketini de dinliyor) ---
     if: contains(github.event.issue.labels.*.name, 'new-event') || contains(github.event.issue.labels.*.name, 'upgrade-event')
     runs-on: ubuntu-latest
     permissions:
@@ -21,7 +20,6 @@ jobs:
       - name: Parse issue body
         id: parse
         env:
-          # --- GÜNCELLENDİ: 'event_title' (ID) veya 'Başlık' (Markdown) arar ---
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
           TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
@@ -29,7 +27,6 @@ jobs:
           TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY_MAIN=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
-          # --- YENİ EKLENDİ (Özel Kategoriyi Oku) ---
           CATEGORY_OTHER=$(echo "$ISSUE_BODY" | awk '/### Özel Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           
           if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
@@ -37,7 +34,6 @@ jobs:
           else
             CATEGORY="$CATEGORY_MAIN"
           fi
-          # ------------------------------------------
 
           DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
           SOURCES=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
@@ -45,32 +41,32 @@ jobs:
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
 
-          # --- YENİ EKLENDİ (Düzenleme mi Yeni mi Kontrol Et) ---
-          # Gizli 'FILENAME' etiketini ara
           ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
           
           IS_EDIT="false"
+          FILENAME="${DATE}-${SLUG}.md" # Yeni dosya adını varsayılan olarak ayarla
+          FILES_TO_DELETE="" # Silinecek dosya yok
+
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
             IS_EDIT="true"
-            FILENAME="$ORIGINAL_FILENAME"
-            NEW_FILENAME_FROM_EDIT="${DATE}-${SLUG}.md"
-            if [[ "$FILENAME" != "$NEW_FILENAME_FROM_EDIT" ]]; then
-                echo "Dosya adı değişti: $FILENAME -> $NEW_FILENAME_FROM_EDIT"
-                FILENAME="$NEW_FILENAME_FROM_EDIT"
+            echo "İşlem: Düzenleme."
+            if [[ "$FILENAME" != "$ORIGINAL_FILENAME" ]]; then
+                echo "Dosya adı değişti: $ORIGINAL_FILENAME -> $FILENAME"
+                # PR'a, eski dosyayı silmesini söyle
+                FILES_TO_DELETE="events/data/${ORIGINAL_FILENAME}"
             fi
-            echo "İşlem: Düzenleme. Dosya: $FILENAME"
           else
             IS_EDIT="false"
-            FILENAME="${DATE}-${SLUG}.md"
             echo "İşlem: Yeni Olay. Dosya: $FILENAME"
           fi
-          # ----------------------------------------------------
           
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
           echo "$DESCRIPTION" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
+          echo "category_main=$CATEGORY_MAIN" >> $GITHUB_OUTPUT
+          echo "category_other=$CATEGORY_OTHER" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "time=$TIME" >> $GITHUB_OUTPUT 
           echo "sources<<EOF" >> $GITHUB_OUTPUT
@@ -79,13 +75,13 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "year=$YEAR" >> $GITHUB_OUTPUT
           echo "is_edit=$IS_EDIT" >> $GITHUB_OUTPUT
-          echo "original_filename=$ORIGINAL_FILENAME" >> $GITHUB_OUTPUT
+          echo "files_to_delete=$FILES_TO_DELETE" >> $GITHUB_OUTPUT # YENİ OUTPUT
 
       - name: Create markdown file
         run: |
           mkdir -p events/data
           
-          # --- GÜNCELLENDİ (other_category eklendi) ---
+          # 'time' alanı boşsa YAML'a boş olarak eklenir (bu sorun değil)
           cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
           ---
           title: "${{ steps.parse.outputs.title }}"
@@ -101,12 +97,6 @@ jobs:
           ${{ steps.parse.outputs.sources }}
           MDEOF
 
-      - name: Remove old file if renamed
-        if: steps.parse.outputs.is_edit == 'true' && steps.parse.outputs.filename != steps.parse.outputs.original_filename
-        run: |
-          echo "Dosya adı değişti. Eski dosya siliniyor: events/data/${{ steps.parse.outputs.original_filename }}"
-          rm -f "events/data/${{ steps.parse.outputs.original_filename }}"
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
@@ -121,10 +111,15 @@ jobs:
             **Tarih:** ${{ steps.parse.outputs.date }}
             **Kategori:** ${{ steps.parse.outputs.category }}
             
+            ${{ steps.parse.outputs.files_to_delete != '' && format('**Silinen Eski Dosya:** `{0}`', steps.parse.outputs.files_to_delete) || '' }}
+
             ---
             Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
             
             **Lütfen "Merge pull request" butonuna basarak onaylayın.**
+          
+          delete-files: ${{ steps.parse.outputs.files_to_delete }}
+          
           labels: |
             event
             automated
