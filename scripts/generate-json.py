@@ -6,7 +6,7 @@ Bu script events/data/ klasöründeki tüm .md dosyalarını okur ve events.json
 
 import os
 import json
-import re # <- YENİ EKLENDİ (Regex için)
+import re 
 from pathlib import Path
 from datetime import datetime
 
@@ -15,7 +15,6 @@ def parse_markdown_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # YAML front matter'ı parse et
     yaml_pattern = r'^---\s*\n(.*?)\n---\s*\n(.*?)$'
     match = re.match(yaml_pattern, content, re.DOTALL)
     
@@ -24,7 +23,7 @@ def parse_markdown_file(file_path):
         return None
     
     yaml_content = match.group(1)
-    full_content = match.group(2).strip() # Burası artık "full_content"
+    full_content = match.group(2).strip() 
     
     event = {}
     for line in yaml_content.split('\n'):
@@ -32,35 +31,31 @@ def parse_markdown_file(file_path):
             key, value = line.split(':', 1)
             key = key.strip()
             value = value.strip().strip('"').strip("'")
-            # Boş değerleri None yerine boş string yap
             event[key] = value if value.lower() != 'null' and value.lower() != '_no response_' else ''
     
+    # --- YENİ EKLENDİ (Gizli etiketi temizle) ---
+    # JSON'a gitmeden önce, (varsa) 'FILENAME' etiketini temizle
+    full_content = re.sub(r'', '', full_content).strip()
+    # -------------------------------------------
+
     # --- DÜZELTME: AÇIKLAMA VE KAYNAKLARI AYIR ---
     sources_header = "## Kaynaklar"
-    # Kaynak başlığını (büyük/küçük harf duyarsız) ara
     header_match = re.search(r'^##\s*Kaynaklar\s*$', full_content, re.MULTILINE | re.IGNORECASE)
     
     if header_match:
-        # Başlıktan öncesi Açıklama, sonrası Kaynaklar
         description_part = full_content[:header_match.start()]
         sources_part = full_content[header_match.end():]
-        
         event['description'] = description_part.strip()
         event['sources'] = sources_part.strip()
     else:
-        # Başlık bulunamazsa, hepsi açıklamadır
         event['description'] = full_content
         event['sources'] = "" 
     # -----------------------------------------------
     
-    # --- YENİ: KATEGORİ MANTIĞI ---
-    # Eğer 'other_category' doluysa, onu 'category' olarak kullan
     if event.get('category') == 'diğer' and event.get('other_category'):
         event['category'] = event.get('other_category').strip()
     
-    # Artık 'other_category'ye ihtiyacımız yok
     event.pop('other_category', None)
-    # ----------------------------
 
     event['filename'] = file_path.name
     
@@ -70,37 +65,30 @@ def parse_markdown_file(file_path):
     
     # --- GÜNCELLENMİŞ SAAT İŞLEME MANTIĞI ---
     try:
-        event_date_str = event['date'] # YYYY-MM-DD
+        event_date_str = event['date'] 
         event_time_str = event.get('time', None) 
 
-        # Orijinal saati (varsa) düzenleme formu için sakla
         event['original_time'] = event_time_str.strip() if event_time_str else ""
 
         clean_time = None
         if event_time_str:
             clean_time = event_time_str.strip()
 
-        # Regex: Saat formatını (SS:DD) kontrol et (örn: 14:30, 09:05)
         time_pattern = re.compile(r'^([01]\d|2[0-3]):([0-5]\d)$')
 
         if clean_time and time_pattern.match(clean_time):
-            # Saat geçerli ve format doğruysa: T ve saniye :00 ile birleştir
             full_iso_str = f"{event_date_str}T{clean_time}:00"
         else:
-            # Saat yoksa, boşsa, "_No response_" ise veya formatı bozuksa: 12:00 kullan
             full_iso_str = f"{event_date_str}T12:00:00"
             
             if clean_time and clean_time != '_No response_':
                 print(f"   ℹ️  Bilgi: {file_path.name} dosyasında geçersiz saat formatı ('{clean_time}'). 12:00 varsayılan olarak kullanıldı.")
         
-        # String'i tarih nesnesine çevir
         event_date = datetime.fromisoformat(full_iso_str)
         
-        # event['date']'i JS'nin okuyacağı son ISO string haliyle güncelle
         event['date'] = full_iso_str 
         event['year'] = event_date.year
         
-        # Orijinal 'time' anahtarını temizle
         event.pop('time', None)
 
     except ValueError as e:
@@ -111,7 +99,7 @@ def parse_markdown_file(file_path):
     return event
 
 def generate_events_json():
-    """Tüm markdown dosyalarını oku ve events.json oluştur"""
+    # ... (Bu fonksiyonun geri kalanı değişmedi) ...
     
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -139,7 +127,6 @@ def generate_events_json():
         else:
             print(f"   ❌ Dosya parse edilemedi")
     
-    # Olayları tam tarihe göre sırala (ISO string sıralaması çalışır)
     events.sort(key=lambda x: x['date'])
     
     output_data = {
@@ -147,7 +134,7 @@ def generate_events_json():
         "metadata": {
             "total_events": len(events),
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "generator": "Zaman Yolculuğu Event Generator v2.3" # Versiyon güncellendi
+            "generator": "Zaman Yolculuğu Event Generator v2.3"
         }
     }
     
