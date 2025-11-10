@@ -3820,11 +3820,21 @@
       "filename": "1953-11-10-atamizin-tabutu-yapilan-buyuk-bir-torenle-bugunku-anit.md",
       "original_time": "",
       "year": 1953
+    },
+    {
+      "title": "Atamızın tabutu, yapılan büyük bir törenle",
+      "date": "1953-11-10T12:00:00",
+      "category": "tarih",
+      "description": "",
+      "sources": "",
+      "filename": "1953-11-10-atamızın-tabutu-yapılan-büyük-bir-törenle.md",
+      "original_time": "",
+      "year": 1953
     }
   ],
   "metadata": {
-    "total_events": 382,
-    "generated_at": "2025-11-10T16:45:59.815776Z",
+    "total_events": 383,
+    "generated_at": "2025-11-10T16:59:05.428831Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
