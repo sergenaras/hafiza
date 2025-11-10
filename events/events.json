@@ -3774,6 +3774,16 @@
     {
       "title": "Atatürk'ün bulunamadığı Cumhuriyet Bayramı",
       "date": "1938-10-29T12:00:00",
+      "category": "teknoloji",
+      "description": "",
+      "sources": "",
+      "filename": "1938-10-29-atatürk-ün-bulunamadığı-cumhuriyet-bayramı.md",
+      "original_time": "",
+      "year": 1938
+    },
+    {
+      "title": "Atatürk'ün bulunamadığı Cumhuriyet Bayramı",
+      "date": "1938-10-29T12:00:00",
       "category": "tarih",
       "description": "Atatürk'ün bulunamadığı Cumhuriyet Bayramı\n    büyük bir üzüntü içinde kutlandı. Cumhuriyetin 15. yıl dönümü nedeniyle\n    Atatürk'ün hasta yatağından Türk Ordusu'na yayınladığı son bildiride\n    şöyle diyordu:",
       "sources": "https://www.meb.gov.tr/ataturk/Hayati/Kronoloji",
@@ -3833,8 +3843,8 @@
     }
   ],
   "metadata": {
-    "total_events": 383,
-    "generated_at": "2025-11-10T16:59:05.428831Z",
+    "total_events": 384,
+    "generated_at": "2025-11-10T17:05:23.279419Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
