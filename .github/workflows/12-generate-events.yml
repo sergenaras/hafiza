@@ -56,13 +56,9 @@ jobs:
         if: steps.commit_push.outcome == 'success'
         run: |
           echo "Purging jsDelivr cache for events.json..."
-          curl "https://purge.jsdelivr.net/gh/${{ github.repository }}@${{ github.ref_name }}/events/events.json"
+          # --- DÜZELTME: Hedef URL 'main' olarak sabitlendi ---
+          curl "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/events/events.json"
           echo "Cache purge request sent."
-
-      - name: No changes detected
-        if: steps.check_changes.outputs.changed == 'false'
-        run: |
-          echo "✅ events.json is already up to date"
 
       - name: No changes detected
         if: steps.check_changes.outputs.changed == 'false'
