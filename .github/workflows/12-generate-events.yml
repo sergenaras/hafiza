@@ -1,4 +1,4 @@
-name: 12 - Generate JSON and Deploy Site (BATCH)
+name: 12 - JSON Oluştur
 
 on:
   workflow_dispatch:
