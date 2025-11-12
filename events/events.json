@@ -33,17 +33,27 @@
     {
       "title": "Mavi",
       "date": "2025-11-11T21:30:00",
-      "category": "politika",
+      "category": "spor",
       "description": "",
-      "sources": "",
+      "sources": "yaya",
       "filename": "2025-11-11-mavi.md",
       "original_time": "21:30",
+      "year": 2025
+    },
+    {
+      "title": "Kırmızı",
+      "date": "2025-11-13T12:30:00",
+      "category": "kültür",
+      "description": "",
+      "sources": "?",
+      "filename": "2025-11-13-kırmızı.md",
+      "original_time": "12:30",
       "year": 2025
     }
   ],
   "metadata": {
-    "total_events": 4,
-    "generated_at": "2025-11-12T03:46:15.028063Z",
+    "total_events": 5,
+    "generated_at": "2025-11-12T22:34:27.038371Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
