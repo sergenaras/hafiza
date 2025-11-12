@@ -40,7 +40,6 @@ jobs:
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
           # 2. Gizli etiketten 'ORIGINAL_FILENAME'ı ara
-          # --- DÜZELTİLDİ: HTML Yorum etiketini () arar ---
           ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '' | sed -e 's///' | tr -d '\r\n')
           
           IS_EDIT="false"
@@ -57,9 +56,9 @@ jobs:
           fi
           
           # 3. Gizli etiketi metinden temizle
-          # --- DÜZELTİLDİ: HTML Yorum etiketini 'sed' ile temizler ---
+          # --- DÜZELTİLEN SATIRLAR ---
           DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
-          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed '/^$/N;/\n$/D')
+          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
           # -------------------------------
           
           # 4. Çıktıları ayarla
@@ -82,7 +81,6 @@ jobs:
       - name: Create markdown file
         run: |
           mkdir -p events/data
-          # Not: 'time' alanı ekleniyor
           cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
           ---
           title: "${{ steps.parse.outputs.title }}"

@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
     <style>
+        /* ... (tüm stilleriniz değişmedi) ... */
         * {
             margin: 0;
             padding: 0;
@@ -250,12 +251,28 @@
         #details-content .date {
             font-size: 14px;
             color: #555;
+            margin-bottom: 2px;
+        }
+        /* --- YENİ EKLENDİ --- */
+        #details-content .category {
+            font-size: 13px;
+            color: #4a90e2;
+            font-weight: 500;
             margin-bottom: 16px;
         }
-        #details-content .description {
+        #details-content .description,
+        #details-content .sources {
             font-size: 15px;
             line-height: 1.6;
         }
+        #details-content .sources h2 {
+            font-size: 18px;
+            margin-top: 24px;
+            margin-bottom: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 16px;
+        }
+        /* --- BİTİŞ --- */
 
         #details-content .description h2 {
             font-size: 18px;
@@ -422,26 +439,20 @@
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
             
-            // Tarih girişini bugüne ayarla
             const today = new Date();
             const dateStr = today.toISOString().split('T')[0];
             document.getElementById('dateInput').value = dateStr;
             
             document.getElementById('langSwitcher').value = window.i18n.currentLanguage;
 
-            // Ana veri yükleme ve timeline başlatma işlemini çağır
             loadDataAndInitTimeline();
         });
         
         async function loadDataAndInitTimeline() {
-            // Kütüphaneyi başlat
             const timeline = new Timeline('timelineCanvas');
-            // Butonların (onclick) erişebilmesi için global yap
             window.timeline = timeline;
 
-            // Veriyi yükle
             try {
-                // events.json'u manuel olarak çekiyoruz
                 const response = await fetch(`${window.ENV.EVENTS_JSON_URL}?t=${Date.now()}`);
                 if (!response.ok) throw new Error('Failed to fetch');
                 
@@ -452,20 +463,18 @@
                     year: event.year,
                     title: event.title,
                     description: event.description,
+                    sources: event.sources, // Kaynakları da al
                     category: event.category || 'diğer'
                 }));
                 
                 events.sort((a, b) => a.date - b.date);
                 
-                // Kütüphaneye veriyi gönder
                 timeline.setData(events); 
                 
-                // Kütüphaneden gelen tıklama olayını dinle
                 timeline.on('eventClick', (event) => {
                     selectEvent(event);
                 });
                 
-                // Kütüphaneden gelen zoom olayını dinle (Zoom göstergesi için)
                 timeline.on('zoom', (zoomInfo) => {
                     const indicator = document.getElementById('zoomIndicator');
                     indicator.textContent = `×${zoomInfo.levelId} - ${zoomInfo.levelName}`;
@@ -473,7 +482,6 @@
                     setTimeout(() => { indicator.style.opacity = 0; }, 1500);
                 });
 
-                // Veri yüklendikten sonra UI'ı başlat
                 initializeUI(events);
 
             } catch (error) {
@@ -577,7 +585,8 @@
                 listContainer.appendChild(li);
             });
         }
-
+        
+        // --- GÜNCELLENDİ: KATEGORİ VE KAYNAKLAR EKLENDİ ---
         function updateDetailsPanel(event) {
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
@@ -591,13 +600,23 @@
                 return;
             }
 
-            // marked ve DOMPurify'ı kullan
+            // Çevrilmiş kategori adını al
+            const categoryKey = `categories.${event.category || 'diğer'}`;
+            const translatedCategory = window.t(categoryKey) || event.category;
+
+            // Açıklamayı ve Kaynakları Markdown'dan HTML'e çevir
             const formattedDescription = escapeAndFormat(event.description);
+            const formattedSources = escapeAndFormat(event.sources);
 
             detailsContainer.innerHTML = `
                 <h2>${event.title}</h2>
                 <div class="date">${window.formatDate(event.date, 'full')}</div>
+                <div class="category">${translatedCategory}</div>
                 <div class="description">${formattedDescription}</div>
+                <div class="sources">
+                    ${formattedSources ? `<h2>${window.t('categories.all') === 'All' ? 'Sources' : 'Kaynaklar'}</h2>` : ''}
+                    ${formattedSources}
+                </div>
             `;
             
             if (event.filename) {
@@ -605,7 +624,7 @@
                     e.preventDefault(); 
                     handleEditClick(e, event); 
                 };
-                editLink.style.display = 'block';
+                editLink.style.display = 'block'; 
             } else {
                 editLink.style.display = 'none';
             }
@@ -613,7 +632,6 @@
 
         function escapeAndFormat(str) {
             if (!str) return '';
-            // marked ve DOMPurify global scope'ta yüklendi
             const dirtyHTML = marked.parse(str, { breaks: true, gfm: true });
             const cleanHTML = DOMPurify.sanitize(dirtyHTML, {
                 ALLOWED_TAGS: [
@@ -630,7 +648,6 @@
             currentSortOrder = sortSelect.value;
             filterCategory();
         }
-        // HTML'den erişim için window'a ata
         window.sortList = sortList;
 
         function filterCategory() {
@@ -650,26 +667,19 @@
 
             populateEventList(filteredEvents);
         }
-        // HTML'den erişim için window'a ata
         window.filterCategory = filterCategory;
 
-
-        // 'selectEvent' artık hem timeline'dan (eventClick) hem de listeden (onclick) çağrılıyor
         function selectEvent(event) {
             currentSelectedEvent = event;
             updateDetailsPanel(event);
             
-            // Yeni timeline kütüphanesine gitmesini söyle
             if (window.timeline) {
                 window.timeline.goToDate(event.date);
                 window.timeline.setFocalEvent(event);
             }
             
-            // Listeyi 'selected' olarak güncellemek için yeniden filtrele
             filterCategory(); 
         }
-        
-        // Bu fonksiyonu global scope'a taşıdık (listedeki onclick için)
         window.selectEvent = selectEvent;
 
         function formatDateToYYYYMMDD(date) {
@@ -684,8 +694,7 @@
             return encodeURIComponent(str).replace(/'/g, "%27");
         }
         
-        // --- KRİTİK HATA DÜZELTMESİ ---
-        // 'handleEditClick' fonksiyonu, gizli FILENAME etiketini doğru ekleyecek şekilde düzeltildi.
+        // --- KRİTİK HATA DÜZELTMESİ (Aynı kaldı, zaten doğruydu) ---
         function handleEditClick(e, event) {
             if (e) e.stopPropagation(); 
             
@@ -701,13 +710,9 @@
             const dateField = formatDateToYYYYMMDD(eventDate);
             const timeField = event.original_time || ""; 
 
-            // --- DÜZELTİLEN SATIRLAR ---
-            // 'FILENAME:' etiketini 'description'a gizli bir HTML yorumu olarak ekliyoruz.
-            // Bu, '11-issue-to-pr.yml' Action'ının bunu bir DÜZENLEME olarak algılamasını sağlar.
             const hiddenFilenameTag = `\n\n`;
             const descriptionField = (event.description || "") + hiddenFilenameTag;
-            // -------------------------
-
+            
             const sourcesField = event.sources || ""; 
             
             const issueTitle = `Olay Düzenle: ${event.title}`;
@@ -747,7 +752,6 @@
             const dateInput = document.getElementById('dateInput');
             const dateValue = dateInput.value;
             if (dateValue && window.timeline) {
-                // Saat dilimi sorunlarını önlemek için T12:00:00 ekliyoruz
                 const selectedDate = new Date(dateValue + 'T12:00:00'); 
                 window.timeline.goToDate(selectedDate);
             }
@@ -763,7 +767,6 @@
             if (!window.i18n || !window.i18n.translations[lang]) return;
             
             window.i18n.setLanguage(lang);
-            // UI'ı yeni dille güncelle
             populateSortFilter();
             populateCategoryFilter(allEvents);
             filterCategory();
