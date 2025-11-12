@@ -1,16 +1,12 @@
-// Configuration / Environment Variables
 window.ENV = {
-    // GitHub Repository Settings (Geri geldi)
     GITHUB_USERNAME: 'sergenaras',
     REPO_NAME: 'hafiza',
     BRANCH: 'main',
     
-    // Data Source (Geri geldi)
     get EVENTS_JSON_URL() {
         return `https://cdn.jsdelivr.net/gh/${this.GITHUB_USERNAME}/${this.REPO_NAME}@${this.BRANCH}/events/events.json`;
     },
     
-    // GitHub Issue URL (Geri geldi)
     get GITHUB_ISSUE_URL() {
         return `https://github.com/${this.GITHUB_USERNAME}/${this.REPO_NAME}/issues/new?template=new-event.yml&title=Yeni+Olay:+`;
     },
@@ -22,7 +18,6 @@ window.ENV = {
         { id: 4, pixelsPerYear: 365 * 24 * 60, showDays: true, showMonths: true, showHours: true } // x4 Saat
     ],
     
-    // Visual Settings (Yeni Renk Paleti)
     COLORS: {
         background: '#FFFFFF',
         text: '#212121',
@@ -30,8 +25,8 @@ window.ENV = {
         textVeryLight: '#BDBDBD',
         
         ruler: '#E0E0E0',
-        todayMarker: '#E53935',    // Güçlü Kırmızı
-        hoverMarker: '#1E88E5',    // Güçlü Mavi
+        todayMarker: '#E53935',
+        hoverMarker: '#1E88E5',
         
         yearLine: '#BDBDBD',
         yearLineThick: '#757575',
@@ -39,10 +34,9 @@ window.ENV = {
         dayLine: '#F5F5F5',
         
         eventBar: '#757575',
-        eventBarHover: '#1E88E5'   // Mavi
+        eventBarHover: '#1E88E5'
     },
 
-    // Yerleşim Ayarları (Doğru ve güncel)
     LAYOUT: {
         rulerYOffset: 0,       // DÜZELTME: 0 olarak ayarlandı (ortalamak için)
         infoBoxY: 80,          // Bu artık kullanılmıyor ama kalsın
@@ -51,23 +45,18 @@ window.ENV = {
         monthLabelOffset: 25   // Ay isimlerinin cetvelden dikey uzaklığı
     },
     
-    // Event Display Settings
     EVENT_BAR_HEIGHT: 8,
     EVENT_BAR_SPACING: 4,
     EVENT_MAX_STACK: 5,
     
-    // Animation Settings
     ANIMATION_DURATION: 300,
     ANIMATION_EASING: 'easeOutCubic',
     
-    // Touch/Gesture Settings
-    PINCH_ZOOM_SENSITIVITY: 0.005,
+    PINCH_ZOOM_SENSITIVITY: 2,
     MIN_PINCH_DISTANCE: 50,
     DOUBLE_CLICK_DELAY: 300,
     
-    // Language (EN ÖNEMLİ DÜZELTME - Geri geldi)
     DEFAULT_LANGUAGE: 'tr',
     
-    // Cache Settings
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
 };

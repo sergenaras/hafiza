@@ -1,4 +1,3 @@
-// Internationalization (i18n) System
 window.i18n = {
     currentLanguage: window.ENV.DEFAULT_LANGUAGE,
     
@@ -171,14 +170,13 @@ window.i18n = {
             if (value && typeof value === 'object') {
                 value = value[k];
             } else {
-                return key; // Return key if translation not found
+                return key;
             }
         }
         
         return value || key;
     },
     
-    // Set language
     setLanguage(lang) {
         if (this.translations[lang]) {
             this.currentLanguage = lang;
@@ -186,18 +184,17 @@ window.i18n = {
         }
     },
     
-    // --- DÜZELTİLMİŞ FONKSİYON ---
-    // Update DOM elements with i18n attributes
     updateDOM() {
         document.querySelectorAll('[data-i18n]').forEach(element => {
-            // Bu satır eksikti:
             const key = element.getAttribute('data-i18n');
-            element.textContent = this.t(key);
+            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                 if(element.placeholder) element.placeholder = this.t(key);
+            } else {
+                element.textContent = this.t(key);
+            }
         });
     },
-    // ----------------------------
     
-    // Format date
     formatDate(date, format = 'full') {
         if (!(date instanceof Date)) {
             date = new Date(date);
@@ -219,11 +216,9 @@ window.i18n = {
     }
 };
 
-// Initialize i18n
 function initI18n() {
     window.i18n.updateDOM();
 }
 
-// Export for use in other modules
 window.t = (key) => window.i18n.t(key);
 window.formatDate = (date, format) => window.i18n.formatDate(date, format);

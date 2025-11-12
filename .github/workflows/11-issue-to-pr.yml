@@ -28,8 +28,8 @@ jobs:
           TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY_MAIN=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
           CATEGORY_OTHER=$(echo "$ISSUE_BODY" | awk '/### Özel Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          DESCRIPTION=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
-          SOURCES=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
+          DESCRIPTION_RAW=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
+          SOURCES_RAW=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
 
           if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
             CATEGORY="$CATEGORY_OTHER"
@@ -40,7 +40,8 @@ jobs:
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
           # 2. Gizli etiketten 'ORIGINAL_FILENAME'ı ara
-          ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | awk -F 'FILENAME: ' '/FILENAME:/{print $2}' | awk '{print $1}' | tr -d '\r\n')
+          # --- DÜZELTİLDİ: HTML Yorum etiketini () arar ---
+          ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '' | sed -e 's///' | tr -d '\r\n')
           
           IS_EDIT="false"
           
@@ -56,10 +57,10 @@ jobs:
           fi
           
           # 3. Gizli etiketi metinden temizle
-          # --- DÜZELTİLEN SATIRLAR ---
-          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION" | sed 's///g' | sed '/^$/N;/\n$/D')
-          SOURCES_CLEAN=$(echo "$SOURCES" | sed 's///g' | sed '/^$/N;/\n$/D')
-          # -------------------------
+          # --- DÜZELTİLDİ: HTML Yorum etiketini 'sed' ile temizler ---
+          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
+          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed '/^$/N;/\n$/D')
+          # -------------------------------
           
           # 4. Çıktıları ayarla
           echo "title=$TITLE" >> $GITHUB_OUTPUT
@@ -81,6 +82,7 @@ jobs:
       - name: Create markdown file
         run: |
           mkdir -p events/data
+          # Not: 'time' alanı ekleniyor
           cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
           ---
           title: "${{ steps.parse.outputs.title }}"
