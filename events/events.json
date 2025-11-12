@@ -29,11 +29,21 @@
       "filename": "2025-11-09-su.md",
       "original_time": "",
       "year": 2025
+    },
+    {
+      "title": "Mavi",
+      "date": "2025-11-11T21:30:00",
+      "category": "politika",
+      "description": "",
+      "sources": "",
+      "filename": "2025-11-11-mavi.md",
+      "original_time": "21:30",
+      "year": 2025
     }
   ],
   "metadata": {
-    "total_events": 3,
-    "generated_at": "2025-11-10T21:01:55.520553Z",
+    "total_events": 4,
+    "generated_at": "2025-11-12T03:46:15.028063Z",
     "generator": "Zaman Yolculuğu Event Generator v2.3"
   }
 }
