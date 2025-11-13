@@ -17,21 +17,66 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --- TAMAMEN YENİ PARSE LOGIC ---
       - name: Parse issue body
         id: parse
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # 1. Tüm alanları şablondan ayrıştır
-          TITLE=$(echo "$ISSUE_BODY" | awk '/### Başlık/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          DATE=$(echo "$ISSUE_BODY" | awk '/### Tam Tarih/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          TIME=$(echo "$ISSUE_BODY" | awk '/### Saat \(SS:DD\)/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          CATEGORY_MAIN=$(echo "$ISSUE_BODY" | awk '/### Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          CATEGORY_OTHER=$(echo "$ISSUE_BODY" | awk '/### Özel Kategori/{getline; while($0 ~ /^[[:space:]]*$/){getline}; print}' | tr -d '\r')
-          DESCRIPTION_RAW=$(echo "$ISSUE_BODY" | awk '/### Açıklama/{f=1;next} /### Kaynaklar/{f=0} f' | tr -d '\r')
-          SOURCES_RAW=$(echo "$ISSUE_BODY" | awk '/### Kaynaklar/{f=1;next} /### Doğrulama Kontrol Listesi/{f=0} f' | tr -d '\r')
+          # Bu 'awk' komutu, GitHub'ın "**Label:**\n\nValue" formatını 'LABEL=Value' formatına çevirir
+          parsed_data=$(echo "$ISSUE_BODY" | awk -F'\n\n' '
+            BEGIN { RS = "\n\n" }
+            {
+              if (match($0, /^\*\*([^*]+)\*\*/, label)) {
+                gsub(/\r$/, "", $0); 
+                current_label = label[1];
+                sub( /^\*\*([^*]+)\*\*\s*/, "");
+                
+                # Checkbox'ları işle
+                if (match($0, /^- \[ \]/) || match($0, /^- \[x\]/i)) {
+                    value=""
+                    n_opts = split($0, opts, "\n- ");
+                    for (i=1; i<=n_opts; i++) {
+                        value = value opts[i] "\n"
+                    }
+                } else {
+                    value = $0;
+                }
+                
+                # ' sed ' komutları yerine 'gsub' kullan (daha güvenli)
+                gsub(/'/, "\\&apos;", value);
+                gsub(/"/, "\\&quot;", value);
+                
+                # Çıktı için etiketleri basitleştir
+                if (current_label == "Başlık") key="TITLE";
+                else if (current_label == "Tam Tarih (YYYY-AA-GG)") key="DATE";
+                else if (current_label == "Saat (SS:DD) - İsteğe bağlı") key="TIME";
+                else if (current_label == "Kategori") key="CATEGORY_MAIN";
+                else if (current_label == "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)") key="CATEGORY_OTHER";
+                else if (current_label == "Açıklama") key="DESCRIPTION_RAW";
+                else if (current_label == "Kaynaklar") key="SOURCES_RAW";
+                else key="UNKNOWN";
+                
+                if (key != "UNKNOWN") {
+                    printf "%s=%s\n", key, value
+                }
+              }
+            }
+          ')
 
-          if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
+          # Ayrıştırılmış veriyi GITHUB_ENV'e yükle
+          echo "$parsed_data" >> $GITHUB_ENV
+          
+          # --- Ortam Değişkenlerinden Değerleri Ayarla ---
+          TITLE="${TITLE:-_No response_}"
+          DATE="${DATE:-_No response_}"
+          TIME="${TIME:-_No response_}"
+          CATEGORY_MAIN="${CATEGORY_MAIN:-_No response_}"
+          CATEGORY_OTHER="${CATEGORY_OTHER:-_No response_}"
+          DESCRIPTION_RAW="${DESCRIPTION_RAW:-_No response_}"
+          SOURCES_RAW="${SOURCES_RAW:-_No response_}"
+
+          if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" && "$CATEGORY_OTHER" != "_No response_" ]]; then
             CATEGORY="$CATEGORY_OTHER"
           else
             CATEGORY="$CATEGORY_MAIN"
@@ -39,7 +84,7 @@ jobs:
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
-          # 2. Gizli etiketten 'ORIGINAL_FILENAME'ı ara
+          # Gizli etiketten 'ORIGINAL_FILENAME'ı ara (Bu mantık doğruydu)
           ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '' | sed -e 's///' | tr -d '\r\n')
           
           IS_EDIT="false"
@@ -55,13 +100,17 @@ jobs:
             echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
           fi
           
-          # 3. Gizli etiketi metinden temizle
-          # --- DÜZELTİLEN SATIRLAR ---
+          # Gizli etiketi metinden temizle (Bu mantık doğruydu)
           DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
           SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
-          # -------------------------------
           
-          # 4. Çıktıları ayarla
+          # '_No response_' olanları boş string yap
+          [ "$TIME" == "_No response_" ] && TIME=""
+          [ "$CATEGORY_OTHER" == "_No response_" ] && CATEGORY_OTHER=""
+          [ "$DESCRIPTION_CLEAN" == "_No response_" ] && DESCRIPTION_CLEAN=""
+          [ "$SOURCES_CLEAN" == "_No response_" ] && SOURCES_CLEAN=""
+
+          # Çıktıları ayarla
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
           echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT 
