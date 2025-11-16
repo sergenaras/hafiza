@@ -14,7 +14,7 @@ body:
   - type: input
     id: event_title 
     attributes:
-      label: Başlık
+      label: "Başlık *"
       description: Olay başlığı (kısa ve öz) - Bu, dosya adının bir parçası olacak
       placeholder: "Örnek: Yapay Zeka Devrimi"
     validations:
@@ -23,18 +23,10 @@ body:
   - type: input
     id: date
     attributes:
-      label: Tam Tarih (YYYY-AA-GG)
-      description: Olayın gerçekleştiği tam tarih. Dosya adının ilk kısmı olacak.
-      placeholder: "Örnek: 2024-10-24"
-    validations:
-      required: true
-
-  - type: input
-    id: date
-    attributes:
-      label: Tam Tarih (YYYY-AA-GG)
+      label: "Tam Tarih (YYYY-AA-GG) *"
       description: |
-        Olayın gerçekleştiği tam tarih. Eğer gün ve ay bilinmiyorsa, lütfen yılın ilk gününü girin (Örn: 2024-01-01).
+        Olayın gerçekleştiği tam tarih. Dosya adının ilk kısmı olacak.
+        Eğer gün ve ay bilinmiyorsa, lütfen yılın ilk gününü girin (Örn: 2024-01-01).
       placeholder: "Örnek: 2024-10-24"
     validations:
       required: true
@@ -42,7 +34,7 @@ body:
   - type: input
     id: time
     attributes:
-      label: Saat (SS:DD) - İsteğe bağlı
+      label: "Saat (SS:DD) - İsteğe bağlı"
       description: |
         Olayın gerçekleştiği tam saat (24 saat formatında). 
         Bu alanı doldurmak, olayın zaman çizelgesinde (x4) saat hassasiyetinde görünmesini sağlar.
@@ -53,7 +45,7 @@ body:
   - type: dropdown
     id: category
     attributes:
-      label: Kategori
+      label: "Kategori *"
       description: Olayın ana kategorisi. "Diğer" seçerseniz, lütfen aşağıdaki "Özel Kategori" alanını doldurun.
       options:
         - teknoloji
@@ -69,7 +61,7 @@ body:
   - type: input
     id: other_category
     attributes:
-      label: Özel Kategori (Eğer 'Diğer' Seçtiyseniz)
+      label: "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)"
       description: Kategori listesinden "Diğer"i seçtiyseniz, lütfen özel kategorinizi buraya girin.
       placeholder: "Örn: Arkeoloji"
     validations:
@@ -78,7 +70,7 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Açıklama
+      label: "Açıklama *"
       description: Olay hakkında 1-2 cümlelik detaylı açıklama. Bu, "Olay Detayları" panelinde görünecektir.
       placeholder: "Olayın detaylı açıklamasını buraya yazın..."
     validations:
@@ -87,7 +79,7 @@ body:
   - type: textarea
     id: sources
     attributes:
-      label: Kaynaklar
+      label: "Kaynaklar *"
       description: |
         Lütfen olayı doğrulayan kaynak(lar) için URL ekleyin.
         - **Resmi Kaynak:** (Örn: Resmi Gazete, TÜİK, NASA.gov) 1 adet kaynak yeterlidir.
@@ -101,7 +93,7 @@ body:
   - type: checkboxes
     id: terms
     attributes:
-      label: Doğrulama Kontrol Listesi
+      label: "Doğrulama Kontrol Listesi *"
       description: Göndermeden önce lütfen onaylayın.
       options:
         - label: Tarih formatının (YYYY-AA-GG) doğru olduğundan eminim.
