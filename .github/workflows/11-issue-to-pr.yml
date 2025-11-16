@@ -1,4 +1,4 @@
-name: 11 - Olay PR Oluşturucu (Yeni/Düzenle)
+name: 11 - Olay PR Oluşturucu (JSON Format)
 
 on:
   issues:
@@ -6,7 +6,6 @@ on:
 
 jobs:
   create-pr:
-    if: contains(github.event.issue.labels.*.name, 'new-event') || contains(github.event.issue.labels.*.name, 'upgrade-event')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,270 +13,177 @@ jobs:
       issues: write
     
     steps:
+      - name: Check labels and skip if not supported
+        id: check_labels
+        run: |
+          LABELS_JSON='${{ toJSON(github.event.issue.labels) }}'
+          if echo "$LABELS_JSON" | grep -q '"name":"new-event"' || echo "$LABELS_JSON" | grep -q '"name":"upgrade-event"' || echo "$LABELS_JSON" | grep -q '"name":"delete-event"'; then
+            echo "continue=true" >> $GITHUB_OUTPUT
+          else
+            echo "continue=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Exit if not supported label
+        if: steps.check_labels.outputs.continue == 'false'
+        run: |
+          echo "Bu issue desteklenmeyen etiket taşıyor. İşlem iptal ediliyor."
+          exit 0
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check labels and determine operation type
-        id: check_labels
-        run: |
-          # Labels'ı JSON formatında al
-          LABELS_JSON='${{ toJSON(github.event.issue.labels) }}'
-          echo "Labels JSON: $LABELS_JSON"
-          
-          # upgrade-event etiketi var mı kontrol et
-          if echo "$LABELS_JSON" | grep -q '"name":"upgrade-event"'; then
-            echo "🔄 Düzenleme işlemi tespit edildi"
-            echo "IS_EDIT=true" >> $GITHUB_OUTPUT
-          else
-            echo "🆕 Yeni olay işlemi tespit edildi"
-            echo "IS_EDIT=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Parse issue body and URL parameters
-        id: parse
+      - name: Parse JSON data from issue body
+        id: parse_json
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
-          ISSUE_URL: '${{ github.event.issue.html_url }}'
         run: |
           echo "=== ISSUE BODY START ==="
           echo "$ISSUE_BODY"
           echo "=== ISSUE BODY END ==="
           
-          # Değişkenleri başlat
-          TITLE=""
-          DATE=""
-          TIME=""
-          CATEGORY_MAIN=""
-          CATEGORY_OTHER=""
-          DESCRIPTION_RAW=""
-          SOURCES_RAW=""
-          ORIGINAL_FILENAME=""
+          # JSON verisini çıkar
+          JSON_DATA=""
           
-          # Düzenleme mi yeni mi? check_labels step'inden al
-          IS_EDIT="${{ steps.check_labels.outputs.IS_EDIT }}"
-          echo "IS_EDIT: $IS_EDIT"
+          # EVENT JSON verisi
+          if echo "$ISSUE_BODY" | grep -q '<!-- EVENT_JSON_DATA_BASE64:'; then
+            echo "📦 EVENT JSON verisi bulundu"
+            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -o '<!-- EVENT_JSON_DATA_BASE64:[^>]*' | sed 's/<!-- EVENT_JSON_DATA_BASE64://')
+            JSON_DATA=$(echo "$BASE64_DATA" | base64 -d)
+            OPERATION_TYPE="event"
           
-          if [ "$IS_EDIT" = "true" ]; then
-            echo "🔄 Düzenleme işlemi - Orijinal dosya adı aranıyor..."
-            
-            # URL'den original_filename parametresini çek
-            ORIGINAL_FILENAME=$(echo "$ISSUE_URL" | grep -o 'original_filename=[^&]*' | cut -d'=' -f2 || echo "")
-            if [[ -n "$ORIGINAL_FILENAME" ]]; then
-              # URL decode işlemi
-              ORIGINAL_FILENAME=$(echo "$ORIGINAL_FILENAME" | sed 's/+/ /g; s/%/\\x/g')
-              ORIGINAL_FILENAME=$(printf "%b" "$ORIGINAL_FILENAME" 2>/dev/null || echo "$ORIGINAL_FILENAME")
-              echo "📁 Orijinal dosya adı bulundu: $ORIGINAL_FILENAME"
-            else
-              echo "⚠️ Orijinal dosya adı bulunamadı, yeni dosya oluşturulacak"
-            fi
+          # DELETE JSON verisi  
+          elif echo "$ISSUE_BODY" | grep -q '<!-- DELETE_JSON_DATA_BASE64:'; then
+            echo "🗑️ DELETE JSON verisi bulundu"
+            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -o '<!-- DELETE_JSON_DATA_BASE64:[^>]*' | sed 's/<!-- DELETE_JSON_DATA_BASE64://')
+            JSON_DATA=$(echo "$BASE64_DATA" | base64 -d)
+            OPERATION_TYPE="delete"
+          
           else
-            echo "🆕 Yeni olay işlemi"
+            echo "❌ JSON verisi bulunamadı"
+            echo "OPERATION_TYPE=unknown" >> $GITHUB_OUTPUT
+            exit 0
           fi
           
-          # Issue body'yi satır satır oku
-          current_section=""
-          content=""
+          echo "📄 JSON Data: $JSON_DATA"
           
-          while IFS= read -r line; do
-            # Başlık kontrolü (### ile başlıyor mu?)
-            if [[ "$line" =~ ^###[[:space:]](.+) ]]; then
-              # Önceki bölümü kaydet
-              if [[ -n "$current_section" ]]; then
-                case "$current_section" in
-                  "Başlık")
-                    TITLE="$content"
-                    ;;
-                  "Tam Tarih (YYYY-AA-GG)")
-                    DATE="$content"
-                    ;;
-                  "Saat (SS:DD) - İsteğe bağlı")
-                    TIME="$content"
-                    ;;
-                  "Kategori")
-                    CATEGORY_MAIN="$content"
-                    ;;
-                  "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)")
-                    CATEGORY_OTHER="$content"
-                    ;;
-                  "Açıklama")
-                    DESCRIPTION_RAW="$content"
-                    ;;
-                  "Kaynaklar")
-                    SOURCES_RAW="$content"
-                    ;;
-                esac
-              fi
-              
-              current_section="${BASH_REMATCH[1]}"
-              content=""
-            elif [[ -n "$line" && ! "$line" =~ ^-[[:space:]]\[.?\] ]]; then
-              # Checkbox değilse ve boş satır değilse içeriğe ekle
-              if [[ -n "$content" ]]; then
-                content="$content"$'\n'"$line"
-              else
-                content="$line"
-              fi
-            fi
-          done <<< "$ISSUE_BODY"
-          
-          if [[ -n "$current_section" ]]; then
-            case "$current_section" in
-              "Başlık")
-                TITLE="$content"
-                ;;
-              "Tam Tarih (YYYY-AA-GG)")
-                DATE="$content"
-                ;;
-              "Saat (SS:DD) - İsteğe bağlı")
-                TIME="$content"
-                ;;
-              "Kategori")
-                CATEGORY_MAIN="$content"
-                ;;
-              "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)")
-                CATEGORY_OTHER="$content"
-                ;;
-              "Açıklama")
-                DESCRIPTION_RAW="$content"
-                ;;
-              "Kaynaklar")
-                SOURCES_RAW="$content"
-                ;;
-            esac
-          fi
-          
-          # Değişkenleri temizle
-          TITLE=$(echo "$TITLE" | tr -d '\r' | xargs)
-          DATE=$(echo "$DATE" | tr -d '\r' | xargs)
-          TIME=$(echo "$TIME" | tr -d '\r' | xargs)
-          CATEGORY_MAIN=$(echo "$CATEGORY_MAIN" | tr -d '\r' | xargs)
-          CATEGORY_OTHER=$(echo "$CATEGORY_OTHER" | tr -d '\r' | xargs)
-          DESCRIPTION_RAW=$(echo "$DESCRIPTION_RAW" | tr -d '\r')
-          SOURCES_RAW=$(echo "$SOURCES_RAW" | tr -d '\r')
+          # jq ile parse et
+          TITLE=$(echo "$JSON_DATA" | jq -r '.title // ""')
+          DATE=$(echo "$JSON_DATA" | jq -r '.date // ""')
+          TIME=$(echo "$JSON_DATA" | jq -r '.time // ""')
+          CATEGORY=$(echo "$JSON_DATA" | jq -r '.category // ""')
+          DESCRIPTION=$(echo "$JSON_DATA" | jq -r '.description // ""')
+          SOURCES=$(echo "$JSON_DATA" | jq -r '.sources // ""')
+          TYPE=$(echo "$JSON_DATA" | jq -r '.type // ""')
+          ORIGINAL_FILENAME=$(echo "$JSON_DATA" | jq -r '.original_filename // ""')
+          FILENAME_TO_DELETE=$(echo "$JSON_DATA" | jq -r '.filename // ""')
           
           # Varsayılan değerler
           TITLE="${TITLE:-Başlıksız Olay}"
           DATE="${DATE:-$(date +%Y-%m-%d)}"
-          TIME="${TIME:-}"
-          CATEGORY_MAIN="${CATEGORY_MAIN:-diğer}"
-          CATEGORY_OTHER="${CATEGORY_OTHER:-}"
-          DESCRIPTION_RAW="${DESCRIPTION_RAW:-Açıklama eklenmedi}"
-          SOURCES_RAW="${SOURCES_RAW:-}"
+          CATEGORY="${CATEGORY:-diğer}"
+          DESCRIPTION="${DESCRIPTION:-Açıklama eklenmedi}"
+          SOURCES="${SOURCES:-}"
           
-          # Kategori belirle
-          if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
-            CATEGORY="$CATEGORY_OTHER"
-          else
-            CATEGORY="$CATEGORY_MAIN"
-          fi
-          
-          YEAR=$(echo "$DATE" | cut -d'-' -f1)
-          
-          # DOSYA ADI BELİRLEME - EN ÖNEMLİ KISIM
-          if [[ "$IS_EDIT" == "true" && -n "$ORIGINAL_FILENAME" ]]; then
-            # DÜZENLEME: Mevcut dosya adını koru
-            FILENAME="$ORIGINAL_FILENAME"
-            echo "📝 Düzenleme işlemi: Varolan dosya korunacak - $FILENAME"
-          else
-            # YENİ OLAR: Otomatik dosya adı oluştur
-            SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | \
-                   sed -e 's/ç/c/g' -e 's/ğ/g/g' -e 's/ı/i/g' \
-                       -e 's/ö/o/g' -e 's/ş/s/g' -e 's/ü/u/g' \
-                       -e 's/Ç/c/g' -e 's/Ğ/g/g' -e 's/I/i/g' \
-                       -e 's/İ/i/g' -e 's/Ö/o/g' -e 's/Ş/s/g' \
-                       -e 's/Ü/u/g' | \
-                   sed -e 's/[^a-z0-9]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')
-            FILENAME="${DATE}-${SLUG}.md"
-            echo "🆕 Yeni olay: Yeni dosya oluşturulacak - $FILENAME"
-          fi
-          
-          # İçerikleri temizle
-          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed '/^$/d')
-          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed '/^$/d')
-          
-          # "_No response_" olanları boş yap
-          if [[ "$TIME" == "_No response_" || "$TIME" == "*No response*" ]]; then
-            TIME=""
-          fi
-          if [[ "$CATEGORY_OTHER" == "_No response_" || "$CATEGORY_OTHER" == "*No response*" ]]; then
-            CATEGORY_OTHER=""
-          fi
-          if [[ "$DESCRIPTION_CLEAN" == "_No response_" || "$DESCRIPTION_CLEAN" == "*No response*" ]]; then
-            DESCRIPTION_CLEAN="Açıklama eklenmedi"
-          fi
-          if [[ "$SOURCES_CLEAN" == "_No response_" || "$SOURCES_CLEAN" == "*No response*" ]]; then
-            SOURCES_CLEAN=""
+          # Dosya adı oluştur
+          if [[ "$OPERATION_TYPE" == "event" ]]; then
+            if [[ "$TYPE" == "edit" && -n "$ORIGINAL_FILENAME" ]]; then
+              FILENAME="$ORIGINAL_FILENAME"
+              echo "📝 Düzenleme işlemi: $FILENAME"
+            else
+              SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | \
+                     sed -e 's/ç/c/g' -e 's/ğ/g/g' -e 's/ı/i/g' \
+                         -e 's/ö/o/g' -e 's/ş/s/g' -e 's/ü/u/g' \
+                         -e 's/Ç/c/g' -e 's/Ğ/g/g' -e 's/I/i/g' \
+                         -e 's/İ/i/g' -e 's/Ö/o/g' -e 's/Ş/s/g' \
+                         -e 's/Ü/u/g' | \
+                     sed -e 's/[^a-z0-9]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')
+              FILENAME="${DATE}-${SLUG}.md"
+              echo "🆕 Yeni olay: $FILENAME"
+            fi
+          elif [[ "$OPERATION_TYPE" == "delete" ]]; then
+            FILENAME="$FILENAME_TO_DELETE"
+            echo "🗑️ Silinecek dosya: $FILENAME"
           fi
           
           # GitHub Output'a yaz
+          echo "OPERATION_TYPE=$OPERATION_TYPE" >> $GITHUB_OUTPUT
           echo "title=$TITLE" >> $GITHUB_OUTPUT
-          echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "category=$CATEGORY" >> $GITHUB_OUTPUT
-          echo "category_main=$CATEGORY_MAIN" >> $GITHUB_OUTPUT
-          echo "category_other=$CATEGORY_OTHER" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "time=$TIME" >> $GITHUB_OUTPUT
+          echo "category=$CATEGORY" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          echo "$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           echo "sources<<EOF" >> $GITHUB_OUTPUT
-          echo "$SOURCES_CLEAN" >> $GITHUB_OUTPUT
+          echo "$SOURCES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
-          echo "year=$YEAR" >> $GITHUB_OUTPUT
-          echo "is_edit=$IS_EDIT" >> $GITHUB_OUTPUT
           echo "original_filename=$ORIGINAL_FILENAME" >> $GITHUB_OUTPUT
+          echo "type=$TYPE" >> $GITHUB_OUTPUT
           
-          # Debug çıktıları
           echo "=== PARSED VALUES ==="
+          echo "OPERATION_TYPE: $OPERATION_TYPE"
           echo "TITLE: $TITLE"
           echo "DATE: $DATE"
-          echo "TIME: $TIME"
           echo "CATEGORY: $CATEGORY"
           echo "FILENAME: $FILENAME"
-          echo "IS_EDIT: $IS_EDIT"
-          echo "ORIGINAL_FILENAME: $ORIGINAL_FILENAME"
+          echo "TYPE: $TYPE"
           echo "===================="
 
-      - name: Create or update markdown file
+      - name: Create or update event file
+        if: steps.parse_json.outputs.OPERATION_TYPE == 'event'
         run: |
           mkdir -p events/data
           
-          echo "Dosya işleniyor: events/data/${{ steps.parse.outputs.filename }}"
+          echo "Dosya işleniyor: events/data/${{ steps.parse_json.outputs.filename }}"
           
-          cat > "events/data/${{ steps.parse.outputs.filename }}" << MDEOF
+          cat > "events/data/${{ steps.parse_json.outputs.filename }}" << MDEOF
           ---
-          title: "${{ steps.parse.outputs.title }}"
-          date: "${{ steps.parse.outputs.date }}"
-          time: "${{ steps.parse.outputs.time }}"
-          category: "${{ steps.parse.outputs.category_main }}"
-          other_category: "${{ steps.parse.outputs.category_other }}"
+          title: "${{ steps.parse_json.outputs.title }}"
+          date: "${{ steps.parse_json.outputs.date }}"
+          time: "${{ steps.parse_json.outputs.time }}"
+          category: "${{ steps.parse_json.outputs.category }}"
           ---
 
-          ${{ steps.parse.outputs.description }}
+          ${{ steps.parse_json.outputs.description }}
 
           ## Kaynaklar
-          ${{ steps.parse.outputs.sources }}
+          ${{ steps.parse_json.outputs.sources }}
           MDEOF
           
-          echo "✅ Dosya oluşturuldu/güncellendi: events/data/${{ steps.parse.outputs.filename }}"
+          echo "✅ Dosya oluşturuldu/güncellendi: events/data/${{ steps.parse_json.outputs.filename }}"
           echo "--- DOSYA İÇERİĞİ ---"
-          cat "events/data/${{ steps.parse.outputs.filename }}"
+          cat "events/data/${{ steps.parse_json.outputs.filename }}"
           echo "--- SON ---"
 
-      - name: Create Pull Request
+      - name: Delete event file
+        if: steps.parse_json.outputs.OPERATION_TYPE == 'delete'
+        run: |
+          echo "Silinecek dosya: events/data/${{ steps.parse_json.outputs.filename }}"
+          
+          if [ -f "events/data/${{ steps.parse_json.outputs.filename }}" ]; then
+            rm "events/data/${{ steps.parse_json.outputs.filename }}"
+            echo "✅ Dosya silindi: events/data/${{ steps.parse_json.outputs.filename }}"
+          else
+            echo "❌ Dosya bulunamadı: events/data/${{ steps.parse_json.outputs.filename }}"
+            exit 1
+          fi
+
+      - name: Create Pull Request for Event
+        if: steps.parse_json.outputs.OPERATION_TYPE == 'event'
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: "${{ steps.parse.outputs.is_edit == 'true' && '📝 Olay güncelle' || '✨ Yeni olay ekle' }}: ${{ steps.parse.outputs.title }}"
-          branch: event/${{ github.event.issue.number }}
+          commit-message: "${{ steps.parse_json.outputs.type == 'edit' && '📝 Olay güncelle' : '✨ Yeni olay ekle' }}: ${{ steps.parse_json.outputs.title }}"
+          branch: ${{ steps.parse_json.outputs.type == 'edit' && 'update' || 'new' }}-event-${{ github.event.issue.number }}
           delete-branch: true
-          title: "${{ steps.parse.outputs.is_edit == 'true' && '📝 Olay Güncelleme' || '✨ Yeni Olay' }}: ${{ steps.parse.outputs.title }}"
+          title: "${{ steps.parse_json.outputs.type == 'edit' && '📝 Olay Güncelleme' : '✨ Yeni Olay' }}: ${{ steps.parse_json.outputs.title }}"
           body: |
-            ## 📅 Olay ${{ steps.parse.outputs.is_edit == 'true' && 'Güncellendi' || 'Eklendi' }}
+            ## 📅 Olay ${{ steps.parse_json.outputs.type == 'edit' && 'Güncellendi' : 'Eklendi' }}
             
             **Issue:** #${{ github.event.issue.number }}
-            **Dosya:** \`${{ steps.parse.outputs.filename }}\`
-            **Tarih:** ${{ steps.parse.outputs.date }}
-            **Kategori:** ${{ steps.parse.outputs.category }}
+            **Dosya:** \`${{ steps.parse_json.outputs.filename }}\`
+            **Tarih:** ${{ steps.parse_json.outputs.date }}
+            **Kategori:** ${{ steps.parse_json.outputs.category }}
             
             ---
             Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
@@ -287,16 +193,52 @@ jobs:
           labels: |
             event
             automated
-            ${{ steps.parse.outputs.is_edit == 'true' && 'update' || 'new' }}
-        id: create-pr
+            ${{ steps.parse_json.outputs.type == 'edit' && 'update' || 'new' }}
+        id: create-event-pr
+
+      - name: Create Pull Request for Delete
+        if: steps.parse_json.outputs.OPERATION_TYPE == 'delete'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "🗑️ Olay sil: ${{ steps.parse_json.outputs.filename }}"
+          branch: delete-event-${{ github.event.issue.number }}
+          delete-branch: true
+          title: "🗑️ Olay Sil: ${{ steps.parse_json.outputs.filename }}"
+          body: |
+            ## ⛔ Olay Silme İsteği
+            
+            **Issue:** #${{ github.event.issue.number }}
+            **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\`
+            
+            ---
+            ⚠️ **DİKKAT:** Bu işlem geri alınamaz!
+            
+            Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
+            
+            **Lütfen "Merge pull request" butonuna basarak silme işlemini onaylayın.**
+          
+          labels: |
+            event
+            deletion
+            automated
+        id: create-delete-pr
 
       - name: Comment on issue
         uses: actions/github-script@v7
         with:
           script: |
+            const operationType = '${{ steps.parse_json.outputs.OPERATION_TYPE }}';
+            const prNumber = operationType === 'event' 
+              ? '${{ steps.create-event-pr.outputs.pull-request-number }}'
+              : '${{ steps.create-delete-pr.outputs.pull-request-number }}';
+              
+            const message = operationType === 'event' 
+              ? `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``
+              : `✅ Issue kapatıldı. Silme işlemi için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n🗑️ **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}\n📁 **Dosya:** \`${{ steps.parse.outputs.filename }}\`\n\n⚠️ **Not:** PR merge edildikten sonra olay zaman çizelgesinde görünecektir.`
-            })
+              body: message
+            });

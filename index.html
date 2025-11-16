@@ -4,13 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-
     <title>Hafıza Cetveli</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
     <style>
+        /* Önceki CSS kodları aynen kalacak, sadece modal için ek CSS */
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        .required {
+            color: #d9534f;
+        }
+
+        /* Önceki CSS'ler burada devam edecek */
         * {
             margin: 0;
             padding: 0;
@@ -363,6 +476,69 @@
     </style>
 </head>
 <body>
+    <!-- Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Yeni Olay Ekle</h2>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <div class="form-group">
+                        <label for="eventTitle">Başlık <span class="required">*</span></label>
+                        <input type="text" id="eventTitle" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventDate">Tarih (YYYY-AA-GG) <span class="required">*</span></label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventTime">Saat (SS:DD) - İsteğe bağlı</label>
+                        <input type="time" id="eventTime">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventCategory">Kategori <span class="required">*</span></label>
+                        <select id="eventCategory" required>
+                            <option value="">Seçiniz</option>
+                            <option value="teknoloji">Teknoloji</option>
+                            <option value="bilim">Bilim</option>
+                            <option value="tarih">Tarih</option>
+                            <option value="kültür">Kültür</option>
+                            <option value="spor">Spor</option>
+                            <option value="politika">Politika</option>
+                            <option value="diğer">Diğer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="otherCategoryGroup" style="display: none;">
+                        <label for="eventOtherCategory">Özel Kategori</label>
+                        <input type="text" id="eventOtherCategory">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventDescription">Açıklama <span class="required">*</span></label>
+                        <textarea id="eventDescription" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="eventSources">Kaynaklar <span class="required">*</span></label>
+                        <textarea id="eventSources" placeholder="- https://example.com&#10;- https://anotherexample.com" required></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">İptal</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mevcut HTML yapısı -->
     <header class="header">
         <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
         <div class="header-controls">
@@ -380,7 +556,7 @@
                 Tarihe Git
             </button>
             
-            <button class="btn btn-primary" onclick="window.openNewEventDialog()" data-i18n="addEvent">
+            <button class="btn btn-primary" onclick="window.openEventModal('new')" data-i18n="addEvent">
                 + Olay Ekle
             </button>
         </div>
@@ -391,7 +567,7 @@
         <section class="panel panel-details">
             <div class="panel-header">
                 <span data-i18n="panel.detailsTitle">Olay Detayları</span>
-                <a id="editEventLink" href="#" class="panel-header-link" target="_blank" data-i18n="panel.editLink">
+                <a id="editEventLink" href="#" class="panel-header-link" data-i18n="panel.editLink">
                     (Bu Olayı Düzenle)
                 </a>
             </div>
@@ -449,7 +625,161 @@
         let currentSortOrder = 'newest';
         const standardCategories = ['teknoloji', 'bilim', 'tarih', 'kültür', 'spor', 'politika', 'diğer'];
 
-        // --- 1. Başlatma Fonksiyonları ---
+        // --- Modal Yönetimi ---
+        const modal = document.getElementById('eventModal');
+        const closeBtn = document.querySelector('.close');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const eventForm = document.getElementById('eventForm');
+        const eventCategory = document.getElementById('eventCategory');
+        const otherCategoryGroup = document.getElementById('otherCategoryGroup');
+        let currentModalMode = 'new'; // 'new' veya 'edit'
+        let currentEditingEvent = null;
+
+        // Modal'ı aç
+        function openEventModal(mode, event = null) {
+            currentModalMode = mode;
+            currentEditingEvent = event;
+            
+            const modalTitle = document.getElementById('modalTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (mode === 'edit' && event) {
+                modalTitle.textContent = 'Olayı Düzenle';
+                submitBtn.textContent = 'Güncelle';
+                
+                // Formu doldur
+                document.getElementById('eventTitle').value = event.title || '';
+                document.getElementById('eventDate').value = formatDateToYYYYMMDD(new Date(event.date));
+                document.getElementById('eventTime').value = event.original_time || '';
+                document.getElementById('eventCategory').value = event.category || '';
+                document.getElementById('eventDescription').value = event.description || '';
+                document.getElementById('eventSources').value = event.sources || '';
+                
+                // Kategori "diğer" ise özel kategori alanını göster
+                if (!standardCategories.includes(event.category)) {
+                    document.getElementById('eventCategory').value = 'diğer';
+                    otherCategoryGroup.style.display = 'block';
+                    document.getElementById('eventOtherCategory').value = event.category;
+                }
+            } else {
+                modalTitle.textContent = 'Yeni Olay Ekle';
+                submitBtn.textContent = 'Oluştur';
+                
+                // Formu temizle
+                eventForm.reset();
+                otherCategoryGroup.style.display = 'none';
+                
+                // Varsayılan tarihi bugün yap
+                const today = new Date();
+                document.getElementById('eventDate').value = formatDateToYYYYMMDD(today);
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        // Modal'ı kapat
+        function closeEventModal() {
+            modal.style.display = 'none';
+            currentEditingEvent = null;
+        }
+
+        // Kategori değiştiğinde
+        eventCategory.addEventListener('change', function() {
+            if (this.value === 'diğer') {
+                otherCategoryGroup.style.display = 'block';
+            } else {
+                otherCategoryGroup.style.display = 'none';
+            }
+        });
+
+        // Form gönderimi
+        eventForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitEventForm();
+        });
+
+        // Form verilerini gönder
+        function submitEventForm() {
+            const formData = {
+                title: document.getElementById('eventTitle').value,
+                date: document.getElementById('eventDate').value,
+                time: document.getElementById('eventTime').value,
+                category: document.getElementById('eventCategory').value,
+                other_category: document.getElementById('eventOtherCategory').value,
+                description: document.getElementById('eventDescription').value,
+                sources: document.getElementById('eventSources').value
+            };
+
+            // Kategori belirle
+            let finalCategory = formData.category;
+            if (formData.category === 'diğer' && formData.other_category) {
+                finalCategory = formData.other_category;
+            }
+
+            // JSON verisini hazırla
+            const eventData = {
+                type: currentModalMode === 'edit' ? 'edit' : 'new',
+                title: formData.title,
+                date: formData.date,
+                time: formData.time || '',
+                category: finalCategory,
+                description: formData.description,
+                sources: formData.sources,
+                timestamp: new Date().toISOString()
+            };
+
+            // Düzenleme modunda ise orijinal dosya adını ekle
+            if (currentModalMode === 'edit' && currentEditingEvent) {
+                eventData.original_filename = currentEditingEvent.filename;
+                eventData.original_title = currentEditingEvent.title;
+            }
+
+            // GitHub Issue oluştur
+            createGitHubIssue(eventData);
+        }
+
+        // GitHub Issue oluştur
+        function createGitHubIssue(eventData) {
+            const issueType = eventData.type === 'edit' ? 'upgrade-event' : 'new-event';
+            const issueTitle = eventData.type === 'edit' 
+                ? `Olay Düzenle: ${eventData.original_title || eventData.title}`
+                : `Yeni Olay: ${eventData.title}`;
+
+            // JSON verisini base64 encode et (daha temiz)
+            const jsonData = JSON.stringify(eventData, null, 2);
+            const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
+
+            // Issue body'si oluştur
+            const issueBody = `<!-- EVENT_JSON_DATA_BASE64:${base64Data} -->\n\n` +
+                             `**Bu issue otomatik olarak oluşturulmuştur. Lütfen bu metni değiştirmeyin.**\n\n` +
+                             `## Olay Bilgileri\n\n` +
+                             `- **Başlık:** ${eventData.title}\n` +
+                             `- **Tarih:** ${eventData.date}\n` +
+                             `- **Kategori:** ${eventData.category}\n` +
+                             `- **Tip:** ${eventData.type === 'edit' ? 'Düzenleme' : 'Yeni Olay'}\n\n` +
+                             `*JSON verisi yukarıdaki base64 kodlu blokta bulunmaktadır.*`;
+
+            const issueUrl = `${GITHUB_REPO_URL}/issues/new?` +
+                `title=${encodeURIComponent(issueTitle)}&` +
+                `body=${encodeURIComponent(issueBody)}&` +
+                `labels=${issueType}`;
+
+            window.open(issueUrl, '_blank');
+            closeEventModal();
+        }
+
+        // Event Listener'lar
+        closeBtn.onclick = closeEventModal;
+        cancelBtn.onclick = closeEventModal;
+
+        // Modal dışına tıklayınca kapat
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                closeEventModal();
+            }
+        }
+
+        // --- Mevcut JavaScript kodları ---
         window.addEventListener('DOMContentLoaded', () => {
             initI18n();
             
@@ -509,8 +839,6 @@
             populateCategoryFilter(allEvents);
             filterCategory();
         }
-
-        // --- 2. Panel Doldurma Fonksiyonları ---
 
         function populateSortFilter() {
             const sortSelect = document.getElementById('sortOrderFilter');
@@ -583,7 +911,10 @@
                 const editBtn = document.createElement('button');
                 editBtn.className = 'event-action-btn btn-edit';
                 editBtn.textContent = window.t('buttons.edit');
-                editBtn.onclick = (e) => handleEditClick(e, event);
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openEventModal('edit', event);
+                };
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'event-action-btn btn-delete';
@@ -618,7 +949,6 @@
 
             const formattedDescription = escapeAndFormat(event.description);
             
-            // Kaynaklar için başlığı dinamik olarak ekle
             let formattedSources = "";
             if (event.sources && event.sources.trim() !== "") {
                 const sourcesTitleKey = window.i18n.currentLanguage === 'tr' ? '## Kaynaklar' : '## Sources';
@@ -638,7 +968,7 @@
             if (event.filename) {
                 editLink.onclick = (e) => {
                     e.preventDefault(); 
-                    handleEditClick(e, event); 
+                    openEventModal('edit', event);
                 };
                 editLink.style.display = 'block'; 
             } else {
@@ -656,8 +986,6 @@
             });
             return cleanHTML;
         }
-
-        // --- 3. Olay (Event) Yöneticileri ---
 
         function sortList() {
             const sortSelect = document.getElementById('sortOrderFilter');
@@ -709,76 +1037,38 @@
             if (!str) return "";
             return encodeURIComponent(str).replace(/'/g, "%27");
         }
-        
-        // --- YENİ OLAY EKLEME - OTOMATİK DOSYA ADI ---
-        function openNewEventDialog() {
-            const dateInput = document.getElementById('dateInput');
-            const defaultDate = dateInput.value;
-            
-            // Başlık otomatik olarak tarih + "yeni-olay" olacak
-            const defaultTitle = `${defaultDate}-yeni-olay`;
-            const newIssueUrl = `${window.ENV.GITHUB_ISSUE_URL}${safeEncode(defaultTitle)}`;
-            window.open(newIssueUrl, '_blank');
-        }
-        window.openNewEventDialog = openNewEventDialog;
 
-        // --- DÜZENLEME - MEVCUT DOSYA ADI KORUNACAK ---
-        function handleEditClick(e, event) {
-            if (e) e.stopPropagation();
-            
-            // MEVCUT dosya adını al
-            const originalFilename = event.filename;
-            
-            let categoryField = event.category;
-            let otherCategoryField = "";
-            
-            if (!standardCategories.includes(event.category)) {
-                categoryField = "diğer";
-                otherCategoryField = event.category;
-            }
-
-            const eventDate = new Date(event.date);
-            const dateField = formatDateToYYYYMMDD(eventDate);
-            const timeField = event.original_time || "";
-
-            // AÇIKLAMA ve KAYNAKLARI gönder (gizli dosya adı OLMADAN)
-            const descriptionField = event.description || "";
-            const sourcesField = event.sources || "";
-            
-            const issueTitle = `Olay Düzenle: ${event.title}`;
-            
-            // DÜZENLEME İÇİN ÖZEL TEMPLATE KULLAN
-            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=edit-event.yml` +
-                `&labels=upgrade-event` +
-                `&title=${safeEncode(issueTitle)}` +
-                `&event_title=${safeEncode(event.title)}` +
-                `&date=${safeEncode(dateField)}` +
-                `&time=${safeEncode(timeField)}` +
-                `&category=${safeEncode(categoryField)}` +
-                `&other_category=${safeEncode(otherCategoryField)}` +
-                `&description=${safeEncode(descriptionField)}` +
-                `&sources=${safeEncode(sourcesField)}` +
-                `&original_filename=${safeEncode(originalFilename)}`;  // GİZLİ PARAMETRE
-            
-            window.open(editIssueUrl, '_blank');
-        }
-
-        // --- SİLME İŞLEMİ - DOSYA ADI OTOMATİK ---
+        // Silme işlemi
         function handleDeleteClick(e, event) {
             e.stopPropagation();
             
-            const issueTitle = `Olay Silme İsteği: ${event.title}`;
-            const issueBody = `Lütfen aşağıdaki olayın silinmesini değerlendirin:\n\n` +
-                              `**Dosya Adı:** \`${event.filename}\`\n` +
-                              `**Tarih:** ${event.date.toISOString().split('T')[0]}\n` +
-                              `**Başlık:** ${event.title}\n\n` +
-                              `**Sebep (isteğe bağlı):**\n...`;
-                              
-            const deleteIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=delete-event.yml&title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=delete-request`;
+            const deleteData = {
+                type: 'delete',
+                filename: event.filename,
+                title: event.title,
+                date: event.date.toISOString().split('T')[0],
+                timestamp: new Date().toISOString()
+            };
+
+            const jsonData = JSON.stringify(deleteData, null, 2);
+            const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
+
+            const issueTitle = `Olay Sil: ${event.title}`;
+            const issueBody = `<!-- DELETE_JSON_DATA_BASE64:${base64Data} -->\n\n` +
+                             `**Bu issue otomatik olarak oluşturulmuştur. Lütfen bu metni değiştirmeyin.**\n\n` +
+                             `## Silinecek Olay\n\n` +
+                             `- **Dosya:** ${event.filename}\n` +
+                             `- **Başlık:** ${event.title}\n` +
+                             `- **Tarih:** ${event.date.toISOString().split('T')[0]}\n\n` +
+                             `*JSON verisi yukarıdaki base64 kodlu blokta bulunmaktadır.*`;
+
+            const deleteIssueUrl = `${GITHUB_REPO_URL}/issues/new?` +
+                `title=${encodeURIComponent(issueTitle)}&` +
+                `body=${encodeURIComponent(issueBody)}&` +
+                `labels=delete-event`;
+
             window.open(deleteIssueUrl, '_blank');
         }
-
-        // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
         function goToDate() {
             const dateInput = document.getElementById('dateInput');
@@ -789,6 +1079,9 @@
             }
         }
         window.goToDate = goToDate;
+
+        // Modal açma fonksiyonunu global yap
+        window.openEventModal = openEventModal;
 
         function switchLanguage(lang) {
             if (!window.i18n || !window.i18n.translations[lang]) return;
