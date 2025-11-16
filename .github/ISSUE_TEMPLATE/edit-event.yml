@@ -1,6 +1,6 @@
 name: Olay Düzenle
 description: Mevcut bir olayı düzenleyin
-title: "Olay Düzenle: "
+title: "Olay Düzenle"
 labels: ["upgrade-event"]
 assignees:
   - sergenaras
@@ -12,18 +12,9 @@ body:
         ⚠️ **NOT:** Bu form sadece mevcut bir olayı düzenlemek içindir. Dosya adı otomatik olarak korunacaktır.
         
   - type: input
-    id: event_title 
-    attributes:
-      label: Başlık
-      description: Olay başlığı (kısa ve öz)
-      placeholder: "Örnek: Yapay Zeka Devrimi"
-    validations:
-      required: true
-
-  - type: input
     id: date
     attributes:
-      label: Tam Tarih (YYYY-AA-GG)
+      label: "Tam Tarih (YYYY-AA-GG) *"
       description: Olayın gerçekleştiği tam tarih.
       placeholder: "Örnek: 2024-10-24"
     validations:
@@ -32,7 +23,7 @@ body:
   - type: input
     id: time
     attributes:
-      label: Saat (SS:DD) - İsteğe bağlı
+      label: "Saat (SS:DD) - İsteğe bağlı"
       description: Olayın gerçekleştiği tam saat (24 saat formatında).
       placeholder: "Örnek: 14:30"
     validations:
@@ -41,7 +32,7 @@ body:
   - type: dropdown
     id: category
     attributes:
-      label: Kategori
+      label: "Kategori *"
       description: Olayın ana kategorisi.
       options:
         - teknoloji
@@ -57,7 +48,7 @@ body:
   - type: input
     id: other_category
     attributes:
-      label: Özel Kategori (Eğer 'Diğer' Seçtiyseniz)
+      label: "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)"
       description: Kategori listesinden "Diğer"i seçtiyseniz, lütfen özel kategorinizi buraya girin.
       placeholder: "Örn: Arkeoloji"
     validations:
@@ -66,8 +57,11 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Açıklama
-      description: Olay hakkında detaylı açıklama.
+      label: "Olay Açıklaması *"
+      description: |
+        Olayın detaylı açıklaması. 
+        **İLK CÜMLE OTOMATİK OLARAK BAŞLIK OLARAK KULLANILACAKTIR.**
+        Lütfen ilk cümleyi başlık gibi yazın.
       placeholder: "Olayın detaylı açıklamasını buraya yazın..."
     validations:
       required: true
@@ -75,7 +69,7 @@ body:
   - type: textarea
     id: sources
     attributes:
-      label: Kaynaklar
+      label: "Kaynaklar *"
       description: Olayı doğrulayan kaynak(lar) için URL ekleyin.
       placeholder: |
         - https://www.resmikaynak.gov/....
@@ -86,7 +80,7 @@ body:
   - type: checkboxes
     id: terms
     attributes:
-      label: Doğrulama Kontrol Listesi
+      label: "Doğrulama Kontrol Listesi *"
       description: Göndermeden önce lütfen onaylayın.
       options:
         - label: Tarih formatının (YYYY-AA-GG) doğru olduğundan eminim.
