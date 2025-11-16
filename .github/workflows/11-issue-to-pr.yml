@@ -169,19 +169,19 @@ jobs:
             exit 1
           fi
 
-      - name: Create Pull Request for Event
-        if: steps.parse_json.outputs.OPERATION_TYPE == 'event'
+      - name: Create Pull Request for Edit Event
+        if: steps.parse_json.outputs.OPERATION_TYPE == 'event' && steps.parse_json.outputs.type == 'edit'
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: "${{ steps.parse_json.outputs.type == 'edit' && '📝 Olay güncelle' : '✨ Yeni olay ekle' }}: ${{ steps.parse_json.outputs.title }}"
-          branch: ${{ steps.parse_json.outputs.type == 'edit' && 'update' || 'new' }}-event-${{ github.event.issue.number }}
+          commit-message: "📝 Olay güncelle: ${{ steps.parse_json.outputs.title }}"
+          branch: update-event-${{ github.event.issue.number }}
           delete-branch: true
-          title: "${{ steps.parse_json.outputs.type == 'edit' && '📝 Olay Güncelleme' : '✨ Yeni Olay' }}: ${{ steps.parse_json.outputs.title }}"
+          title: "📝 Olay Güncelleme: ${{ steps.parse_json.outputs.title }}"
           body: |
-            ## 📅 Olay ${{ steps.parse_json.outputs.type == 'edit' && 'Güncellendi' : 'Eklendi' }}
+            ## 📅 Olay Güncellendi
             
             **Issue:** #${{ github.event.issue.number }}
-            **Dosya:** \`${{ steps.parse_json.outputs.filename }}\`
+            **Dosya:** `${{ steps.parse_json.outputs.filename }}`
             **Tarih:** ${{ steps.parse_json.outputs.date }}
             **Kategori:** ${{ steps.parse_json.outputs.category }}
             
@@ -189,12 +189,35 @@ jobs:
             Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
             
             **Lütfen "Merge pull request" butonuna basarak onaylayın.**
-          
           labels: |
             event
             automated
-            ${{ steps.parse_json.outputs.type == 'edit' && 'update' || 'new' }}
-        id: create-event-pr
+            update
+
+      - name: Create Pull Request for New Event
+        if: steps.parse_json.outputs.OPERATION_TYPE == 'event' && steps.parse_json.outputs.type != 'edit'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "✨ Yeni olay ekle: ${{ steps.parse_json.outputs.title }}"
+          branch: new-event-${{ github.event.issue.number }}
+          delete-branch: true
+          title: "✨ Yeni Olay: ${{ steps.parse_json.outputs.title }}"
+          body: |
+            ## 📅 Olay Eklendi
+            
+            **Issue:** #${{ github.event.issue.number }}
+            **Dosya:** `${{ steps.parse_json.outputs.filename }}`
+            **Tarih:** ${{ steps.parse_json.outputs.date }}
+            **Kategori:** ${{ steps.parse_json.outputs.category }}
+            
+            ---
+            Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
+            
+            **Lütfen "Merge pull request" butonuna basarak onaylayın.**
+          labels: |
+            event
+            automated
+            new
 
       - name: Create Pull Request for Delete
         if: steps.parse_json.outputs.OPERATION_TYPE == 'delete'
@@ -208,7 +231,7 @@ jobs:
             ## ⛔ Olay Silme İsteği
             
             **Issue:** #${{ github.event.issue.number }}
-            **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\`
+            **Silinen Dosya:** `${{ steps.parse_json.outputs.filename }}`
             
             ---
             ⚠️ **DİKKAT:** Bu işlem geri alınamaz!
@@ -216,25 +239,37 @@ jobs:
             Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
             
             **Lütfen "Merge pull request" butonuna basarak silme işlemini onaylayın.**
-          
           labels: |
             event
             deletion
             automated
-        id: create-delete-pr
 
       - name: Comment on issue
         uses: actions/github-script@v7
         with:
           script: |
             const operationType = '${{ steps.parse_json.outputs.OPERATION_TYPE }}';
-            const prNumber = operationType === 'event' 
-              ? '${{ steps.create-event-pr.outputs.pull-request-number }}'
-              : '${{ steps.create-delete-pr.outputs.pull-request-number }}';
+            const eventType = '${{ steps.parse_json.outputs.type }}';
+            
+            let prNumber;
+            let message;
+            
+            if (operationType === 'event') {
+              // Event PR'ları için - hangi PR oluştuysa onu al
+              const editPR = '${{ steps.create-edit-pr.outputs.pull-request-number }}';
+              const newPR = '${{ steps.create-new-pr.outputs.pull-request-number }}';
+              prNumber = editPR || newPR;
               
-            const message = operationType === 'event' 
-              ? `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``
-              : `✅ Issue kapatıldı. Silme işlemi için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n🗑️ **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+              if (eventType === 'edit') {
+                message = `✅ Issue kapatıldı. Olay güncelleme için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+              } else {
+                message = `✅ Issue kapatıldı. Yeni olay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+              }
+            } else {
+              // Delete PR'ı için
+              prNumber = '${{ steps.create-delete-pr.outputs.pull-request-number }}';
+              message = `✅ Issue kapatıldı. Silme işlemi için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n🗑️ **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
