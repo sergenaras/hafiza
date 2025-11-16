@@ -17,6 +17,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check labels and determine operation type
+        id: check_labels
+        run: |
+          # Labels'ı JSON formatında al
+          LABELS_JSON='${{ toJSON(github.event.issue.labels) }}'
+          echo "Labels JSON: $LABELS_JSON"
+          
+          # upgrade-event etiketi var mı kontrol et
+          if echo "$LABELS_JSON" | grep -q '"name":"upgrade-event"'; then
+            echo "🔄 Düzenleme işlemi tespit edildi"
+            echo "IS_EDIT=true" >> $GITHUB_OUTPUT
+          else
+            echo "🆕 Yeni olay işlemi tespit edildi"
+            echo "IS_EDIT=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Parse issue body and URL parameters
         id: parse
         env:
@@ -37,23 +53,25 @@ jobs:
           SOURCES_RAW=""
           ORIGINAL_FILENAME=""
           
-          # Düzenleme mi yeni mi? Label'dan kontrol et
-          if contains(github.event.issue.labels.*.name, 'upgrade-event'); then
-            IS_EDIT="true"
-            echo "🔄 Düzenleme işlemi tespit edildi"
+          # Düzenleme mi yeni mi? check_labels step'inden al
+          IS_EDIT="${{ steps.check_labels.outputs.IS_EDIT }}"
+          echo "IS_EDIT: $IS_EDIT"
+          
+          if [ "$IS_EDIT" = "true" ]; then
+            echo "🔄 Düzenleme işlemi - Orijinal dosya adı aranıyor..."
             
             # URL'den original_filename parametresini çek
-            ORIGINAL_FILENAME=$(echo "$ISSUE_URL" | grep -o 'original_filename=[^&]*' | cut -d'=' -f2)
+            ORIGINAL_FILENAME=$(echo "$ISSUE_URL" | grep -o 'original_filename=[^&]*' | cut -d'=' -f2 || echo "")
             if [[ -n "$ORIGINAL_FILENAME" ]]; then
+              # URL decode işlemi
               ORIGINAL_FILENAME=$(echo "$ORIGINAL_FILENAME" | sed 's/+/ /g; s/%/\\x/g')
-              ORIGINAL_FILENAME=$(printf "%b" "$ORIGINAL_FILENAME")
-              echo "📁 Orijinal dosya adı: $ORIGINAL_FILENAME"
+              ORIGINAL_FILENAME=$(printf "%b" "$ORIGINAL_FILENAME" 2>/dev/null || echo "$ORIGINAL_FILENAME")
+              echo "📁 Orijinal dosya adı bulundu: $ORIGINAL_FILENAME"
             else
               echo "⚠️ Orijinal dosya adı bulunamadı, yeni dosya oluşturulacak"
             fi
           else
-            IS_EDIT="false"
-            echo "🆕 Yeni olay işlemi tespit edildi"
+            echo "🆕 Yeni olay işlemi"
           fi
           
           # Issue body'yi satır satır oku
@@ -185,7 +203,7 @@ jobs:
             CATEGORY_OTHER=""
           fi
           if [[ "$DESCRIPTION_CLEAN" == "_No response_" || "$DESCRIPTION_CLEAN" == "*No response*" ]]; then
-            DESCRIPTION_CLEAN=""
+            DESCRIPTION_CLEAN="Açıklama eklenmedi"
           fi
           if [[ "$SOURCES_CLEAN" == "_No response_" || "$SOURCES_CLEAN" == "*No response*" ]]; then
             SOURCES_CLEAN=""
@@ -280,5 +298,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}\n📁 **Dosya:** \`${{ steps.parse.outputs.filename }}\``
+              body: `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}\n📁 **Dosya:** \`${{ steps.parse.outputs.filename }}\`\n\n⚠️ **Not:** PR merge edildikten sonra olay zaman çizelgesinde görünecektir.`
             })
