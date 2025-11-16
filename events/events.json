@@ -1,6 +1,66 @@
 {
   "events": [
     {
+      "title": "Denemelerden Bir Seçki",
+      "date": "2025-11-17T12:30:00",
+      "category": "Test",
+      "description": "denemeler elbet bir gün başarıya ulaşacaktır",
+      "sources": "den",
+      "filename": "2025-11-17-denemelerden-bir-secki.md",
+      "original_time": "12:30",
+      "year": 2025
+    },
+    {
+      "title": "Başlıksız Olay",
+      "date": "2025-11-16T12:30:00",
+      "category": "diğer",
+      "description": "Açıklama eklenmedi",
+      "sources": "",
+      "filename": "2025-11-16-basliksiz-olay.md",
+      "original_time": "12:30",
+      "year": 2025
+    },
+    {
+      "title": "Temiz",
+      "date": "2025-11-16T11:30:00",
+      "category": "bilim",
+      "description": "temizlik imandan gelir",
+      "sources": "iman",
+      "filename": "2025-11-16-temiz.md",
+      "original_time": "11:30",
+      "year": 2025
+    },
+    {
+      "title": "Kırmızı",
+      "date": "2025-11-13T12:30:00",
+      "category": "teknoloji",
+      "description": "",
+      "sources": "",
+      "filename": "2025-11-13-kırmızı.md",
+      "original_time": "12:30",
+      "year": 2025
+    },
+    {
+      "title": "Mavi",
+      "date": "2025-11-11T21:30:00",
+      "category": "spor",
+      "description": "",
+      "sources": "yaya",
+      "filename": "2025-11-11-mavi.md",
+      "original_time": "21:30",
+      "year": 2025
+    },
+    {
+      "title": "Su",
+      "date": "2025-11-09T12:00:00",
+      "category": "kültür",
+      "description": "",
+      "sources": "",
+      "filename": "2025-11-09-su.md",
+      "original_time": "",
+      "year": 2025
+    },
+    {
       "title": "Ateş",
       "date": "2025-11-08T12:00:00",
       "category": "kültür",
@@ -19,41 +79,13 @@
       "filename": "2025-11-08-toprak.md",
       "original_time": "",
       "year": 2025
-    },
-    {
-      "title": "Su",
-      "date": "2025-11-09T12:00:00",
-      "category": "kültür",
-      "description": "",
-      "sources": "",
-      "filename": "2025-11-09-su.md",
-      "original_time": "",
-      "year": 2025
-    },
-    {
-      "title": "Mavi",
-      "date": "2025-11-11T21:30:00",
-      "category": "spor",
-      "description": "",
-      "sources": "yaya",
-      "filename": "2025-11-11-mavi.md",
-      "original_time": "21:30",
-      "year": 2025
-    },
-    {
-      "title": "Kırmızı",
-      "date": "2025-11-13T12:30:00",
-      "category": "teknoloji",
-      "description": "",
-      "sources": "",
-      "filename": "2025-11-13-kırmızı.md",
-      "original_time": "12:30",
-      "year": 2025
     }
   ],
   "metadata": {
-    "total_events": 5,
-    "generated_at": "2025-11-16T03:49:57.274791Z",
-    "generator": "Hafiza Cetveli JSON Generator v1.0"
+    "total_events": 8,
+    "generated_at": "2025-11-16T21:32:00.849229Z",
+    "generator": "Hafiza Cetveli JSON Generator v2.0",
+    "success_count": 8,
+    "error_count": 4
   }
 }
