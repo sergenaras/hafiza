@@ -17,10 +17,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Parse issue body
+      - name: Parse issue body and URL parameters
         id: parse
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_URL: '${{ github.event.issue.html_url }}'
         run: |
           echo "=== ISSUE BODY START ==="
           echo "$ISSUE_BODY"
@@ -34,6 +35,26 @@ jobs:
           CATEGORY_OTHER=""
           DESCRIPTION_RAW=""
           SOURCES_RAW=""
+          ORIGINAL_FILENAME=""
+          
+          # Düzenleme mi yeni mi? Label'dan kontrol et
+          if contains(github.event.issue.labels.*.name, 'upgrade-event'); then
+            IS_EDIT="true"
+            echo "🔄 Düzenleme işlemi tespit edildi"
+            
+            # URL'den original_filename parametresini çek
+            ORIGINAL_FILENAME=$(echo "$ISSUE_URL" | grep -o 'original_filename=[^&]*' | cut -d'=' -f2)
+            if [[ -n "$ORIGINAL_FILENAME" ]]; then
+              ORIGINAL_FILENAME=$(echo "$ORIGINAL_FILENAME" | sed 's/+/ /g; s/%/\\x/g')
+              ORIGINAL_FILENAME=$(printf "%b" "$ORIGINAL_FILENAME")
+              echo "📁 Orijinal dosya adı: $ORIGINAL_FILENAME"
+            else
+              echo "⚠️ Orijinal dosya adı bulunamadı, yeni dosya oluşturulacak"
+            fi
+          else
+            IS_EDIT="false"
+            echo "🆕 Yeni olay işlemi tespit edildi"
+          fi
           
           # Issue body'yi satır satır oku
           current_section=""
@@ -107,6 +128,7 @@ jobs:
             esac
           fi
           
+          # Değişkenleri temizle
           TITLE=$(echo "$TITLE" | tr -d '\r' | xargs)
           DATE=$(echo "$DATE" | tr -d '\r' | xargs)
           TIME=$(echo "$TIME" | tr -d '\r' | xargs)
@@ -115,6 +137,7 @@ jobs:
           DESCRIPTION_RAW=$(echo "$DESCRIPTION_RAW" | tr -d '\r')
           SOURCES_RAW=$(echo "$SOURCES_RAW" | tr -d '\r')
           
+          # Varsayılan değerler
           TITLE="${TITLE:-Başlıksız Olay}"
           DATE="${DATE:-$(date +%Y-%m-%d)}"
           TIME="${TIME:-}"
@@ -123,6 +146,7 @@ jobs:
           DESCRIPTION_RAW="${DESCRIPTION_RAW:-Açıklama eklenmedi}"
           SOURCES_RAW="${SOURCES_RAW:-}"
           
+          # Kategori belirle
           if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
             CATEGORY="$CATEGORY_OTHER"
           else
@@ -130,20 +154,14 @@ jobs:
           fi
           
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
-
-          ORIGINAL_FILENAME=""
-          if echo "$ISSUE_BODY" | grep -q '' | sed 's///' | tr -d ' \r\n')
-          fi
-          # ---------------------------------------------------
           
-          IS_EDIT="false"
-          if [[ -n "$ORIGINAL_FILENAME" ]]; then
-            IS_EDIT="true"
+          # DOSYA ADI BELİRLEME - EN ÖNEMLİ KISIM
+          if [[ "$IS_EDIT" == "true" && -n "$ORIGINAL_FILENAME" ]]; then
+            # DÜZENLEME: Mevcut dosya adını koru
             FILENAME="$ORIGINAL_FILENAME"
-            echo "İşlem: Düzenleme. Varolan dosyanın üzerine yazılacak: $FILENAME"
+            echo "📝 Düzenleme işlemi: Varolan dosya korunacak - $FILENAME"
           else
-            IS_EDIT="false"
-            # Slug oluştur (Türkçe karakterler ASCII'ye çevrilir)
+            # YENİ OLAR: Otomatik dosya adı oluştur
             SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | \
                    sed -e 's/ç/c/g' -e 's/ğ/g/g' -e 's/ı/i/g' \
                        -e 's/ö/o/g' -e 's/ş/s/g' -e 's/ü/u/g' \
@@ -152,11 +170,12 @@ jobs:
                        -e 's/Ü/u/g' | \
                    sed -e 's/[^a-z0-9]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')
             FILENAME="${DATE}-${SLUG}.md"
-            echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
+            echo "🆕 Yeni olay: Yeni dosya oluşturulacak - $FILENAME"
           fi
           
-          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/d')
-          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's///g' | sed '/^$/d')
+          # İçerikleri temizle
+          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed '/^$/d')
+          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed '/^$/d')
           
           # "_No response_" olanları boş yap
           if [[ "$TIME" == "_No response_" || "$TIME" == "*No response*" ]]; then
@@ -188,6 +207,7 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "year=$YEAR" >> $GITHUB_OUTPUT
           echo "is_edit=$IS_EDIT" >> $GITHUB_OUTPUT
+          echo "original_filename=$ORIGINAL_FILENAME" >> $GITHUB_OUTPUT
           
           # Debug çıktıları
           echo "=== PARSED VALUES ==="
@@ -197,11 +217,14 @@ jobs:
           echo "CATEGORY: $CATEGORY"
           echo "FILENAME: $FILENAME"
           echo "IS_EDIT: $IS_EDIT"
+          echo "ORIGINAL_FILENAME: $ORIGINAL_FILENAME"
           echo "===================="
 
-      - name: Create markdown file
+      - name: Create or update markdown file
         run: |
           mkdir -p events/data
+          
+          echo "Dosya işleniyor: events/data/${{ steps.parse.outputs.filename }}"
           
           cat > "events/data/${{ steps.parse.outputs.filename }}" << MDEOF
           ---
@@ -216,9 +239,12 @@ jobs:
 
           ## Kaynaklar
           ${{ steps.parse.outputs.sources }}
-          MDEOF          
-          echo "Dosya oluşturuldu: events/data/${{ steps.parse.outputs.filename }}"
+          MDEOF
+          
+          echo "✅ Dosya oluşturuldu/güncellendi: events/data/${{ steps.parse.outputs.filename }}"
+          echo "--- DOSYA İÇERİĞİ ---"
           cat "events/data/${{ steps.parse.outputs.filename }}"
+          echo "--- SON ---"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -231,6 +257,7 @@ jobs:
             ## 📅 Olay ${{ steps.parse.outputs.is_edit == 'true' && 'Güncellendi' || 'Eklendi' }}
             
             **Issue:** #${{ github.event.issue.number }}
+            **Dosya:** \`${{ steps.parse.outputs.filename }}\`
             **Tarih:** ${{ steps.parse.outputs.date }}
             **Kategori:** ${{ steps.parse.outputs.category }}
             
@@ -253,5 +280,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}`
+              body: `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}\n📁 **Dosya:** \`${{ steps.parse.outputs.filename }}\``
             })

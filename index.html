@@ -600,7 +600,6 @@
             });
         }
         
-        // --- GÜNCELLENDİ: TASARIM İSTEĞİ İÇİN DEĞİŞTİRİLDİ ---
         function updateDetailsPanel(event) {
             const detailsContainer = document.getElementById('details-content');
             const editLink = document.getElementById('editEventLink');
@@ -711,9 +710,24 @@
             return encodeURIComponent(str).replace(/'/g, "%27");
         }
         
-        // --- DÜZELTİLDİ: 'handleEditClick' artık 'sources' alanını da gönderiyor ---
+        // --- YENİ OLAY EKLEME - OTOMATİK DOSYA ADI ---
+        function openNewEventDialog() {
+            const dateInput = document.getElementById('dateInput');
+            const defaultDate = dateInput.value;
+            
+            // Başlık otomatik olarak tarih + "yeni-olay" olacak
+            const defaultTitle = `${defaultDate}-yeni-olay`;
+            const newIssueUrl = `${window.ENV.GITHUB_ISSUE_URL}${safeEncode(defaultTitle)}`;
+            window.open(newIssueUrl, '_blank');
+        }
+        window.openNewEventDialog = openNewEventDialog;
+
+        // --- DÜZENLEME - MEVCUT DOSYA ADI KORUNACAK ---
         function handleEditClick(e, event) {
-            if (e) e.stopPropagation(); 
+            if (e) e.stopPropagation();
+            
+            // MEVCUT dosya adını al
+            const originalFilename = event.filename;
             
             let categoryField = event.category;
             let otherCategoryField = "";
@@ -723,19 +737,18 @@
                 otherCategoryField = event.category;
             }
 
-            const eventDate = new Date(event.date); 
+            const eventDate = new Date(event.date);
             const dateField = formatDateToYYYYMMDD(eventDate);
-            const timeField = event.original_time || ""; 
+            const timeField = event.original_time || "";
 
-            const hiddenFilenameTag = `\n\n`;
-            
-            // AÇIKLAMA VE KAYNAKLARI DOĞRU GÖNDER
-            const descriptionField = (event.description || "") + hiddenFilenameTag;
-            const sourcesField = event.sources || ""; 
+            // AÇIKLAMA ve KAYNAKLARI gönder (gizli dosya adı OLMADAN)
+            const descriptionField = event.description || "";
+            const sourcesField = event.sources || "";
             
             const issueTitle = `Olay Düzenle: ${event.title}`;
             
-            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=new-event.yml` +
+            // DÜZENLEME İÇİN ÖZEL TEMPLATE KULLAN
+            const editIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=edit-event.yml` +
                 `&labels=upgrade-event` +
                 `&title=${safeEncode(issueTitle)}` +
                 `&event_title=${safeEncode(event.title)}` +
@@ -744,11 +757,13 @@
                 `&category=${safeEncode(categoryField)}` +
                 `&other_category=${safeEncode(otherCategoryField)}` +
                 `&description=${safeEncode(descriptionField)}` +
-                `&sources=${safeEncode(sourcesField)}`;
+                `&sources=${safeEncode(sourcesField)}` +
+                `&original_filename=${safeEncode(originalFilename)}`;  // GİZLİ PARAMETRE
             
             window.open(editIssueUrl, '_blank');
         }
 
+        // --- SİLME İŞLEMİ - DOSYA ADI OTOMATİK ---
         function handleDeleteClick(e, event) {
             e.stopPropagation();
             
@@ -759,10 +774,9 @@
                               `**Başlık:** ${event.title}\n\n` +
                               `**Sebep (isteğe bağlı):**\n...`;
                               
-            const deleteIssueUrl = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=delete-request`;
+            const deleteIssueUrl = `${GITHUB_REPO_URL}/issues/new?template=delete-event.yml&title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}&labels=delete-request`;
             window.open(deleteIssueUrl, '_blank');
         }
-
 
         // --- 4. Zaman Çizelgesi (Canvas) Kontrolleri ---
 
@@ -775,11 +789,6 @@
             }
         }
         window.goToDate = goToDate;
-
-        function openNewEventDialog() {
-            window.open(window.ENV.GITHUB_ISSUE_URL, '_blank');
-        }
-        window.openNewEventDialog = openNewEventDialog;
 
         function switchLanguage(lang) {
             if (!window.i18n || !window.i18n.translations[lang]) return;

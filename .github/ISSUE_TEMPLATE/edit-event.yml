@@ -1,21 +1,21 @@
-name: Yeni Olay Ekle
-description: Zaman çizelgesine yeni bir olay ekleyin
-title: "Yeni Olay: "
-labels: ["new-event"]
+name: Olay Düzenle
+description: Mevcut bir olayı düzenleyin
+title: "Olay Düzenle: "
+labels: ["upgrade-event"]
 assignees:
   - sergenaras
 body:
   - type: markdown
     attributes:
       value: |
-        ## Zaman Çizelgesine Yeni Olay Ekleyin
-        📁 **NOT:** Dosya adı otomatik olarak "YYYY-AA-GG-baslik-slug.md" formatında oluşturulacaktır.
+        ## Mevcut Olayı Düzenleyin
+        ⚠️ **NOT:** Bu form sadece mevcut bir olayı düzenlemek içindir. Dosya adı otomatik olarak korunacaktır.
         
   - type: input
     id: event_title 
     attributes:
       label: Başlık
-      description: Olay başlığı (kısa ve öz) - Bu, dosya adının bir parçası olacak
+      description: Olay başlığı (kısa ve öz)
       placeholder: "Örnek: Yapay Zeka Devrimi"
     validations:
       required: true
@@ -24,17 +24,7 @@ body:
     id: date
     attributes:
       label: Tam Tarih (YYYY-AA-GG)
-      description: Olayın gerçekleştiği tam tarih. Dosya adının ilk kısmı olacak.
-      placeholder: "Örnek: 2024-10-24"
-    validations:
-      required: true
-
-  - type: input
-    id: date
-    attributes:
-      label: Tam Tarih (YYYY-AA-GG)
-      description: |
-        Olayın gerçekleştiği tam tarih. Eğer gün ve ay bilinmiyorsa, lütfen yılın ilk gününü girin (Örn: 2024-01-01).
+      description: Olayın gerçekleştiği tam tarih.
       placeholder: "Örnek: 2024-10-24"
     validations:
       required: true
@@ -43,9 +33,7 @@ body:
     id: time
     attributes:
       label: Saat (SS:DD) - İsteğe bağlı
-      description: |
-        Olayın gerçekleştiği tam saat (24 saat formatında). 
-        Bu alanı doldurmak, olayın zaman çizelgesinde (x4) saat hassasiyetinde görünmesini sağlar.
+      description: Olayın gerçekleştiği tam saat (24 saat formatında).
       placeholder: "Örnek: 14:30"
     validations:
       required: false
@@ -54,7 +42,7 @@ body:
     id: category
     attributes:
       label: Kategori
-      description: Olayın ana kategorisi. "Diğer" seçerseniz, lütfen aşağıdaki "Özel Kategori" alanını doldurun.
+      description: Olayın ana kategorisi.
       options:
         - teknoloji
         - bilim
@@ -79,7 +67,7 @@ body:
     id: description
     attributes:
       label: Açıklama
-      description: Olay hakkında 1-2 cümlelik detaylı açıklama. Bu, "Olay Detayları" panelinde görünecektir.
+      description: Olay hakkında detaylı açıklama.
       placeholder: "Olayın detaylı açıklamasını buraya yazın..."
     validations:
       required: true
@@ -88,10 +76,7 @@ body:
     id: sources
     attributes:
       label: Kaynaklar
-      description: |
-        Lütfen olayı doğrulayan kaynak(lar) için URL ekleyin.
-        - **Resmi Kaynak:** (Örn: Resmi Gazete, TÜİK, NASA.gov) 1 adet kaynak yeterlidir.
-        - **Resmi Olmayan Kaynak:** (Örn: Haber siteleri, Wikipedia) Lütfen en az 2 farklı kaynaktan doğrulama ekleyin.
+      description: Olayı doğrulayan kaynak(lar) için URL ekleyin.
       placeholder: |
         - https://www.resmikaynak.gov/....
         - https://www.habersitesi.com/....
