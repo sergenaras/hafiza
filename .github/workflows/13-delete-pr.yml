@@ -33,10 +33,9 @@ jobs:
           content=""
           
           while IFS= read -r line; do
-            # Başlık kontrolü (### ile başlıyor mu?)
             if [[ "$line" =~ ^###[[:space:]](.+) ]]; then
-              # Önceki bölümü kaydet
               if [[ -n "$current_section" ]]; then
+                # --- DÜZELTİLDİ: 'id' ile eşleşen 'label' kullanılmalı ---
                 case "$current_section" in
                   "Dosya Adı (Zorunlu)")
                     FILENAME="$content"
@@ -46,12 +45,9 @@ jobs:
                     ;;
                 esac
               fi
-              
-              # Yeni bölüm başlat
               current_section="${BASH_REMATCH[1]}"
               content=""
             elif [[ -n "$line" && ! "$line" =~ ^-[[:space:]]\[.?\] ]]; then
-              # Checkbox değilse ve boş satır değilse içeriğe ekle
               if [[ -n "$content" ]]; then
                 content="$content"$'\n'"$line"
               else
@@ -72,14 +68,19 @@ jobs:
             esac
           fi
           
-          # Temizlik
           FILENAME=$(echo "$FILENAME" | tr -d '\r' | xargs)
           REASON=$(echo "$REASON" | tr -d '\r' | xargs)
           
           echo "Dosya adı: $FILENAME"
           echo "Silme nedeni: $REASON"
           
-          # Dosya varlığını kontrol et
+          if [[ -z "$FILENAME" || "$FILENAME" == "_No response_" ]]; then
+             echo "❌ HATA: Issue body içinde 'Dosya Adı (Zorunlu)' alanı bulunamadı veya boş."
+             echo "file_exists=false" >> $GITHUB_OUTPUT
+             echo "filename=NOT_FOUND" >> $GITHUB_OUTPUT
+             exit 0
+          fi
+
           if [[ ! -f "events/data/$FILENAME" ]]; then
             echo "❌ HATA: Dosya bulunamadı: events/data/$FILENAME"
             echo "file_exists=false" >> $GITHUB_OUTPUT
@@ -114,7 +115,6 @@ jobs:
             
             **Lütfen "Merge pull request" butonuna basarak silme işlemini onaylayın.**
           
-          # Silme işlemini PR oluşturmadan önce yap
           prepare-script: |
             echo "Dosya siliniyor: events/data/${{ steps.parse.outputs.filename }}"
             if [ -f "events/data/${{ steps.parse.outputs.filename }}" ]; then

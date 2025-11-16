@@ -1,6 +1,6 @@
-name: Olay Sil
-description: Mevcut bir olayı silin
-title: "Sil: "
+name: Olay Silme İsteği
+description: Zaman çizelgesinden bir olayı silmek için istek oluşturun
+title: "Sil: [OLAY BAŞLIĞI BURAYA]"
 labels: ["delete-event"]
 assignees:
   - sergenaras
@@ -8,48 +8,34 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## 🗑️ Olay Silme İsteği
-        
-        ⚠️ **DİKKAT:** Bu işlem geri alınamaz! Olay kalıcı olarak silinecektir.
+        ## ⚠️ Olay Silme İsteği
+        Bu işlem, bir olayı zaman çizelgesinden kalıcı olarak kaldıracaktır.
         
   - type: input
     id: filename_to_delete
     attributes:
-      label: Silinecek Dosya
+      label: Dosya Adı (Zorunlu)
       description: |
-        Silmek istediğiniz olayın dosya adını girin.
-        Örnek: 2024-03-15-yapay-zeka-devrimi.md
-      placeholder: "YYYY-AA-GG-olay-adi.md"
-    validations:
-      required: true
-
-  - type: input
-    id: event_title
-    attributes:
-      label: Olay Başlığı
-      description: |
-        Silmek istediğiniz olayın başlığını onay için yazın.
-      placeholder: "Örnek: Yapay Zeka Devrimi"
+        Silinecek olayın `.md` dosyasının adı. 
+        Bu bilgiyi, olayı UI'dan seçip "Sil" butonuna bastığınızda açılan issue'da bulabilirsiniz.
+      placeholder: "Örn: 2025-11-13-kirmizi.md"
     validations:
       required: true
 
   - type: textarea
     id: deletion_reason
     attributes:
-      label: Silme Nedeni
-      description: |
-        Bu olayı neden silmek istediğinizi açıklayın.
-      placeholder: "Örneğin: Yanlış tarih girilmiş, Mükerrer kayıt, Hatalı bilgi..."
+      label: Silme Gerekçesi
+      description: Lütfen bu olayın neden silinmesi gerektiğini kısaca açıklayın.
+      placeholder: "Örn: Yinelenen kayıt, yanlış bilgi, vb."
     validations:
       required: true
 
   - type: checkboxes
-    id: confirmation
+    id: terms
     attributes:
       label: Onay
-      description: Silme işlemini onaylayın.
+      description: Göndermeden önce lütfen onaylayın.
       options:
         - label: Bu olayı kalıcı olarak silmek istediğimden eminim.
-          required: true
-        - label: Dosya adının doğru olduğunu kontrol ettim.
           required: true

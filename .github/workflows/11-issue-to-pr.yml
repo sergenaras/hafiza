@@ -137,11 +137,12 @@ jobs:
           # Yıl çıkar
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
+          # --- DÜZELTİLDİ: 'grep' komutu dolduruldu ---
           # Düzenleme kontrolü için gizli etiket ara
           ORIGINAL_FILENAME=""
-          if echo "$ISSUE_BODY" | grep -q '<!-- FILENAME:'; then
-            ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '<!-- FILENAME:[^>]*-->' | sed 's/<!-- FILENAME://; s/-->//' | tr -d ' \r\n')
+          if echo "$ISSUE_BODY" | grep -q '' | sed 's///' | tr -d ' \r\n')
           fi
+          # --------------------------------------------
           
           IS_EDIT="false"
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
@@ -162,9 +163,11 @@ jobs:
             echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
           fi
           
+          # --- DÜZELTİLDİ: 'sed' komutu dolduruldu ---
           # Gizli etiketleri temizle
-          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's/<!-- FILENAME:[^>]*-->//g' | sed '/^$/d')
-          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's/<!-- FILENAME:[^>]*-->//g' | sed '/^$/d')
+          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/d')
+          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's///g' | sed '/^$/d')
+          # ------------------------------------------
           
           # "_No response_" olanları boş yap
           if [[ "$TIME" == "_No response_" || "$TIME" == "*No response*" ]]; then
@@ -211,21 +214,21 @@ jobs:
         run: |
           mkdir -p events/data
           
-          # Markdown dosyası oluştur
-          cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
----
-title: "${{ steps.parse.outputs.title }}"
-date: "${{ steps.parse.outputs.date }}"
-time: "${{ steps.parse.outputs.time }}"
-category: "${{ steps.parse.outputs.category_main }}"
-other_category: "${{ steps.parse.outputs.category_other }}"
----
+          # 'MDEOF' çevresindeki tırnaklar kaldırıldı (Bu sizde zaten düzgündü)
+          cat > "events/data/${{ steps.parse.outputs.filename }}" << MDEOF
+          ---
+          title: "${{ steps.parse.outputs.title }}"
+          date: "${{ steps.parse.outputs.date }}"
+          time: "${{ steps.parse.outputs.time }}"
+          category: "${{ steps.parse.outputs.category_main }}"
+          other_category: "${{ steps.parse.outputs.category_other }}"
+          ---
 
-${{ steps.parse.outputs.description }}
+          ${{ steps.parse.outputs.description }}
 
-## Kaynaklar
-${{ steps.parse.outputs.sources }}
-MDEOF
+          ## Kaynaklar
+          ${{ steps.parse.outputs.sources }}
+          MDEOF
           
           echo "Dosya oluşturuldu: events/data/${{ steps.parse.outputs.filename }}"
           cat "events/data/${{ steps.parse.outputs.filename }}"
