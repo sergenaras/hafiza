@@ -22,7 +22,6 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Debug: Issue body'yi göster
           echo "=== ISSUE BODY START ==="
           echo "$ISSUE_BODY"
           echo "=== ISSUE BODY END ==="
@@ -76,8 +75,7 @@ jobs:
             elif [[ -n "$line" && ! "$line" =~ ^-[[:space:]]\[.?\] ]]; then
               # Checkbox değilse ve boş satır değilse içeriğe ekle
               if [[ -n "$content" ]]; then
-                content="${content}
-${line}"
+                content="$content"$'\n'"$line"
               else
                 content="$line"
               fi
@@ -152,7 +150,7 @@ ${line}"
             echo "İşlem: Düzenleme. Varolan dosyanın üzerine yazılacak: $FILENAME"
           else
             IS_EDIT="false"
-            # Slug oluştur (Türkçe karakterler korunur)
+            # Slug oluştur (Türkçe karakterler ASCII'ye çevrilir)
             SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | \
                    sed -e 's/ç/c/g' -e 's/ğ/g/g' -e 's/ı/i/g' \
                        -e 's/ö/o/g' -e 's/ş/s/g' -e 's/ü/u/g' \
