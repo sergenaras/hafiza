@@ -1,200 +1,148 @@
-# 🚀 Hafıza Cetveli - Modern Timeline
+# Hafıza Projesi - Düzeltmeler ve İyileştirmeler
 
-Profesyonel, Canvas-tabanlı, yüksek performanslı zaman çizelgesi uygulaması.
+Bu klasör, Hafıza projesindeki GitHub Actions workflow'ları ve olay yönetim sistemi için düzeltmeleri içermektedir.
 
-## ✨ Özellikler
+## 🔧 Düzeltilen Sorunlar
 
-### 🎯 3 Zoom Seviyesi
-- **×1 - Yıllar**: Geniş bakış, her yıl görünür
-- **×2 - Aylar**: Yıllar + aylar, detaylı görünüm
-- **×3 - Günler**: Tam detay, her gün numaralandırılmış
+### 1. Issue Parse Hatası (11-issue-to-pr.yml)
+**Sorun:** AWK komutu GitHub Issue formatını doğru parse edemiyordu ve syntax hatası veriyordu.
 
-### 🖱️ İki Zoom Modu
-1. **Pinch Zoom** (Mac Trackpad benzeri)
-   - İki parmakla yakınlaştır/uzaklaştır
-   - Sürükle ile hareket
-   
-2. **Çift Tıklama**
-   - Çift tıkla → Zoom
-   - Basılı tut & sürükle → Hareket
+**Çözüm:** 
+- AWK yerine pure Bash kullanarak daha güvenilir bir parse mekanizması
+- Markdown başlıklarını (`###`) doğru tespit etme
+- Checkbox'ları filtreleme
+- Temiz ve hatasız veri çıkarma
 
-### 📊 Event Özellikleri
-- Gri çubuklar ile gösterim
-- Aynı gündeki olaylar otomatik stack'lenir
-- Hover ile tooltip
-- Tıkla ile detaylı modal
-- Modal dışına tıkla ile kapat
+### 2. Olay Düzenleme Sistemi
+**Yenilik:** Mevcut olayları düzenlemek için ayrı bir issue template ve workflow
 
-### 🌍 Çoklu Dil
-- Türkçe (varsayılan)
-- İngilizce
-- Kolayca genişletilebilir
+**Özellikler:**
+- `upgrade-event.yml`: Düzenleme formu
+- Original dosya adını belirtme
+- Mevcut olayın üzerine yazma kontrolü
+- Güvenli güncelleme mekanizması
 
-### ⚡ Performans
-- Canvas-based rendering
-- Virtual rendering (sadece görünür alan)
-- Smooth 60 FPS animasyonlar
-- RequestAnimationFrame kullanımı
+### 3. Olay Silme Sistemi
+**Yenilik:** Olayları güvenli bir şekilde silmek için tam entegre sistem
 
-## 🛠️ Kurulum
+**Özellikler:**
+- `delete-event.yml`: Silme formu
+- `13-delete-event-pr.yml`: Silme PR oluşturucu workflow
+- Dosya varlığı kontrolü
+- Silme nedeni dokümantasyonu
+- Çift onay mekanizması
 
-### 1. Dosyaları Repoya Yükle
+### 4. JSON Generator İyileştirmeleri
+**İyileştirmeler:**
+- Daha iyi hata yakalama ve raporlama
+- Gizli HTML comment'lerini temizleme
+- Geçersiz değerleri düzgün işleme
+- Detaylı log çıktıları
+- Boş klasör durumunu handle etme
+
+## 📁 Dosya Listesi
+
+```
+hafiza-fixes/
+├── 11-issue-to-pr.yml        # Yeni/Düzenleme PR oluşturucu (düzeltilmiş)
+├── 13-delete-event-pr.yml    # Silme PR oluşturucu (yeni)
+├── upgrade-event.yml          # Düzenleme issue template (yeni)
+├── delete-event.yml           # Silme issue template (yeni)
+├── generate-json.py           # İyileştirilmiş JSON generator
+└── README.md                  # Bu dosya
+```
+
+## 🚀 Kurulum Adımları
+
+### 1. GitHub Actions Workflow'larını Güncelle
 
 ```bash
-# Tüm dosyaları hafiza repo'suna kopyala
-cp -r hafiza-timeline/* ~/hafiza/
-
-cd ~/hafiza
-git add .
-git commit -m "Add modern timeline interface"
-git push
+# Ana repo'ya kopyala
+cp 11-issue-to-pr.yml ../../.github/workflows/
+cp 13-delete-event-pr.yml ../../.github/workflows/
 ```
 
-### 2. Config Ayarları
+### 2. Issue Template'lerini Ekle
 
-`config.js` dosyasını düzenle:
-
-```javascript
-GITHUB_USERNAME: 'sergenaras',  // Kullanıcı adınız
-REPO_NAME: 'hafiza',            // Repo adınız
-BRANCH: 'main',                 // Branch adınız
+```bash
+# Issue templates klasörüne kopyala
+cp upgrade-event.yml ../../.github/ISSUE_TEMPLATE/
+cp delete-event.yml ../../.github/ISSUE_TEMPLATE/
 ```
 
-### 3. GitHub Pages
+### 3. Python Script'i Güncelle
 
-- Settings → Pages
-- Source: `main` branch, `/ (root)`
-- Save
-
-Site: `https://sergenaras.github.io/hafiza/`
-
-## 📁 Dosya Yapısı
-
-```
-hafiza-timeline/
-├── index.html          # Ana sayfa
-├── config.js           # Ayarlar & ENV değişkenleri
-├── i18n.js             # Çoklu dil sistemi
-├── timeline.js         # Ana timeline motoru
-└── README.md           # Bu dosya
+```bash
+# Scripts klasörüne kopyala
+cp generate-json.py ../../scripts/
 ```
 
-## 🎨 Özelleştirme
+## 📋 Kullanım
 
-### Renkleri Değiştir
+### Yeni Olay Ekleme
+1. GitHub'da "Issues" → "New issue"
+2. "Yeni Olay Ekle" template'ini seç
+3. Formu doldur ve issue'yu kapat
+4. Otomatik PR oluşturulur
+5. PR'ı merge et
 
-`config.js` → `COLORS`:
+### Mevcut Olayı Düzenleme
+1. GitHub'da "Issues" → "New issue"
+2. "Olay Düzenle" template'ini seç
+3. Düzenlenecek dosya adını gir (örn: `2024-03-15-yapay-zeka.md`)
+4. Güncel bilgileri gir
+5. Issue'yu kapat → PR oluşturulur → Merge et
 
-```javascript
-COLORS: {
-    background: '#ffffff',
-    todayMarker: '#ff4444',
-    eventBar: '#999999',
-    // ...
-}
-```
+### Olay Silme
+1. GitHub'da "Issues" → "New issue"
+2. "Olay Sil" template'ini seç
+3. Silinecek dosya adını gir
+4. Silme nedenini açıkla
+5. Issue'yu kapat → PR oluşturulur → Merge et
 
-### Zoom Seviyelerini Ayarla
+## 🔍 Parse Logic Açıklaması
 
-`config.js` → `ZOOM_LEVELS`:
+Yeni parse mekanizması şu şekilde çalışır:
 
-```javascript
-{
-    pixelsPerYear: 150,  // Arttır = Daha geniş
-    showYears: true,
-    showMonths: false,
-    showDays: false
-}
-```
+1. **Başlık Tespiti:** `###` ile başlayan satırları tespit eder
+2. **İçerik Toplama:** Başlıktan sonraki içeriği toplar
+3. **Checkbox Filtreleme:** `- [ ]` veya `- [x]` formatındaki satırları atlar
+4. **Temizlik:** Carriage return ve fazla boşlukları temizler
+5. **Varsayılan Değerler:** Eksik alanlar için güvenli varsayılanlar
 
-### Dil Ekle
+## ⚠️ Önemli Notlar
 
-`i18n.js` → `translations`:
+1. **Türkçe Karakter Desteği:** Slug oluştururken Türkçe karakterler ASCII'ye çevrilir
+2. **Dosya Adı Formatı:** `YYYY-AA-GG-slug.md` formatında otomatik oluşturulur
+3. **Kategori Logic:** "diğer" seçilirse özel kategori kullanılır
+4. **Saat Formatı:** SS:DD formatında, geçersizse 12:00 varsayılan
 
-```javascript
-de: {
-    appName: 'Erinnerung Timeline',
-    // ...
-}
-```
+## 🐛 Debug İpuçları
 
-## 🔧 Teknik Detaylar
+Workflow'larda sorun yaşarsanız:
 
-### Teknolojiler
-- Vanilla JavaScript (framework yok!)
-- Canvas API (performans)
-- CSS3 animations
-- Touch events API
+1. Actions sekmesinde workflow run'a tıklayın
+2. "Parse issue body" adımındaki logları kontrol edin
+3. `=== PARSED VALUES ===` bölümünü inceleyin
+4. Eksik veya hatalı parse edilen alanları tespit edin
 
-### Tarayıcı Desteği
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- Mobile Safari
-- Chrome Android
+## 📝 Gelecek İyileştirmeler
 
-### Performans Özellikleri
-- Virtual rendering
-- Event pooling
-- RequestAnimationFrame
-- Debounced resize
-- Touch gesture optimization
+- [ ] Toplu olay ekleme desteği
+- [ ] Olay düzenleme geçmişi
+- [ ] Otomatik kategori önerisi
+- [ ] Kaynak URL doğrulama
+- [ ] Tarih tutarlılık kontrolü
 
-## 📊 Veri Formatı
+## 🤝 Katkıda Bulunma
 
-JSON yapısı (`events/events.json`):
-
-```json
-{
-  "events": [
-    {
-      "year": 2024,
-      "title": "Olay Başlığı",
-      "date": "2024-03-15",
-      "category": "teknoloji",
-      "description": "Detaylı açıklama..."
-    }
-  ]
-}
-```
-
-## 🎯 Kullanım
-
-### Zoom Yapma
-- **Pinch Mode**: İki parmak yakınlaştır/uzaklaştır
-- **Double Click Mode**: Çift tıkla
-
-### Hareket Etme
-- **Pinch Mode**: Sürükle
-- **Double Click Mode**: Basılı tut & sürükle
-
-### Olay Görüntüleme
-- **Hover**: Kısa bilgi (tooltip)
-- **Tıkla**: Detaylı bilgi (modal)
-- **Modal**: Dışına tıkla = kapat
-
-## 🚀 Performans İpuçları
-
-1. **Çok olay varsa**: `EVENT_MAX_STACK` değerini düşür
-2. **Yavaşlık**: `pixelsPerYear` değerlerini azalt
-3. **Animasyon**: `ANIMATION_DURATION` değiştir
-
-## 📝 Lisans
-
-MIT License - Özgürce kullanın!
-
-## 🙏 Katkıda Bulunma
-
-1. Fork edin
-2. Feature branch oluşturun
-3. Commit edin
-4. Push edin
-5. Pull Request açın
-
-## 📞 Destek
-
-Sorun mu var? GitHub Issues'de bildirin!
+Sorun bildirmek veya iyileştirme önermek için:
+1. Issue açın
+2. Detaylı açıklama ekleyin
+3. Mümkünse hata loglarını paylaşın
 
 ---
 
-**Yıldız vermeyi unutmayın!** ⭐
+**Hazırlayan:** Claude AI Assistant
+**Tarih:** Kasım 2024
+**Versiyon:** 2.0

@@ -22,130 +22,223 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Bu 'awk' komutu, GitHub'ın "**Label:**\n\nValue" formatını 'LABEL=Value' formatına çevirir
-          parsed_data=$(echo "$ISSUE_BODY" | awk -F'\n\n' '
-            BEGIN { RS = "\n\n" }
-            {
-              if (match($0, /^\*\*([^*]+)\*\*/, label)) {
-                gsub(/\r$/, "", $0); 
-                current_label = label[1];
-                sub( /^\*\*([^*]+)\*\*\s*/, "");
-                
-                if (match($0, /^- \[ \]/) || match($0, /^- \[x\]/i)) {
-                    value=""
-                    n_opts = split($0, opts, "\n- ");
-                    for (i=1; i<=n_opts; i++) {
-                        value = value opts[i] "\n"
-                    }
-                } else {
-                    value = $0;
-                }
-                
-                gsub(/'/, "\\&apos;", value);
-                gsub(/"/, "\\&quot;", value);
-                
-                if (current_label == "Başlık") key="TITLE";
-                else if (current_label == "Tam Tarih (YYYY-AA-GG)") key="DATE";
-                else if (current_label == "Saat (SS:DD) - İsteğe bağlı") key="TIME";
-                else if (current_label == "Kategori") key="CATEGORY_MAIN";
-                else if (current_label == "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)") key="CATEGORY_OTHER";
-                else if (current_label == "Açıklama") key="DESCRIPTION_RAW";
-                else if (current_label == "Kaynaklar") key="SOURCES_RAW";
-                else key="UNKNOWN";
-                
-                if (key != "UNKNOWN") {
-                    printf "%s=%s\n", key, value
-                }
-              }
-            }
-          ')
-
-          echo "$parsed_data" >> $GITHUB_ENV
+          # Debug: Issue body'yi göster
+          echo "=== ISSUE BODY START ==="
+          echo "$ISSUE_BODY"
+          echo "=== ISSUE BODY END ==="
           
-          TITLE="${TITLE:-_No response_}"
-          DATE="${DATE:-_No response_}"
-          TIME="${TIME:-_No response_}"
-          CATEGORY_MAIN="${CATEGORY_MAIN:-_No response_}"
-          CATEGORY_OTHER="${CATEGORY_OTHER:-_No response_}"
-          DESCRIPTION_RAW="${DESCRIPTION_RAW:-_No response_}"
-          SOURCES_RAW="${SOURCES_RAW:-_No response_}"
-
-          if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" && "$CATEGORY_OTHER" != "_No response_" ]]; then
+          # Değişkenleri başlat
+          TITLE=""
+          DATE=""
+          TIME=""
+          CATEGORY_MAIN=""
+          CATEGORY_OTHER=""
+          DESCRIPTION_RAW=""
+          SOURCES_RAW=""
+          
+          # Issue body'yi satır satır oku
+          current_section=""
+          content=""
+          
+          while IFS= read -r line; do
+            # Başlık kontrolü (### ile başlıyor mu?)
+            if [[ "$line" =~ ^###[[:space:]](.+) ]]; then
+              # Önceki bölümü kaydet
+              if [[ -n "$current_section" ]]; then
+                case "$current_section" in
+                  "Başlık")
+                    TITLE="$content"
+                    ;;
+                  "Tam Tarih (YYYY-AA-GG)")
+                    DATE="$content"
+                    ;;
+                  "Saat (SS:DD) - İsteğe bağlı")
+                    TIME="$content"
+                    ;;
+                  "Kategori")
+                    CATEGORY_MAIN="$content"
+                    ;;
+                  "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)")
+                    CATEGORY_OTHER="$content"
+                    ;;
+                  "Açıklama")
+                    DESCRIPTION_RAW="$content"
+                    ;;
+                  "Kaynaklar")
+                    SOURCES_RAW="$content"
+                    ;;
+                esac
+              fi
+              
+              # Yeni bölüm başlat
+              current_section="${BASH_REMATCH[1]}"
+              content=""
+            elif [[ -n "$line" && ! "$line" =~ ^-[[:space:]]\[.?\] ]]; then
+              # Checkbox değilse ve boş satır değilse içeriğe ekle
+              if [[ -n "$content" ]]; then
+                content="${content}
+${line}"
+              else
+                content="$line"
+              fi
+            fi
+          done <<< "$ISSUE_BODY"
+          
+          # Son bölümü de kaydet
+          if [[ -n "$current_section" ]]; then
+            case "$current_section" in
+              "Başlık")
+                TITLE="$content"
+                ;;
+              "Tam Tarih (YYYY-AA-GG)")
+                DATE="$content"
+                ;;
+              "Saat (SS:DD) - İsteğe bağlı")
+                TIME="$content"
+                ;;
+              "Kategori")
+                CATEGORY_MAIN="$content"
+                ;;
+              "Özel Kategori (Eğer 'Diğer' Seçtiyseniz)")
+                CATEGORY_OTHER="$content"
+                ;;
+              "Açıklama")
+                DESCRIPTION_RAW="$content"
+                ;;
+              "Kaynaklar")
+                SOURCES_RAW="$content"
+                ;;
+            esac
+          fi
+          
+          # Temizlik işlemleri
+          TITLE=$(echo "$TITLE" | tr -d '\r' | xargs)
+          DATE=$(echo "$DATE" | tr -d '\r' | xargs)
+          TIME=$(echo "$TIME" | tr -d '\r' | xargs)
+          CATEGORY_MAIN=$(echo "$CATEGORY_MAIN" | tr -d '\r' | xargs)
+          CATEGORY_OTHER=$(echo "$CATEGORY_OTHER" | tr -d '\r' | xargs)
+          DESCRIPTION_RAW=$(echo "$DESCRIPTION_RAW" | tr -d '\r')
+          SOURCES_RAW=$(echo "$SOURCES_RAW" | tr -d '\r')
+          
+          # Varsayılan değerler
+          TITLE="${TITLE:-Başlıksız Olay}"
+          DATE="${DATE:-$(date +%Y-%m-%d)}"
+          TIME="${TIME:-}"
+          CATEGORY_MAIN="${CATEGORY_MAIN:-diğer}"
+          CATEGORY_OTHER="${CATEGORY_OTHER:-}"
+          DESCRIPTION_RAW="${DESCRIPTION_RAW:-Açıklama eklenmedi}"
+          SOURCES_RAW="${SOURCES_RAW:-}"
+          
+          # Kategori seçimi
+          if [[ "$CATEGORY_MAIN" == "diğer" && -n "$CATEGORY_OTHER" ]]; then
             CATEGORY="$CATEGORY_OTHER"
           else
             CATEGORY="$CATEGORY_MAIN"
           fi
-
+          
+          # Yıl çıkar
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
-          # --- DÜZELTİLDİ: Gizli etiketi ('') ara ---
-          ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '' | sed -e 's///' | tr -d '\r\n')
+          # Düzenleme kontrolü için gizli etiket ara
+          ORIGINAL_FILENAME=""
+          if echo "$ISSUE_BODY" | grep -q '<!-- FILENAME:'; then
+            ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '<!-- FILENAME:[^>]*-->' | sed 's/<!-- FILENAME://; s/-->//' | tr -d ' \r\n')
+          fi
           
           IS_EDIT="false"
-          
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
             IS_EDIT="true"
             FILENAME="$ORIGINAL_FILENAME"
             echo "İşlem: Düzenleme. Varolan dosyanın üzerine yazılacak: $FILENAME"
           else
             IS_EDIT="false"
-            SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9çğıöşü]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
-            FILENAME="${DATE}-${SLUG}.md" 
+            # Slug oluştur (Türkçe karakterler korunur)
+            SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | \
+                   sed -e 's/ç/c/g' -e 's/ğ/g/g' -e 's/ı/i/g' \
+                       -e 's/ö/o/g' -e 's/ş/s/g' -e 's/ü/u/g' \
+                       -e 's/Ç/c/g' -e 's/Ğ/g/g' -e 's/I/i/g' \
+                       -e 's/İ/i/g' -e 's/Ö/o/g' -e 's/Ş/s/g' \
+                       -e 's/Ü/u/g' | \
+                   sed -e 's/[^a-z0-9]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')
+            FILENAME="${DATE}-${SLUG}.md"
             echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
           fi
           
-          # --- DÜZELTİLDİ: Gizli etiketi metinden temizle ---
-          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
-          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
+          # Gizli etiketleri temizle
+          DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's/<!-- FILENAME:[^>]*-->//g' | sed '/^$/d')
+          SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's/<!-- FILENAME:[^>]*-->//g' | sed '/^$/d')
           
-          # '_No response_' olanları boş string yap
-          [ "$TIME" == "_No response_" ] && TIME=""
-          [ "$CATEGORY_OTHER" == "_No response_" ] && CATEGORY_OTHER=""
-          [ "$DESCRIPTION_CLEAN" == "_No response_" ] && DESCRIPTION_CLEAN=""
-          [ "$SOURCES_CLEAN" == "_No response_" ] && SOURCES_CLEAN=""
-
-          # Çıktıları ayarla
+          # "_No response_" olanları boş yap
+          if [[ "$TIME" == "_No response_" || "$TIME" == "*No response*" ]]; then
+            TIME=""
+          fi
+          if [[ "$CATEGORY_OTHER" == "_No response_" || "$CATEGORY_OTHER" == "*No response*" ]]; then
+            CATEGORY_OTHER=""
+          fi
+          if [[ "$DESCRIPTION_CLEAN" == "_No response_" || "$DESCRIPTION_CLEAN" == "*No response*" ]]; then
+            DESCRIPTION_CLEAN=""
+          fi
+          if [[ "$SOURCES_CLEAN" == "_No response_" || "$SOURCES_CLEAN" == "*No response*" ]]; then
+            SOURCES_CLEAN=""
+          fi
+          
+          # GitHub Output'a yaz
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT 
+          echo "$DESCRIPTION_CLEAN" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
           echo "category_main=$CATEGORY_MAIN" >> $GITHUB_OUTPUT
           echo "category_other=$CATEGORY_OTHER" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
-          echo "time=$TIME" >> $GITHUB_OUTPUT 
+          echo "time=$TIME" >> $GITHUB_OUTPUT
           echo "sources<<EOF" >> $GITHUB_OUTPUT
           echo "$SOURCES_CLEAN" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          echo "filename=$FILENAME" >> $GITHUB_OUTPUT 
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "year=$YEAR" >> $GITHUB_OUTPUT
           echo "is_edit=$IS_EDIT" >> $GITHUB_OUTPUT
+          
+          # Debug çıktıları
+          echo "=== PARSED VALUES ==="
+          echo "TITLE: $TITLE"
+          echo "DATE: $DATE"
+          echo "TIME: $TIME"
+          echo "CATEGORY: $CATEGORY"
+          echo "FILENAME: $FILENAME"
+          echo "IS_EDIT: $IS_EDIT"
+          echo "===================="
 
       - name: Create markdown file
         run: |
           mkdir -p events/data
-          cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
-          ---
-          title: "${{ steps.parse.outputs.title }}"
-          date: ${{ steps.parse.outputs.date }}
-          time: ${{ steps.parse.outputs.time }}
-          category: ${{ steps.parse.outputs.category_main }}
-          other_category: ${{ steps.parse.outputs.category_other }}
-          ---
           
-          ${{ steps.parse.outputs.description }}
+          # Markdown dosyası oluştur
+          cat > "events/data/${{ steps.parse.outputs.filename }}" << 'MDEOF'
+---
+title: "${{ steps.parse.outputs.title }}"
+date: "${{ steps.parse.outputs.date }}"
+time: "${{ steps.parse.outputs.time }}"
+category: "${{ steps.parse.outputs.category_main }}"
+other_category: "${{ steps.parse.outputs.category_other }}"
+---
 
-          ## Kaynaklar
-          ${{ steps.parse.outputs.sources }}
-          MDEOF
+${{ steps.parse.outputs.description }}
+
+## Kaynaklar
+${{ steps.parse.outputs.sources }}
+MDEOF
+          
+          echo "Dosya oluşturuldu: events/data/${{ steps.parse.outputs.filename }}"
+          cat "events/data/${{ steps.parse.outputs.filename }}"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: "${{ steps.parse.outputs.is_edit == 'true' && 'Olayı güncelle' || 'Yeni olay ekle' }}: ${{ steps.parse.outputs.title }}"
+          commit-message: "${{ steps.parse.outputs.is_edit == 'true' && '📝 Olay güncelle' || '✨ Yeni olay ekle' }}: ${{ steps.parse.outputs.title }}"
           branch: event/${{ github.event.issue.number }}
           delete-branch: true
-          title: "${{ steps.parse.outputs.is_edit == 'true' && '🔄 Olay Güncelleme' || '✨ Yeni Olay' }}: ${{ steps.parse.outputs.title }}"
+          title: "${{ steps.parse.outputs.is_edit == 'true' && '📝 Olay Güncelleme' || '✨ Yeni Olay' }}: ${{ steps.parse.outputs.title }}"
           body: |
             ## 📅 Olay ${{ steps.parse.outputs.is_edit == 'true' && 'Güncellendi' || 'Eklendi' }}
             
@@ -172,5 +265,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}`
+              body: `✅ Issue kapatıldı. Onay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}`
             })

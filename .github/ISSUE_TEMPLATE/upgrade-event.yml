@@ -1,0 +1,111 @@
+name: Olay Düzenle
+description: Mevcut bir olayı düzenleyin
+title: "Düzenle: "
+labels: ["upgrade-event"]
+assignees:
+  - sergenaras
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📝 Mevcut Olayı Düzenle
+        Lütfen düzenlemek istediğiniz olayın güncel bilgilerini girin.
+        
+        > **Not:** Bu form, mevcut bir olayın üzerine yazacaktır. Lütfen dikkatli olun.
+        
+  - type: input
+    id: original_filename
+    attributes:
+      label: Düzenlenecek Dosya
+      description: |
+        Düzenlemek istediğiniz olayın dosya adını girin.
+        Örnek: 2024-03-15-yapay-zeka-devrimi.md
+      placeholder: "YYYY-AA-GG-olay-adi.md"
+    validations:
+      required: true
+
+  - type: input
+    id: event_title 
+    attributes:
+      label: Başlık
+      description: Olay başlığı (kısa ve öz)
+      placeholder: "Örnek: Yapay Zeka Devrimi"
+    validations:
+      required: true
+
+  - type: input
+    id: date
+    attributes:
+      label: Tam Tarih (YYYY-AA-GG)
+      description: |
+        Olayın gerçekleştiği tam tarih.
+      placeholder: "Örnek: 2024-10-24"
+    validations:
+      required: true
+
+  - type: input
+    id: time
+    attributes:
+      label: Saat (SS:DD) - İsteğe bağlı
+      description: |
+        Olayın gerçekleştiği tam saat (24 saat formatında).
+      placeholder: "Örnek: 14:30"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Kategori
+      description: Olayın ana kategorisi.
+      options:
+        - teknoloji
+        - bilim
+        - tarih
+        - kültür
+        - spor
+        - politika
+        - diğer
+    validations:
+      required: true
+
+  - type: input
+    id: other_category
+    attributes:
+      label: Özel Kategori (Eğer 'Diğer' Seçtiyseniz)
+      description: Kategori listesinden "Diğer"i seçtiyseniz, özel kategorinizi girin.
+      placeholder: "Örn: Arkeoloji"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Açıklama
+      description: Olay hakkında detaylı açıklama.
+      placeholder: "Olayın güncel açıklamasını buraya yazın..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Kaynaklar
+      description: |
+        Olayı doğrulayan kaynaklar için URL'ler.
+      placeholder: |
+        - https://www.kaynak1.com/....
+        - https://www.kaynak2.com/....
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Onay
+      description: Lütfen onaylayın.
+      options:
+        - label: Bu değişikliklerin mevcut olayın üzerine yazacağını anlıyorum.
+          required: true
+        - label: Bilgilerin doğruluğundan eminim.
+          required: true
