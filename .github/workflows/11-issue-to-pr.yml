@@ -44,18 +44,48 @@ jobs:
           # JSON verisini çıkar
           JSON_DATA=""
           
-          # EVENT JSON verisi
+          # EVENT JSON verisi - DÜZELTME: Base64'ü doğru şekilde çıkar
           if echo "$ISSUE_BODY" | grep -q '<!-- EVENT_JSON_DATA_BASE64:'; then
             echo "📦 EVENT JSON verisi bulundu"
-            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -o '<!-- EVENT_JSON_DATA_BASE64:[^>]*' | sed 's/<!-- EVENT_JSON_DATA_BASE64://')
-            JSON_DATA=$(echo "$BASE64_DATA" | base64 -d)
+            # Base64 verisini HTML comment'ten çıkar
+            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -oP '<!-- EVENT_JSON_DATA_BASE64:\K[^\s]+' | head -1)
+            echo "Base64 data: $BASE64_DATA"
+            
+            # Base64 decode et
+            if ! JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null); then
+              echo "❌ Base64 decode hatası, alternatif yöntem deneniyor..."
+              # Alternatif: Manuel olarak base64 string'ini çıkar
+              BASE64_DATA=$(echo "$ISSUE_BODY" | sed -n 's/.*EVENT_JSON_DATA_BASE64:\([^[:space:]]*\).*/\1/p')
+              JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null)
+            fi
+            
+            if [ -z "$JSON_DATA" ]; then
+              echo "❌ JSON verisi çıkarılamadı"
+              exit 1
+            fi
+            
             OPERATION_TYPE="event"
           
           # DELETE JSON verisi  
           elif echo "$ISSUE_BODY" | grep -q '<!-- DELETE_JSON_DATA_BASE64:'; then
             echo "🗑️ DELETE JSON verisi bulundu"
-            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -o '<!-- DELETE_JSON_DATA_BASE64:[^>]*' | sed 's/<!-- DELETE_JSON_DATA_BASE64://')
-            JSON_DATA=$(echo "$BASE64_DATA" | base64 -d)
+            # Base64 verisini HTML comment'ten çıkar
+            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -oP '<!-- DELETE_JSON_DATA_BASE64:\K[^\s]+' | head -1)
+            echo "Base64 data: $BASE64_DATA"
+            
+            # Base64 decode et
+            if ! JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null); then
+              echo "❌ Base64 decode hatası, alternatif yöntem deneniyor..."
+              # Alternatif: Manuel olarak base64 string'ini çıkar
+              BASE64_DATA=$(echo "$ISSUE_BODY" | sed -n 's/.*DELETE_JSON_DATA_BASE64:\([^[:space:]]*\).*/\1/p')
+              JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null)
+            fi
+            
+            if [ -z "$JSON_DATA" ]; then
+              echo "❌ JSON verisi çıkarılamadı"
+              exit 1
+            fi
+            
             OPERATION_TYPE="delete"
           
           else
@@ -255,20 +285,13 @@ jobs:
             let message;
             
             if (operationType === 'event') {
-              // Event PR'ları için - hangi PR oluştuysa onu al
-              const editPR = '${{ steps.create-edit-pr.outputs.pull-request-number }}';
-              const newPR = '${{ steps.create-new-pr.outputs.pull-request-number }}';
-              prNumber = editPR || newPR;
-              
               if (eventType === 'edit') {
-                message = `✅ Issue kapatıldı. Olay güncelleme için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+                message = `✅ Issue kapatıldı. Olay güncelleme için Pull Request oluşturuldu!\n\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
               } else {
-                message = `✅ Issue kapatıldı. Yeni olay için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+                message = `✅ Issue kapatıldı. Yeni olay için Pull Request oluşturuldu!\n\n📁 **Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
               }
             } else {
-              // Delete PR'ı için
-              prNumber = '${{ steps.create-delete-pr.outputs.pull-request-number }}';
-              message = `✅ Issue kapatıldı. Silme işlemi için Pull Request oluşturuldu!\n\n🔗 **PR:** #${prNumber}\n🗑️ **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
+              message = `✅ Issue kapatıldı. Silme işlemi için Pull Request oluşturuldu!\n\n🗑️ **Silinen Dosya:** \`${{ steps.parse_json.outputs.filename }}\``;
             }
 
             github.rest.issues.createComment({
