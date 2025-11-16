@@ -137,12 +137,12 @@ jobs:
           # Yıl çıkar
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
-          # --- DÜZELTİLDİ: 'grep' komutu dolduruldu ---
+          # --- DÜZELTİLDİ: 'grep' ve 'sed' komutları dolduruldu ---
           # Düzenleme kontrolü için gizli etiket ara
           ORIGINAL_FILENAME=""
           if echo "$ISSUE_BODY" | grep -q '' | sed 's///' | tr -d ' \r\n')
           fi
-          # --------------------------------------------
+          # ---------------------------------------------------
           
           IS_EDIT="false"
           if [[ -n "$ORIGINAL_FILENAME" ]]; then
@@ -214,7 +214,7 @@ jobs:
         run: |
           mkdir -p events/data
           
-          # 'MDEOF' çevresindeki tırnaklar kaldırıldı (Bu sizde zaten düzgündü)
+          # 'MDEOF' çevresindeki tırnaklar kaldırıldı
           cat > "events/data/${{ steps.parse.outputs.filename }}" << MDEOF
           ---
           title: "${{ steps.parse.outputs.title }}"
