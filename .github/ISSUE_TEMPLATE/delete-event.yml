@@ -1,0 +1,41 @@
+name: Olay Silme İsteği
+description: Zaman çizelgesinden bir olayı silmek için istek oluşturun
+title: "Olay Sil: [OLAY BAŞLIĞI]"
+labels: ["delete-event"]
+assignees:
+  - sergenaras
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ Olay Silme İsteği
+        Bu işlem, bir olayı zaman çizelgesinden kalıcı olarak kaldıracaktır.
+        
+  - type: input
+    id: filename
+    attributes:
+      label: Dosya Adı (Zorunlu)
+      description: |
+        Silinecek olayın `.md` dosyasının adı. 
+        Bu bilgiyi, olayı UI'dan seçip "Sil" butonuna bastığınızda açılan issue'da bulabilirsiniz.
+      placeholder: "Örn: 2025-11-13-kirmizi.md"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: reason
+    attributes:
+      label: Silme Gerekçesi
+      description: Lütfen bu olayın neden silinmesi gerektiğini kısaca açıklayın.
+      placeholder: "Örn: Yinelenen kayıt, yanlış bilgi, vb."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Onay
+      description: Göndermeden önce lütfen onaylayın.
+      options:
+        - label: Doğru dosya adını girdiğimden ve bu olayı silmek istediğimden eminim.
+          required: true

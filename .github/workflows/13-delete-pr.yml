@@ -1,0 +1,100 @@
+name: 13 - Olay Silme PR Oluşturucu
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  create-delete-pr:
+    if: contains(github.event.issue.labels.*.name, 'delete-event')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse issue body
+        id: parse
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          # 'awk' komutu ile "Dosya Adı (Zorunlu)" alanını bul ve 'FILENAME=' olarak ata
+          parsed_data=$(echo "$ISSUE_BODY" | awk -F'\n\n' '
+            BEGIN { RS = "\n\n" }
+            {
+              if (match($0, /^\*\*Dosya Adı \(Zorunlu\)\*\*/, label)) {
+                sub( /^\*\*([^*]+)\*\*\s*/, "");
+                gsub(/\r$/, "", $0);
+                printf "FILENAME=%s\n", $0
+              }
+            }
+          ')
+          
+          echo "$parsed_data" >> $GITHUB_ENV
+          
+          FILENAME="${FILENAME:-NOT_FOUND}"
+          
+          if [[ "$FILENAME" == "NOT_FOUND" ]]; then
+            echo "Hata: Issue body içinde 'Dosya Adı (Zorunlu)' alanı bulunamadı."
+            exit 1
+          fi
+          
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "Dosya silinecek: $FILENAME"
+
+      - name: Create Pull Request for deletion
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "Olayı sil: ${{ steps.parse.outputs.filename }}"
+          branch: event/delete-${{ github.event.issue.number }}
+          delete-branch: true
+          title: "🗑️ Olay Sil: ${{ steps.parse.outputs.filename }}"
+          body: |
+            ## ⛔ Olay Silme İsteği
+            
+            **Issue:** #${{ github.event.issue.number }}
+            **Silinecek Dosya:** `${{ steps.parse.outputs.filename }}`
+            
+            ---
+            Bu PR, issue #${{ github.event.issue.number }} (kapatıldığı için) tarafından otomatik olarak oluşturuldu.
+            
+            **Lütfen "Merge pull request" butonuna basarak silme işlemini onaylayın.**
+          
+          # Bu adım, PR'ı oluşturmadan önce dosyayı siler
+          prepare-script: |
+            if [ -f "events/data/${{ steps.parse.outputs.filename }}" ]; then
+              git rm "events/data/${{ steps.parse.outputs.filename }}"
+              echo "Dosya (events/data/${{ steps.parse.outputs.filename }}) silinmek üzere hazırlandı."
+            else
+              echo "Hata: Dosya (events/data/${{ steps.parse.outputs.filename }}) bulunamadı. PR oluşturulamadı."
+              exit 1
+            fi
+        id: create-pr
+
+      - name: Comment on issue
+        if: steps.create-pr.outputs.pull-request-number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Issue kapatıldı. Silme işlemi için Pull Request oluşturuldu!\n\n🔗 **PR:** #${{ steps.create-pr.outputs.pull-request-number }}`
+            })
+
+      - name: Comment on issue (File not found)
+        if: failure() && steps.create-pr.outcome != 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **Hata:** \`${{ steps.parse.outputs.filename }}\` adında bir dosya bulunamadı. Lütfen dosya adını kontrol edip issue'yu yeniden açın.`
+            })

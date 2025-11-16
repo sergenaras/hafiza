@@ -17,7 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- TAMAMEN YENİ PARSE LOGIC ---
       - name: Parse issue body
         id: parse
         env:
@@ -32,7 +31,6 @@ jobs:
                 current_label = label[1];
                 sub( /^\*\*([^*]+)\*\*\s*/, "");
                 
-                # Checkbox'ları işle
                 if (match($0, /^- \[ \]/) || match($0, /^- \[x\]/i)) {
                     value=""
                     n_opts = split($0, opts, "\n- ");
@@ -43,11 +41,9 @@ jobs:
                     value = $0;
                 }
                 
-                # ' sed ' komutları yerine 'gsub' kullan (daha güvenli)
                 gsub(/'/, "\\&apos;", value);
                 gsub(/"/, "\\&quot;", value);
                 
-                # Çıktı için etiketleri basitleştir
                 if (current_label == "Başlık") key="TITLE";
                 else if (current_label == "Tam Tarih (YYYY-AA-GG)") key="DATE";
                 else if (current_label == "Saat (SS:DD) - İsteğe bağlı") key="TIME";
@@ -64,10 +60,8 @@ jobs:
             }
           ')
 
-          # Ayrıştırılmış veriyi GITHUB_ENV'e yükle
           echo "$parsed_data" >> $GITHUB_ENV
           
-          # --- Ortam Değişkenlerinden Değerleri Ayarla ---
           TITLE="${TITLE:-_No response_}"
           DATE="${DATE:-_No response_}"
           TIME="${TIME:-_No response_}"
@@ -84,7 +78,7 @@ jobs:
 
           YEAR=$(echo "$DATE" | cut -d'-' -f1)
           
-          # Gizli etiketten 'ORIGINAL_FILENAME'ı ara (Bu mantık doğruydu)
+          # --- DÜZELTİLDİ: Gizli etiketi ('') ara ---
           ORIGINAL_FILENAME=$(echo "$ISSUE_BODY" | grep -o '' | sed -e 's///' | tr -d '\r\n')
           
           IS_EDIT="false"
@@ -100,7 +94,7 @@ jobs:
             echo "İşlem: Yeni Olay. Yeni dosya oluşturulacak: $FILENAME"
           fi
           
-          # Gizli etiketi metinden temizle (Bu mantık doğruydu)
+          # --- DÜZELTİLDİ: Gizli etiketi metinden temizle ---
           DESCRIPTION_CLEAN=$(echo "$DESCRIPTION_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
           SOURCES_CLEAN=$(echo "$SOURCES_RAW" | sed 's///g' | sed '/^$/N;/\n$/D')
           
