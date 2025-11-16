@@ -229,7 +229,7 @@ jobs:
           ## Kaynaklar
           ${{ steps.parse.outputs.sources }}
           MDEOF
-          
+                 
           echo "Dosya oluşturuldu: events/data/${{ steps.parse.outputs.filename }}"
           cat "events/data/${{ steps.parse.outputs.filename }}"
 
