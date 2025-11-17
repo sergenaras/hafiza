@@ -45,7 +45,6 @@ jobs:
           BASE64_DATA=""
           OPERATION_TYPE=""
           
-          # === DÜZELTME BAŞLANGICI: HTML YORUMU YERİNE KOD BLOĞU PARSER ===
           # EVENT JSON verisi
           if echo "$ISSUE_BODY" | grep -q 'EVENT_JSON_DATA_BASE64:'; then
             echo "📦 EVENT JSON verisi bulundu"
@@ -87,7 +86,6 @@ jobs:
             echo "OPERATION_TYPE=unknown" >> $GITHUB_OUTPUT
             exit 0
           fi
-          # === DÜZELTME BİTİŞİ ===
           
           echo "📄 JSON Data: $JSON_DATA"
           
@@ -130,21 +128,33 @@ jobs:
             echo "🗑️ Silinecek dosya: $FILENAME"
           fi
           
+          # === DÜZELTME BAŞLANGICI: Güvenli multiline output ===
           # GitHub Output'a yaz
           echo "OPERATION_TYPE=$OPERATION_TYPE" >> $GITHUB_OUTPUT
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "time=$TIME" >> $GITHUB_OUTPUT
           echo "category=$CATEGORY" >> $GITHUB_OUTPUT
-          echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$DESCRIPTION" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "sources<<EOF" >> $GITHUB_OUTPUT
-          echo "$SOURCES" >> $GITHUB_OUTPUT
-          echo "EOF"
+          
+          # $DESCRIPTION değişkeni çok satırlı olabileceği için
+          # bu 'grouping' yöntemi ( { ... } >> file ) kullanılmalıdır.
+          {
+            echo "description<<EOF"
+            echo "$DESCRIPTION"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          # $SOURCES değişkeni de çok satırlı olabilir
+          {
+            echo "sources<<EOF"
+            echo "$SOURCES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "original_filename=$ORIGINAL_FILENAME" >> $GITHUB_OUTPUT
           echo "type=$TYPE" >> $GITHUB_OUTPUT
+          # === DÜZELTME BİTİŞİ ===
           
           echo "=== PARSED VALUES ==="
           echo "OPERATION_TYPE: $OPERATION_TYPE"
@@ -191,7 +201,6 @@ jobs:
             echo "✅ Dosya silindi: events/data/${{ steps.parse_json.outputs.filename }}"
           else
             echo "❌ Uyarı: Dosya bulunamadı: events/data/${{ steps.parse_json.outputs.filename }}. Belki zaten silinmiştir."
-            # Bu bir hata değil, PR devam etmeli. O yüzden 'exit 1' yok.
           fi
 
       - name: Create Pull Request for Edit Event
