@@ -43,9 +43,9 @@
     {
       "title": "Kırmızı",
       "date": "2025-11-13T12:30:00",
-      "category": "teknoloji",
-      "description": "",
-      "sources": "",
+      "category": "bilim",
+      "description": "renkler içerisinde en kızılı",
+      "sources": "kızıl",
       "filename": "2025-11-13-kırmızı.md",
       "original_time": "12:30",
       "year": 2025
@@ -93,7 +93,7 @@
   ],
   "metadata": {
     "total_events": 9,
-    "generated_at": "2025-11-17T08:59:58.972183Z",
+    "generated_at": "2025-11-17T09:02:37.099930Z",
     "generator": "Hafiza Cetveli JSON Generator v2.0",
     "success_count": 9,
     "error_count": 4
