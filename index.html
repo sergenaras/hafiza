@@ -6,8 +6,8 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <title>Hafıza Cetveli</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/marked/marked.min.js](https://cdn.jsdelivr.net/npm/marked/marked.min.js)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js](https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js)"></script>
 
     <style>
         /* Önceki CSS kodları aynen kalacak, sadece modal için ek CSS */
@@ -525,7 +525,7 @@
                     
                     <div class="form-group">
                         <label for="eventSources">Kaynaklar <span class="required">*</span></label>
-                        <textarea id="eventSources" placeholder="- https://example.com&#10;- https://anotherexample.com" required></textarea>
+                        <textarea id="eventSources" placeholder="- [https://example.com](https://example.com)&#10;- [https://anotherexample.com](https://anotherexample.com)" required></textarea>
                     </div>
                     
                     <div class="form-actions">
@@ -614,7 +614,7 @@
     
     <script type="module">
         // Yeni kütüphaneyi CDN'den import et
-        import Timeline from 'https://cdn.jsdelivr.net/gh/sergenaras/timeline-canvas@main/src/timeline.js';
+        import Timeline from '[https://cdn.jsdelivr.net/gh/sergenaras/timeline-canvas@main/src/timeline.js](https://cdn.jsdelivr.net/gh/sergenaras/timeline-canvas@main/src/timeline.js)';
 
         // Global değişkenler
         let allEvents = []; 
@@ -649,7 +649,6 @@
                 document.getElementById('eventTitle').value = event.title || '';
                 document.getElementById('eventDate').value = formatDateToYYYYMMDD(new Date(event.date));
                 document.getElementById('eventTime').value = event.original_time || '';
-                document.getElementById('eventCategory').value = event.category || '';
                 document.getElementById('eventDescription').value = event.description || '';
                 document.getElementById('eventSources').value = event.sources || '';
                 
@@ -658,6 +657,11 @@
                     document.getElementById('eventCategory').value = 'diğer';
                     otherCategoryGroup.style.display = 'block';
                     document.getElementById('eventOtherCategory').value = event.category;
+                } else {
+                    // Standart kategori ise "diğer" alanını temizle ve gizle
+                    document.getElementById('eventCategory').value = event.category || '';
+                    otherCategoryGroup.style.display = 'none';
+                    document.getElementById('eventOtherCategory').value = '';
                 }
             } else {
                 modalTitle.textContent = 'Yeni Olay Ekle';
@@ -711,7 +715,7 @@
             // Kategori belirle
             let finalCategory = formData.category;
             if (formData.category === 'diğer' && formData.other_category) {
-                finalCategory = formData.other_category;
+                finalCategory = formData.other_category.trim() || 'diğer';
             }
 
             // JSON verisini hazırla
@@ -747,15 +751,21 @@
             const jsonData = JSON.stringify(eventData, null, 2);
             const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
 
+            // === DÜZELTME BAŞLANGICI: HTML YORUMU YERİNE <details> KULLAN ===
             // Issue body'si oluştur
-            const issueBody = `\n\n` +
+            const issueBody = `<details>\n<summary>Otomatik Veri (Lütfen Dokunmayın)</summary>\n\n` +
+                             "```json_event\n" +
+                             `EVENT_JSON_DATA_BASE64:${base64Data}\n` +
+                             "```\n" +
+                             `</details>\n\n` +
                              `**Bu issue otomatik olarak oluşturulmuştur. Lütfen bu metni değiştirmeyin.**\n\n` +
                              `## Olay Bilgileri\n\n` +
                              `- **Başlık:** ${eventData.title}\n` +
                              `- **Tarih:** ${eventData.date}\n` +
                              `- **Kategori:** ${eventData.category}\n` +
                              `- **Tip:** ${eventData.type === 'edit' ? 'Düzenleme' : 'Yeni Olay'}\n\n` +
-                             `*JSON verisi yukarıdaki base64 kodlu blokta bulunmaktadır.*`;
+                             `*JSON verisi yukarıdaki gizli blokta bulunmaktadır.*`;
+            // === DÜZELTME BİTİŞİ ===
 
             const issueUrl = `${GITHUB_REPO_URL}/issues/new?` +
                 `title=${encodeURIComponent(issueTitle)}&` +
@@ -856,15 +866,31 @@
             const filterSelect = document.getElementById('categoryFilter');
             const categories = new Set(events.map(event => event.category || 'diğer'));
             filterSelect.innerHTML = ''; 
+            
             const allOption = document.createElement('option');
             allOption.value = 'tumu';
             allOption.textContent = window.t('categories.all') || 'Tümü';
             filterSelect.appendChild(allOption);
             
-            categories.forEach(category => {
+            // Kategorileri i18n'e göre sırala
+            const sortedCategories = [...categories].sort((a, b) => {
+                const aTrans = window.t(`categories.${a}`) || a;
+                const bTrans = window.t(`categories.${b}`) || b;
+                return aTrans.localeCompare(bTrans, window.i18n.currentLanguage);
+            });
+
+            sortedCategories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
-                option.textContent = window.t(`categories.${category}`) || category;
+                
+                // Kategori çevirisini yap, yoksa orijinali kullan
+                const categoryKey = `categories.${category}`;
+                let translated = window.t(categoryKey);
+                if (translated === categoryKey) {
+                    translated = category;
+                }
+                
+                option.textContent = translated;
                 filterSelect.appendChild(option);
             });
         }
@@ -942,7 +968,6 @@
                 return;
             }
 
-            // === DÜZELTME BAŞLANGICI ===
             const categoryKey = `categories.${event.category || 'diğer'}`;
             let translatedCategory = window.t(categoryKey);
 
@@ -951,7 +976,6 @@
             if (translatedCategory === categoryKey) {
                 translatedCategory = event.category;
             }
-            // === DÜZELTME BİTİŞİ ===
 
             const formattedDescription = escapeAndFormat(event.description);
             
@@ -1060,13 +1084,20 @@
             const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
 
             const issueTitle = `Olay Sil: ${event.title}`;
-            const issueBody = `\n\n` +
+            
+            // === DÜZELTME BAŞLANGICI: HTML YORUMU YERİNE <details> KULLAN ===
+            const issueBody = `<details>\n<summary>Otomatik Veri (Lütfen Dokunmayın)</summary>\n\n` +
+                             "```json_delete\n" +
+                             `DELETE_JSON_DATA_BASE64:${base64Data}\n` +
+                             "```\n" +
+                             `</details>\n\n` +
                              `**Bu issue otomatik olarak oluşturulmuştur. Lütfen bu metni değiştirmeyin.**\n\n` +
                              `## Silinecek Olay\n\n` +
                              `- **Dosya:** ${event.filename}\n` +
                              `- **Başlık:** ${event.title}\n` +
                              `- **Tarih:** ${event.date.toISOString().split('T')[0]}\n\n` +
-                             `*JSON verisi yukarıdaki base64 kodlu blokta bulunmaktadır.*`;
+                             `*JSON verisi yukarıdaki gizli blokta bulunmaktadır.*`;
+            // === DÜZELTME BİTİŞİ ===
 
             const deleteIssueUrl = `${GITHUB_REPO_URL}/issues/new?` +
                 `title=${encodeURIComponent(issueTitle)}&` +

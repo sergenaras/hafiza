@@ -41,58 +41,53 @@ jobs:
           echo "$ISSUE_BODY"
           echo "=== ISSUE BODY END ==="
           
-          # JSON verisini çıkar
           JSON_DATA=""
+          BASE64_DATA=""
+          OPERATION_TYPE=""
           
-          # EVENT JSON verisi - DÜZELTME: Base64'ü doğru şekilde çıkar
-          if echo "$ISSUE_BODY" | grep -q '<!-- EVENT_JSON_DATA_BASE64:'; then
+          # === DÜZELTME BAŞLANGICI: HTML YORUMU YERİNE KOD BLOĞU PARSER ===
+          # EVENT JSON verisi
+          if echo "$ISSUE_BODY" | grep -q 'EVENT_JSON_DATA_BASE64:'; then
             echo "📦 EVENT JSON verisi bulundu"
-            # Base64 verisini HTML comment'ten çıkar
-            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -oP '<!-- EVENT_JSON_DATA_BASE64:\K[^\s]+' | head -1)
-            echo "Base64 data: $BASE64_DATA"
+            # Kod bloğundan (```) base64 verisini çıkar
+            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -oP 'EVENT_JSON_DATA_BASE64:\K[^\s`]+' | head -1)
             
-            # Base64 decode et
-            if ! JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null); then
-              echo "❌ Base64 decode hatası, alternatif yöntem deneniyor..."
-              # Alternatif: Manuel olarak base64 string'ini çıkar
-              BASE64_DATA=$(echo "$ISSUE_BODY" | sed -n 's/.*EVENT_JSON_DATA_BASE64:\([^[:space:]]*\).*/\1/p')
-              JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null)
+            if [ -z "$BASE64_DATA" ]; then
+              echo "❌ Base64 verisi çıkarılamadı (EVENT)"
+              exit 1
             fi
             
-            if [ -z "$JSON_DATA" ]; then
-              echo "❌ JSON verisi çıkarılamadı"
+            if ! JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null); then
+              echo "❌ Base64 decode hatası"
               exit 1
             fi
             
             OPERATION_TYPE="event"
           
           # DELETE JSON verisi  
-          elif echo "$ISSUE_BODY" | grep -q '<!-- DELETE_JSON_DATA_BASE64:'; then
+          elif echo "$ISSUE_BODY" | grep -q 'DELETE_JSON_DATA_BASE64:'; then
             echo "🗑️ DELETE JSON verisi bulundu"
-            # Base64 verisini HTML comment'ten çıkar
-            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -oP '<!-- DELETE_JSON_DATA_BASE64:\K[^\s]+' | head -1)
-            echo "Base64 data: $BASE64_DATA"
-            
-            # Base64 decode et
-            if ! JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null); then
-              echo "❌ Base64 decode hatası, alternatif yöntem deneniyor..."
-              # Alternatif: Manuel olarak base64 string'ini çıkar
-              BASE64_DATA=$(echo "$ISSUE_BODY" | sed -n 's/.*DELETE_JSON_DATA_BASE64:\([^[:space:]]*\).*/\1/p')
-              JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null)
+            # Kod bloğundan (```) base64 verisini çıkar
+            BASE64_DATA=$(echo "$ISSUE_BODY" | grep -oP 'DELETE_JSON_DATA_BASE64:\K[^\s`]+' | head -1)
+
+            if [ -z "$BASE64_DATA" ]; then
+              echo "❌ Base64 verisi çıkarılamadı (DELETE)"
+              exit 1
             fi
-            
-            if [ -z "$JSON_DATA" ]; then
-              echo "❌ JSON verisi çıkarılamadı"
+
+            if ! JSON_DATA=$(echo "$BASE64_DATA" | base64 -d 2>/dev/null); then
+              echo "❌ Base64 decode hatası"
               exit 1
             fi
             
             OPERATION_TYPE="delete"
           
           else
-            echo "❌ JSON verisi bulunamadı"
+            echo "❌ JSON verisi bulunamadı. Issue body'de 'EVENT_JSON_DATA_BASE64:' veya 'DELETE_JSON_DATA_BASE64:' anahtarı yok."
             echo "OPERATION_TYPE=unknown" >> $GITHUB_OUTPUT
             exit 0
           fi
+          # === DÜZELTME BİTİŞİ ===
           
           echo "📄 JSON Data: $JSON_DATA"
           
@@ -146,7 +141,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "sources<<EOF" >> $GITHUB_OUTPUT
           echo "$SOURCES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "EOF"
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "original_filename=$ORIGINAL_FILENAME" >> $GITHUB_OUTPUT
           echo "type=$TYPE" >> $GITHUB_OUTPUT
@@ -195,8 +190,8 @@ jobs:
             rm "events/data/${{ steps.parse_json.outputs.filename }}"
             echo "✅ Dosya silindi: events/data/${{ steps.parse_json.outputs.filename }}"
           else
-            echo "❌ Dosya bulunamadı: events/data/${{ steps.parse_json.outputs.filename }}"
-            exit 1
+            echo "❌ Uyarı: Dosya bulunamadı: events/data/${{ steps.parse_json.outputs.filename }}. Belki zaten silinmiştir."
+            # Bu bir hata değil, PR devam etmeli. O yüzden 'exit 1' yok.
           fi
 
       - name: Create Pull Request for Edit Event
