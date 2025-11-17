@@ -476,7 +476,6 @@
     </style>
 </head>
 <body>
-    <!-- Modal -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -538,7 +537,6 @@
         </div>
     </div>
 
-    <!-- Mevcut HTML yapısı -->
     <header class="header">
         <div class="logo" data-i18n="appName">Hafıza Cetveli</div>
         <div class="header-controls">
@@ -750,7 +748,7 @@
             const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
 
             // Issue body'si oluştur
-            const issueBody = `<!-- EVENT_JSON_DATA_BASE64:${base64Data} -->\n\n` +
+            const issueBody = `\n\n` +
                              `**Bu issue otomatik olarak oluşturulmuştur. Lütfen bu metni değiştirmeyin.**\n\n` +
                              `## Olay Bilgileri\n\n` +
                              `- **Başlık:** ${eventData.title}\n` +
@@ -944,8 +942,16 @@
                 return;
             }
 
+            // === DÜZELTME BAŞLANGICI ===
             const categoryKey = `categories.${event.category || 'diğer'}`;
-            const translatedCategory = window.t(categoryKey) || event.category;
+            let translatedCategory = window.t(categoryKey);
+
+            // Eğer çeviri başarısız olduysa (yani anahtarın kendisini döndürdüyse),
+            // doğrudan orijinal kategori adını (örn: "Test") kullan.
+            if (translatedCategory === categoryKey) {
+                translatedCategory = event.category;
+            }
+            // === DÜZELTME BİTİŞİ ===
 
             const formattedDescription = escapeAndFormat(event.description);
             
@@ -1054,7 +1060,7 @@
             const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
 
             const issueTitle = `Olay Sil: ${event.title}`;
-            const issueBody = `<!-- DELETE_JSON_DATA_BASE64:${base64Data} -->\n\n` +
+            const issueBody = `\n\n` +
                              `**Bu issue otomatik olarak oluşturulmuştur. Lütfen bu metni değiştirmeyin.**\n\n` +
                              `## Silinecek Olay\n\n` +
                              `- **Dosya:** ${event.filename}\n` +
