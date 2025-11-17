@@ -11,6 +11,16 @@
       "year": 2025
     },
     {
+      "title": "Nane Limon",
+      "date": "2025-11-17T12:22:00",
+      "category": "Sağlık",
+      "description": "Eski adamlar doğruyu söylemiş\nBir çiçekle bahar olmaz\nKişi kendini bilip sağa sola sormalı\nCan pazarı bu, oyun olmaz\nZürefanın düşkünü\nBeyaz giyer kış günü\nSonunda şifayı kapıp da şaşırınca\nBana gel, beni dinle, iyi yaz\nDefteri, kalemi al, iyi yaz\nNane, limon kabuğu\nBir güzel kaynasın, aman, ha-ha-ha-ha-ha\nİçine hatmi çiçeği\nBiraz çöre' otu katasın, aman, ha-ha-ha-ha-ha\nHatta biraz tarçın\nBir tutam zencefil, aman, ha-ha-ha-ha-ha\nBin derde deva geliyor\nBiraz daha sabret, güzelim, ha-ha-ha-ha-ha-hapşu\nSen tedbirini al, önünü kış tut\nBırak yine de yaz gelsin\nÇoğu zaman hesap çarşıya uymaz\nSonra dizini döversin\nZürefanın düşkünü\nBeyaz giyer kış günü\nSonunda şifayı kapıp da şaşırınca\nBana gel, beni dinle, iyi yaz\nDefteri, kalemi al, iyi yaz\nNane, limon kabuğu\nBir güzel kaynasın, aman, ha-ha-ha-ha-ha\nİçine hatmi çiçeği\nBiraz çöre' otu katasın, aman, ha-ha-ha-ha-ha\nHatta biraz tarçın\nBir tutam zencefil, aman, ha-ha-ha-ha-ha\nBin derde deva geliyor\nBiraz daha sabret, güzelim, ha-ha-ha-ha-ha-hapşu\nBarış iğneyi kendine batırır\nÇuvaldızı başkasına\nBol keseden aklı ona buna dağıtır\nDarısı kendi başına\nZürefanın düşkünü\nBeyaz giyer kış günü\nSonunda şifayı kapıp da şaşırınca\nBana gel, beni dinle, iyi yaz\nDefteri, kalemi al, iyi yaz\nNane, limon kabuğu\nBir güzel kaynasın, aman, ha-ha-ha-ha-ha\nİçine hatmi çiçeği\nBiraz çöre' otu katasın, aman, ha-ha-ha-ha-ha\nHatta biraz tarçın\nBir tutam zencefil, aman, ha-ha-ha-ha-ha\nBin derde deva geliyor\nBiraz daha sabret, güzelim, ha-ha-ha-ha-ha-hapşu\nNane, limon kabuğu\nBir güzel kaynasın, aman, ha-ha-ha-ha-ha\nİçine hatmi çiçeği\nBiraz çöre' otu katasın, aman, ha-ha-ha-ha-ha\nHatta biraz tarçın\nBir tutam zencefil, aman, ha-ha-ha-ha-ha\nBin derde deva geliyor\nBiraz daha sabret, güzelim, ha-ha-ha-ha-ha-hapşu\nNane, limon kabuğu\nBir güzel kaynasın, aman, ha-ha-ha-ha-ha\nİçine hatmi çiçeği\nBiraz çöre' otu katasın, aman, ha-ha-ha-ha-ha\nHatta biraz tarçın\nBir tutam zencefil, aman, ha-ha-ha-ha-ha\nBin derde deva geliyor\nBiraz daha sabret, güzelim, ha-ha-ha-ha-ha-hapşu",
+      "sources": "Barış",
+      "filename": "2025-11-17-nane-limon.md",
+      "original_time": "12:22",
+      "year": 2025
+    },
+    {
       "title": "Başlıksız Olay",
       "date": "2025-11-16T12:30:00",
       "category": "diğer",
@@ -82,10 +92,10 @@
     }
   ],
   "metadata": {
-    "total_events": 8,
-    "generated_at": "2025-11-17T03:50:19.880953Z",
+    "total_events": 9,
+    "generated_at": "2025-11-17T08:59:58.972183Z",
     "generator": "Hafiza Cetveli JSON Generator v2.0",
-    "success_count": 8,
+    "success_count": 9,
     "error_count": 4
   }
 }
